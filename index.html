@@ -1,50 +1,74 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>AHO Monitoring Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .dept-item.active { background-color: #eef2ff; border-right: 4px solid #4f46e5; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  </style>
 </head>
-<body class="bg-slate-50 p-4 lg:p-10">
-    <div class="max-w-7xl mx-auto">
-        <header class="mb-10 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold text-indigo-900 uppercase tracking-tighter">AHO Performance Dashboard</h1>
-                <p class="text-slate-500">Monitoring Score Layanan Berdasarkan Departemen</p>
-            </div>
-            <div id="loader" class="text-indigo-600 font-bold flex items-center">
-                <i class="fas fa-circle-notch fa-spin mr-2"></i> Syncing Data...
-            </div>
-        </header>
+<body class="bg-slate-50 flex h-screen overflow-hidden text-slate-800">
 
-        <h2 class="text-xl font-bold mb-4 text-slate-700 flex items-center">
-            <i class="fas fa-trophy text-yellow-500 mr-2"></i> Ranking 13 Departemen (Highest SLA)
-        </h2>
-        <div id="dept-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            </div>
+  <aside class="w-80 bg-white border-r border-slate-200 flex flex-col">
+    <div class="p-6 border-b border-slate-100">
+      <h1 class="text-xl font-bold text-indigo-900">AHO Ranking</h1>
+      <p class="text-xs text-slate-400 uppercase tracking-widest mt-1">Top 13 Departments</p>
+    </div>
+    <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll">
+      <div class="p-10 text-center"><i class="fas fa-spinner fa-spin"></i></div>
+    </div>
+  </aside>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 border-b bg-slate-50">
-                <h3 class="font-bold">Recent Service Records</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left" id="main-table">
-                    <thead class="text-xs text-slate-400 uppercase bg-slate-50">
-                        <tr>
-                            <th class="px-6 py-4">Departemen</th>
-                            <th class="px-6 py-4">Toko</th>
-                            <th class="px-6 py-4">Problem</th>
-                            <th class="px-6 py-4 text-center">ACH SLA</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm"></tbody>
-                </table>
-            </div>
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <header id="detail-header" class="bg-white p-6 border-b border-slate-200 hidden">
+      <div class="flex justify-between items-end">
+        <div>
+          <h2 id="selected-dept-name" class="text-2xl font-black text-slate-800 uppercase italic">Nama Departemen</h2>
+          <p class="text-slate-500 text-sm">Analisis detail problem dan performa SLA</p>
         </div>
+        <div id="dept-stats-summary" class="flex gap-4">
+          </div>
+      </div>
+    </header>
+
+    <div id="detail-content" class="flex-1 overflow-y-auto p-6 space-y-6 hidden">
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h3 class="font-bold text-slate-700 mb-4 flex items-center">
+          <i class="fas fa-chart-bar mr-2 text-indigo-500"></i> Distribusi Problem Terbanyak
+        </h3>
+        <div id="top-problems-list" class="space-y-3"></div>
+      </section>
+
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h3 class="font-bold text-rose-600 mb-4 flex items-center">
+          <i class="fas fa-exclamation-triangle mr-2"></i> Outstanding & SLA Critical (Minus)
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm" id="unclosed-table">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
+              <tr>
+                <th class="px-4 py-3">No Problem</th>
+                <th class="px-4 py-3">Toko</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3 text-right">Target Hari</th>
+                <th class="px-4 py-3 text-right text-rose-600">Umur Prob</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
 
-    <script src="app.js"></script>
+    <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-slate-400">
+      <i class="fas fa-mouse-pointer fa-3xl mb-4 opacity-20"></i>
+      <p>Pilih departemen di sebelah kiri untuk melihat detail</p>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
