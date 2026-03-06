@@ -1,137 +1,66 @@
-// GANTI DENGAN URL WEB APP ANDA
-const API_URL = "https://script.google.com/macros/s/AKfycbwy7orzjb0kN6JZsTcEm698Mxj4FP2a2p9BOy2JsnEZ2_jG8sycaoQSWSVVJKJW2Iaq/exec"; 
+let allData = [];
+// URL API Web App Anda
+const API_URL = "https://script.google.com/macros/s/AKfycbxr5am6ev_L3XvMebnySiTa9Ypl0h2fTqBIX1hSden62_mvYDchN_PcrSPD4jKiqN5D/exec";
 
-let dataTarikan = [];
-let dataMasterDept = [];
-
-document.addEventListener('DOMContentLoaded', fetchData);
+document.addEventListener('DOMContentLoaded', () => {
+  fetchData();
+});
 
 async function fetchData() {
-    try {
-        const response = await fetch(API_URL);
-        const result = await response.json();
-        
-        if(result.error) throw new Error(result.error);
-
-        dataTarikan = result.tarikan;
-        dataMasterDept = result.masterDept;
-        
-        document.getElementById('side-loader').classList.add('hidden');
-        renderSidebar();
-    } catch (e) {
-        console.error("Fetch Error:", e);
-        document.getElementById('side-loader').innerHTML = `
-            <i class="fas fa-exclamation-circle text-red-500 fa-2xl mb-2"></i>
-            <p class="text-red-500 text-[10px] font-bold uppercase">Gagal Load Data</p>
-        `;
-    }
-}
-
-function calculateScore(deptName) {
-    // Cari data di Tarikan yang cocok dengan Nama Divisi atau Departemen
-    const records = dataTarikan.filter(d => 
-        (d.Nama_Divisi && d.Nama_Divisi.toUpperCase() === deptName.toUpperCase()) || 
-        (d.Departemen && d.Departemen.toUpperCase() === deptName.toUpperCase())
-    );
-
-    const total = records.length;
-    if (total === 0) return { score: "0.00", percClosed: 0, sla: 0, total: 0 };
-
-    // 1. % Closed (Konversi ke skala 4)
-    const closedCount = records.filter(x => x.Status === 'Closed').length;
-    const closedScore = (closedCount / total) * 4;
-
-    // 2. ACH SLA (Konversi ke skala 4)
-    const avgSla = records.reduce((a, b) => a + (parseFloat(b.ACH_SLA) || 0), 0) / total;
-    const slaScore = (avgSla / 100) * 4;
-
-    // 3. Tingkat Kepuasan (Sudah skala 1-4)
-    const avgPuas = records.reduce((a, b) => a + (parseFloat(b.Tingkat_Kepuasan) || 0), 0) / total;
-
-    const finalScore = ((closedScore + slaScore + (avgPuas || 0)) / 3).toFixed(2);
-
-    return { 
-        score: finalScore, 
-        total, 
-        percClosed: ((closedCount/total)*100).toFixed(0),
-        sla: avgSla.toFixed(0)
-    };
+  try {
+    // Menambahkan indikator loading ke sidebar
+    document.getElementById('dept-list').innerHTML = '<div class="p-4 text-center text-gray-500 animate-pulse">Menghubungkan ke API...</div>';
+    
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error('Gagal mengambil data dari API');
+    
+    allData = await response.json();
+    renderSidebar();
+  } catch (error) {
+    console.error("Error:", error);
+    document.getElementById('dept-list').innerHTML = '<div class="p-4 text-red-500 text-sm">Gagal memuat data. Periksa koneksi API.</div>';
+  }
 }
 
 function renderSidebar() {
-    const container = document.getElementById('dept-list');
-    
-    // Perhatikan: Nama kolom di file Anda adalah "Departement" (pakai 'e')
-    const deptScores = dataMasterDept.map(d => {
-        const name = d.Departement || d.DEPARTEMENT; 
-        const stats = calculateScore(name);
-        return { name, ...stats };
-    }).sort((a, b) => b.score - a.score);
-
-    container.innerHTML = deptScores.map((s, i) => `
-        <div onclick="showDetail(this, '${s.name.replace(/'/g, "\\'")}', ${i+1})" 
-             class="p-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-all border border-transparent group mb-1">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-[9px] font-black text-slate-400 group-hover:text-indigo-600 uppercase">Rank #${i+1}</span>
-                <span class="text-xs font-black bg-slate-100 text-indigo-700 px-2 py-0.5 rounded">${s.score}</span>
-            </div>
-            <h4 class="text-sm font-bold text-slate-700 truncate uppercase italic">${s.name}</h4>
-            <div class="flex gap-3 mt-1 text-[9px] font-bold text-slate-400 uppercase">
-                <span>${s.percClosed}% CLSD</span>
-                <span>${s.sla}% SLA</span>
-            </div>
-        </div>
-    `).join('');
+  // Mengambil daftar departemen unik dari data
+  const depts = [...new Set(allData.map(d => d.Departemen))].filter(n => n);
+  const container = document.getElementById('dept-list');
+  
+  container.innerHTML = depts.map(d => `
+    <div onclick="showDetail('${d.replace(/'/g, "\\'")}')" class="p-4 cursor-pointer hover:bg-gray-50 border-b border-gray-50 transition-all">
+      <h4 class="font-bold text-gray-700">${d}</h4>
+    </div>
+  `).join('');
 }
 
-function showDetail(el, deptName, rank) {
-    document.querySelectorAll('.p-4').forEach(c => c.classList.remove('active-dept'));
-    el.classList.add('active-dept');
-    
-    document.getElementById('empty-state').classList.add('hidden');
-    document.getElementById('detail-view').classList.remove('hidden');
+function showDetail(deptName) {
+  document.getElementById('dept-name').innerText = deptName;
+  document.getElementById('detail-view').classList.remove('hidden');
+  
+  const deptData = allData.filter(d => d.Departemen === deptName);
+  
+  // 1. Bar Chart Masalah
+  const probCounts = {};
+  deptData.forEach(d => {
+    const prob = d['Nama Problem'];
+    if(prob) probCounts[prob] = (probCounts[prob] || 0) + 1;
+  });
+  
+  const topProbs = Object.entries(probCounts).sort((a,b) => b[1]-a[1]).slice(0,5);
+  
+  document.getElementById('problem-bars').innerHTML = topProbs.length > 0 ? topProbs.map(p => `
+    <div class="text-xs font-bold mb-1">${p[0]} (${p[1]} case)</div>
+    <div class="bg-gray-200 h-2 rounded mb-3"><div class="bg-indigo-600 h-full rounded" style="width:${(p[1]/topProbs[0][1])*100}%"></div></div>
+  `).join('') : '<p class="text-xs text-gray-400">Tidak ada data masalah.</p>';
 
-    const deptData = dataTarikan.filter(d => 
-        (d.Nama_Divisi && d.Nama_Divisi.toUpperCase() === deptName.toUpperCase()) || 
-        (d.Departemen && d.Departemen.toUpperCase() === deptName.toUpperCase())
-    );
-    const stats = calculateScore(deptName);
-
-    document.getElementById('view-dept-name').innerText = deptName;
-    document.getElementById('final-score-val').innerText = stats.score;
-
-    // Masalah Terbanyak
-    const counts = {};
-    deptData.forEach(d => counts[d.Nama_Problem] = (counts[d.Nama_Problem] || 0) + 1);
-    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 5);
-    const max = sorted[0] ? sorted[0][1] : 0;
-
-    document.getElementById('problem-bars').innerHTML = sorted.map(p => `
-        <div>
-            <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1 uppercase italic">
-                <span class="truncate pr-4">${p[0]}</span>
-                <span class="text-indigo-600">${p[1]} CASE</span>
-            </div>
-            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div class="bg-indigo-600 h-full transition-all duration-1000" style="width: ${(p[1]/max)*100}%"></div>
-            </div>
-        </div>
-    `).join('');
-
-    // Tabel Outstanding & Critical
-    const unclosed = deptData.filter(d => d.Status !== 'Closed');
-    document.getElementById('unclosed-tbody').innerHTML = unclosed.map(row => {
-        const isMinus = parseFloat(row.Umur_Problem) > (parseFloat(row.Target_Hari) || 0);
-        return `
-            <tr class="${isMinus ? 'critical-row' : ''} border-b border-slate-50">
-                <td class="p-3">
-                    <div class="font-bold text-slate-700">${row.No_Problem}</div>
-                    <div class="text-[9px] text-slate-400 italic truncate w-32">${row.Nama_Problem}</div>
-                </td>
-                <td class="p-3 text-[9px] font-black uppercase text-slate-500">${row.Status}</td>
-                <td class="p-3 text-right font-bold text-slate-400">${row.Target_Hari || 0}</td>
-                <td class="p-3 text-right font-black ${isMinus ? 'text-rose-600' : 'text-slate-700'}">${row.Umur_Problem} Hr</td>
-            </tr>
-        `;
-    }).join('');
+  // 2. Tabel SLA Minus (Status: New, Progress, Solved)
+  const unclosed = deptData.filter(d => d.Status !== 'Closed');
+  document.getElementById('table-body').innerHTML = unclosed.length > 0 ? unclosed.map(d => `
+    <tr class="${d['Umur Problem'] > d['Target Hari'] ? 'critical' : ''} border-b">
+      <td class="p-2 font-mono text-xs">${d['No Problem']}</td>
+      <td class="p-2 text-xs">${d.Status}</td>
+      <td class="p-2 text-right text-xs">${d['Target Hari']}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="3" class="p-4 text-center text-gray-400 text-xs">Semua tiket closed.</td></tr>';
 }
