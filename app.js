@@ -1,37 +1,36 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyKgLwEWiFaw2uGQjR_U-u1bht9ZPTWmNSYgSUuZkvUTQrR_Ona84sp4MloWTfLq66C/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxr5am6ev_L3XvMebnySiTa9Ypl0h2fTqBIX1hSden62_mvYDchN_PcrSPD4jKiqN5D/exec";
 
-async function init() {
-  const res = await fetch(API_URL);
-  const data = await res.json();
-  
-  // Render Sidebar dari Sheet Dept
-  const nav = document.getElementById('dept-list');
-  data.dept.forEach(d => {
-    nav.innerHTML += `<button onclick="render('${d.Departement}')" class="w-full text-left p-3 hover:bg-indigo-50 rounded-lg font-medium">${d.Departement}</button>`;
-  });
-  
-  window.fullData = data.tarikan;
+async function loadDashboard() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    
+    // Render Sidebar (mengambil dari sheet Dept)
+    const list = document.getElementById('dept-list');
+    list.innerHTML = data.dept.map(d => 
+      `<button onclick="render('${d.Departement}')" class="w-full p-2 text-left hover:bg-indigo-100 rounded">${d.Departement}</button>`
+    ).join('');
+    
+    window.allData = data.tarikan;
+  } catch(e) {
+    document.getElementById('sidebar').innerHTML = "Gagal memuat API. Pastikan Deployment 'Anyone'.";
+  }
 }
 
 function render(dept) {
-  const filtered = window.fullData.filter(d => d.Departemen === dept);
+  document.getElementById('dashboard-content').classList.remove('hidden');
+  document.getElementById('dept-title').innerText = dept;
   
-  // 1. Update Statistik
-  document.getElementById('stats-grid').innerHTML = `
-    <div class="bg-blue-600 text-white p-4 rounded-xl">Total: ${filtered.length} Case</div>
-    <div class="bg-emerald-600 text-white p-4 rounded-xl">Closed: ${filtered.filter(d=>d.Status==='Closed').length}</div>
-    <div class="bg-amber-600 text-white p-4 rounded-xl">SLA Avg: 98%</div>
-  `;
+  const filtered = window.allData.filter(d => d.Departemen === dept);
   
-  // 2. Render Tabel SLA Kritis
-  const tbody = document.getElementById('sla-table');
-  tbody.innerHTML = filtered.filter(d => d.Status !== 'Closed').map(d => `
-    <tr class="border-b">
-      <td class="p-2 font-bold">${d['No Problem']}</td>
-      <td class="p-2">${d['Nama Problem']}</td>
-      <td class="p-2 text-red-500 font-bold">${d['Umur Problem']} Hr</td>
+  // Render Tabel
+  document.getElementById('table-body').innerHTML = filtered.map(d => `
+    <tr class="border-b ${d['Umur Problem'] > d['Target Hari'] ? 'bg-red-50' : ''}">
+      <td class="p-2">${d['No Problem']}</td>
+      <td class="p-2">${d.Status}</td>
+      <td class="p-2 text-red-500 font-bold">${d['Target Hari'] || 0}</td>
     </tr>
   `).join('');
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', loadDashboard);
