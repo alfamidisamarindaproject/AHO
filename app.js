@@ -1,36 +1,69 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxr5am6ev_L3XvMebnySiTa9Ypl0h2fTqBIX1hSden62_mvYDchN_PcrSPD4jKiqN5D/exec";
+let allData = [];
+const API_URL = "https://script.google.com/macros/s/AKfycbzMSZ4iMywUiPTZGjoiMczkviWl9qKTvZowhlTT0wMSD8JY65N49y3KkwATgScrgq8_/exec";
 
-async function loadDashboard() {
+// Fungsi Konversi Interval 1-4
+function calcValue(val, type) {
+  if (type === 'closed') {
+    if (val < 85) return 1;
+    if (val >= 100) return 4;
+    return 1 + ((val - 85) / 15) * 3;
+  }
+  if (type === 'sla') {
+    if (val < 85) return 1;
+    if (val > 130) return 4;
+    return 1 + ((val - 85) / 45) * 3;
+  }
+  // Kepuasan
+  return val < 4 ? 1 + ((val - 1) / 3) * 3 : 4;
+}
+
+function calculateDeptScore(data) {
+  if (data.length === 0) return 0;
+  const total = data.length;
+  const closed = (data.filter(d => d.Status === 'Closed').length / total) * 100;
+  const sla = data.reduce((a, b) => a + (parseFloat(b['ACH SLA']) || 0), 0) / total;
+  const puas = data.reduce((a, b) => a + (parseFloat(b['Tingkat Kepuasan']) || 0), 0) / total;
+  
+  const score = (calcValue(closed, 'closed') * 0.3) + 
+                (calcValue(sla, 'sla') * 0.4) + 
+                (calcValue(puas, 'kepuasan') * 0.2);
+  return score.toFixed(2);
+}
+
+// Fungsi utama loading menggunakan Fetch API
+async function init() {
   try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    const response = await fetch(API_URL);
+    allData = await response.json();
     
-    // Render Sidebar (mengambil dari sheet Dept)
-    const list = document.getElementById('dept-list');
-    list.innerHTML = data.dept.map(d => 
-      `<button onclick="render('${d.Departement}')" class="w-full p-2 text-left hover:bg-indigo-100 rounded">${d.Departement}</button>`
+    // Filter 13 Departemen Unik
+    const depts = [...new Set(allData.map(d => d.Departemen))].filter(n => n);
+    
+    document.getElementById('dept-list').innerHTML = depts.map(d => 
+      `<button onclick="renderDetail('${d}')" class="w-full text-left p-2 hover:bg-indigo-100 rounded transition font-medium text-sm border-b">
+        ${d}
+      </button>`
     ).join('');
-    
-    window.allData = data.tarikan;
-  } catch(e) {
-    document.getElementById('sidebar').innerHTML = "Gagal memuat API. Pastikan Deployment 'Anyone'.";
+  } catch (err) {
+    console.error("Gagal memuat data:", err);
+    alert("Gagal terhubung ke API. Pastikan Deployment Apps Script sudah 'Anyone'.");
   }
 }
 
-function render(dept) {
-  document.getElementById('dashboard-content').classList.remove('hidden');
-  document.getElementById('dept-title').innerText = dept;
+function renderDetail(dept) {
+  const filtered = allData.filter(d => d.Departemen === dept);
+  document.getElementById('content').classList.remove('hidden');
+  document.getElementById('dept-name').innerText = dept;
   
-  const filtered = window.allData.filter(d => d.Departemen === dept);
+  const score = calculateDeptScore(filtered);
   
-  // Render Tabel
-  document.getElementById('table-body').innerHTML = filtered.map(d => `
-    <tr class="border-b ${d['Umur Problem'] > d['Target Hari'] ? 'bg-red-50' : ''}">
-      <td class="p-2">${d['No Problem']}</td>
-      <td class="p-2">${d.Status}</td>
-      <td class="p-2 text-red-500 font-bold">${d['Target Hari'] || 0}</td>
-    </tr>
-  `).join('');
+  // Contoh Render ke UI
+  document.getElementById('score-cards').innerHTML = `
+    <div class="bg-indigo-600 text-white p-4 rounded-lg shadow">
+      <p class="text-xs opacity-75">Score Layanan</p>
+      <p class="text-2xl font-bold">${score}</p>
+    </div>
+  `;
 }
 
-document.addEventListener('DOMContentLoaded', loadDashboard);
+document.addEventListener('DOMContentLoaded', init);
