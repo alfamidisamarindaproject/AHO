@@ -14,29 +14,40 @@
 <body class="bg-slate-50 flex h-screen font-sans text-slate-800 overflow-hidden">
 
   <aside class="w-80 bg-white shadow-xl flex flex-col z-10 border-r border-slate-200">
-    <div class="p-6 bg-indigo-900 text-white shadow-md">
+    <div onclick="showOverview()" class="p-6 bg-indigo-900 text-white shadow-md cursor-pointer hover:bg-indigo-800 transition-all">
       <h1 class="text-xl font-black italic tracking-tight">LEADERBOARD</h1>
       <p class="text-[10px] font-bold tracking-widest uppercase text-indigo-300">Peringkat Kinerja AHO</p>
     </div>
-    
     <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
-      <div id="loading-indicator" class="p-6 text-center text-indigo-600 font-bold animate-pulse">
-        Menghubungkan ke Database...
-      </div>
+      <div id="loading-indicator" class="p-6 text-center text-indigo-600 font-bold animate-pulse">Menghubungkan...</div>
     </div>
   </aside>
 
   <main class="flex-1 flex flex-col overflow-hidden relative">
+    
+    <div id="overview-view" class="flex-1 overflow-y-auto custom-scroll p-8">
+      <h2 class="text-3xl font-black text-slate-800 uppercase italic mb-6 border-b pb-4">Gambaran Besar (All Dept)</h2>
+      <div id="global-stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h3 class="font-bold text-slate-700 mb-4 uppercase text-sm">Distribusi Kinerja Departemen</h3>
+        <div id="dept-comparison-bar" class="space-y-4">
+          </div>
+      </div>
+    </div>
+
     <div id="detail-view" class="hidden flex-1 overflow-y-auto custom-scroll p-8">
-      
       <div class="flex justify-between items-end mb-8 border-b border-slate-200 pb-4">
         <div>
-          <span id="dept-rank" class="text-xs font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase italic tracking-widest"></span>
-          <h2 id="dept-name" class="text-3xl font-black text-slate-800 uppercase italic mt-2"></h2>
+          <button onclick="showOverview()" class="text-xs font-bold text-indigo-600 mb-2 hover:underline">← Kembali ke Gambaran Besar</button>
+          <div class="flex items-center gap-3">
+            <span id="dept-rank" class="text-xs font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase italic tracking-widest"></span>
+            <h2 id="dept-name" class="text-3xl font-black text-slate-800 uppercase italic"></h2>
+          </div>
         </div>
         <div class="text-right">
           <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Total Score Layanan</p>
-          <div class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md">
+          <div class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md inline-block">
             <span id="dept-score" class="text-3xl font-black italic">0.00</span>
           </div>
         </div>
@@ -44,7 +55,10 @@
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="p-4 bg-slate-100 font-bold text-slate-700 text-sm uppercase">Top Problem Terbanyak</div>
+          <div class="p-4 bg-slate-100 flex justify-between items-center">
+            <span class="font-bold text-slate-700 text-sm uppercase">Top Problem</span>
+            <input type="text" id="search-problem" onkeyup="filterTable('search-problem', 'top-problems')" placeholder="Cari problem..." class="text-xs border rounded px-2 py-1 outline-none focus:border-indigo-500 w-40">
+          </div>
           <div class="overflow-auto max-h-64 custom-scroll">
             <table class="w-full text-xs text-left">
               <thead class="bg-slate-50 text-slate-500 sticky top-0">
@@ -56,7 +70,10 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="p-4 bg-slate-100 font-bold text-slate-700 text-sm uppercase">Kinerja Per PIC (Solve)</div>
+          <div class="p-4 bg-slate-100 flex justify-between items-center">
+            <span class="font-bold text-slate-700 text-sm uppercase">Kinerja Per PIC</span>
+            <input type="text" id="search-pic" onkeyup="filterTable('search-pic', 'top-pics')" placeholder="Cari nama PIC..." class="text-xs border rounded px-2 py-1 outline-none focus:border-indigo-500 w-40">
+          </div>
           <div class="overflow-auto max-h-64 custom-scroll">
             <table class="w-full text-xs text-left">
               <thead class="bg-slate-50 text-slate-500 sticky top-0">
@@ -69,9 +86,9 @@
       </div>
 
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-4 bg-red-50 font-bold text-red-600 text-sm uppercase flex justify-between">
-          <span>Warning: Problem Melewati & Mendekati Target</span>
-          <span class="text-xs font-normal text-red-400">*Belum Closed</span>
+        <div class="p-4 bg-red-50 flex justify-between items-center">
+          <span class="font-bold text-red-600 text-sm uppercase">Warning Problem</span>
+          <input type="text" id="search-warning" onkeyup="filterTable('search-warning', 'critical-tickets')" placeholder="Cari tiket/masalah..." class="text-xs border rounded px-2 py-1 outline-none focus:border-red-500 w-48">
         </div>
         <div class="overflow-auto max-h-64 custom-scroll">
           <table class="w-full text-xs text-left">
@@ -82,7 +99,6 @@
           </table>
         </div>
       </div>
-
     </div>
   </main>
 
