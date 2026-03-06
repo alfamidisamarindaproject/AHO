@@ -4,76 +4,69 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>AHO Executive Dashboard</title>
+  <title>AHO Monitoring</title>
   <style>
     .custom-scroll::-webkit-scrollbar { width: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .active-dept { background-color: #f0f7ff; border-left: 4px solid #4f46e5; font-weight: bold; }
+    .active-dept { background-color: #eef2ff; border-left: 4px solid #4f46e5; font-weight: bold; }
   </style>
 </head>
 <body class="bg-slate-50 flex h-screen overflow-hidden text-slate-800">
 
   <aside class="w-72 bg-white shadow-xl flex flex-col border-r border-slate-200">
-    <div onclick="showHome()" class="p-6 bg-indigo-900 text-white cursor-pointer hover:bg-indigo-800 transition-all">
+    <div onclick="window.location.reload()" class="p-6 bg-indigo-900 text-white cursor-pointer">
       <h1 class="text-xl font-black italic tracking-tighter uppercase">AHO Dashboard</h1>
-      <p class="text-[10px] font-bold opacity-60 tracking-widest">SMART MONITORING</p>
+      <p class="text-[10px] opacity-60 font-bold uppercase">Smart Monitoring System</p>
     </div>
     
-    <div class="p-4 border-b">
-      <button onclick="showHome()" class="w-full py-2 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all">🏠 HOME (GAMBARAN BESAR)</button>
-    </div>
+    <button onclick="showHome()" class="m-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100">🏠 HOME (GAMBARAN BESAR)</button>
 
     <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
-      <div class="p-4 text-center text-xs animate-pulse">Memuat Departemen...</div>
+      <div class="p-4 text-center text-xs animate-pulse text-slate-400">Menyinkronkan Data...</div>
     </div>
   </aside>
 
-  <main class="flex-1 overflow-hidden relative flex flex-col">
+  <main class="flex-1 overflow-hidden flex flex-col">
     
     <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-6">
       <h2 class="text-2xl font-black text-slate-800 uppercase italic mb-6 border-b pb-2">Gambaran Besar (All Dept)</h2>
       
-      <div id="home-metrics" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-        </div>
+      <div id="home-metrics" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8"></div>
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-            <span class="font-bold text-xs uppercase">Top Problem Global</span>
-            <input type="text" onkeyup="tableSearch(this, 'home-table-prob')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none focus:border-indigo-500">
+            <span class="font-bold text-[10px] uppercase">Top Problem (Global)</span>
+            <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
           </div>
           <table class="w-full text-[11px] text-left">
-            <thead class="bg-slate-50 text-slate-500 font-bold border-b">
-              <tr><th class="p-2">Masalah</th><th class="p-2">Total</th><th class="p-2">Score</th></tr>
-            </thead>
-            <tbody id="home-table-prob" class="divide-y divide-slate-100"></tbody>
+            <thead class="bg-slate-50 text-slate-400 font-bold border-b"><tr><th class="p-2">Masalah</th><th class="p-2 text-center">Total</th><th class="p-2 text-center">Score</th></tr></thead>
+            <tbody id="home-body-prob" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-            <span class="font-bold text-xs uppercase">Top PIC Global</span>
-            <input type="text" onkeyup="tableSearch(this, 'home-table-pic')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none focus:border-indigo-500">
+            <span class="font-bold text-[10px] uppercase">Kinerja PIC (Global)</span>
+            <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
           </div>
           <table class="w-full text-[11px] text-left">
-            <thead class="bg-slate-50 text-slate-500 font-bold border-b">
-              <tr><th class="p-2">Nama PIC</th><th class="p-2">Total</th><th class="p-2">Score</th></tr>
-            </thead>
-            <tbody id="home-table-pic" class="divide-y divide-slate-100"></tbody>
+            <thead class="bg-slate-50 text-slate-400 font-bold border-b"><tr><th class="p-2">PIC</th><th class="p-2 text-center">Total</th><th class="p-2 text-center">Score</th></tr></thead>
+            <tbody id="home-body-pic" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
 
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-3 bg-red-50 flex justify-between items-center border-b">
-          <span class="font-bold text-red-600 text-xs uppercase italic">Warning: Melebihi / Mendekati Target</span>
-          <input type="text" onkeyup="tableSearch(this, 'home-table-warn')" placeholder="Cari tiket..." class="text-[10px] border border-red-200 px-2 py-1 rounded w-40 outline-none">
+          <span class="font-bold text-red-600 text-[10px] uppercase italic">Warning: Tiket Melebihi / Mendekati Target</span>
+          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket..." class="text-[10px] border border-red-200 px-2 py-1 rounded w-40 outline-none">
         </div>
         <table class="w-full text-[11px] text-left">
-          <thead class="bg-slate-50 text-slate-500 border-b">
-            <tr><th class="p-2">Dept</th><th class="p-2">No Tiket</th><th class="p-2">Masalah</th><th class="p-2">PIC</th><th class="p-2">Usia/Target</th><th class="p-2">Status</th></tr>
+          <thead class="bg-slate-50 text-slate-400 border-b">
+            <tr><th class="p-2">Dept</th><th class="p-2">Ticket</th><th class="p-2">Masalah</th><th class="p-2">PIC</th><th class="p-2">Usia/Target</th><th class="p-2">Status</th></tr>
           </thead>
-          <tbody id="home-table-warn" class="divide-y divide-slate-100"></tbody>
+          <tbody id="home-body-warn" class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
     </div>
@@ -83,40 +76,35 @@
         <div>
           <button onclick="showHome()" class="text-[10px] font-bold text-indigo-600 hover:underline mb-1">← KEMBALI KE HOME</button>
           <div class="flex items-center gap-3">
-            <span id="dept-label-rank" class="bg-indigo-600 text-white text-[9px] px-2 py-0.5 rounded font-black">RANK #</span>
-            <h2 id="dept-label-name" class="text-2xl font-black text-slate-800 uppercase italic">NAMA DEPT</h2>
+            <span id="det-rank" class="bg-indigo-600 text-white text-[9px] px-2 py-0.5 rounded font-black italic">RANK #</span>
+            <h2 id="det-name" class="text-3xl font-black text-slate-800 uppercase italic">NAMA DEPT</h2>
           </div>
         </div>
         <div class="text-right">
-          <p class="text-[9px] font-bold text-slate-400 uppercase">Department Score</p>
-          <div id="dept-label-score" class="text-4xl font-black text-indigo-600 italic">0.00</div>
+          <p class="text-[9px] font-bold text-slate-400 uppercase">Final Score</p>
+          <div id="det-score" class="text-5xl font-black text-indigo-600 italic">0.00</div>
         </div>
       </div>
+
+      <div id="dept-metrics" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"></div>
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-            <span class="font-bold text-xs uppercase">Top Problem Dept</span>
-            <input type="text" onkeyup="tableSearch(this, 'dept-table-prob')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
+            <span class="font-bold text-[10px] uppercase">Problem Departemen</span>
+            <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
           </div>
           <table class="w-full text-[11px] text-left">
-            <thead class="bg-slate-50 text-slate-500 font-bold border-b">
-              <tr><th class="p-2">Masalah</th><th class="p-2">Closed</th><th class="p-2">SLA</th><th class="p-2">Score</th></tr>
-            </thead>
-            <tbody id="dept-table-prob" class="divide-y divide-slate-100"></tbody>
+            <tbody id="dept-body-prob" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
-
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-            <span class="font-bold text-xs uppercase">Kinerja PIC Dept</span>
-            <input type="text" onkeyup="tableSearch(this, 'dept-table-pic')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
+            <span class="font-bold text-[10px] uppercase">PIC Departemen</span>
+            <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
           </div>
           <table class="w-full text-[11px] text-left">
-            <thead class="bg-slate-50 text-slate-500 font-bold border-b">
-              <tr><th class="p-2">PIC</th><th class="p-2">Closed</th><th class="p-2">SLA</th><th class="p-2">Score</th></tr>
-            </thead>
-            <tbody id="dept-table-pic" class="divide-y divide-slate-100"></tbody>
+            <tbody id="dept-body-pic" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
