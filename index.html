@@ -2,49 +2,52 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <title>AHO Performance Dashboard</title>
   <style>
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar { width: 5px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .active-dept { background-color: #eef2ff; border-left: 4px solid #4f46e5; }
   </style>
 </head>
-<body class="bg-slate-50 flex h-screen overflow-hidden font-sans text-slate-800">
+<body class="bg-slate-50 flex h-screen font-sans text-slate-800 overflow-hidden">
 
   <aside class="w-80 bg-white shadow-xl flex flex-col z-10 border-r border-slate-200">
     <div class="p-6 bg-indigo-900 text-white shadow-md">
       <h1 class="text-xl font-black italic tracking-tight">LEADERBOARD</h1>
-      <p class="text-[10px] font-bold tracking-widest uppercase text-indigo-300">Peringkat 13 Departemen</p>
+      <p class="text-[10px] font-bold tracking-widest uppercase text-indigo-300">Peringkat Kinerja AHO</p>
     </div>
-    <div id="dept-list" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-      <div class="p-4 text-center text-slate-400 text-sm animate-pulse">Memuat & Menghitung Data...</div>
+    
+    <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
+      <div id="loading-indicator" class="p-6 text-center text-indigo-600 font-bold animate-pulse">
+        Menghubungkan ke Database...
+      </div>
     </div>
   </aside>
 
   <main class="flex-1 flex flex-col overflow-hidden relative">
-    <div id="loader" class="absolute inset-0 bg-white/80 backdrop-blur flex items-center justify-center z-50 hidden">
-      <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-    </div>
-
-    <div id="detail-view" class="hidden flex-1 overflow-y-auto custom-scrollbar p-8">
+    <div id="detail-view" class="hidden flex-1 overflow-y-auto custom-scroll p-8">
+      
       <div class="flex justify-between items-end mb-8 border-b border-slate-200 pb-4">
         <div>
-          <span id="dept-rank" class="text-xs font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase italic tracking-widest">Rank #</span>
-          <h2 id="dept-name" class="text-3xl font-black text-slate-800 uppercase italic mt-2">NAMA DEPT</h2>
+          <span id="dept-rank" class="text-xs font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase italic tracking-widest"></span>
+          <h2 id="dept-name" class="text-3xl font-black text-slate-800 uppercase italic mt-2"></h2>
         </div>
         <div class="text-right">
-          <p class="text-[10px] font-bold uppercase text-slate-400">Score Layanan</p>
-          <p id="dept-score" class="text-4xl font-black text-indigo-600 italic">0.00</p>
+          <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Total Score Layanan</p>
+          <div class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md">
+            <span id="dept-score" class="text-3xl font-black italic">0.00</span>
+          </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 uppercase italic text-sm">Top Problem</div>
-          <div class="overflow-auto max-h-64 custom-scrollbar">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-4 bg-slate-100 font-bold text-slate-700 text-sm uppercase">Top Problem Terbanyak</div>
+          <div class="overflow-auto max-h-64 custom-scroll">
             <table class="w-full text-xs text-left">
-              <thead class="bg-slate-100 text-slate-500 uppercase sticky top-0">
+              <thead class="bg-slate-50 text-slate-500 sticky top-0">
                 <tr><th class="p-3">Problem</th><th class="p-3">Closed</th><th class="p-3">SLA</th><th class="p-3">Puas</th><th class="p-3">Score</th></tr>
               </thead>
               <tbody id="top-problems" class="divide-y divide-slate-100"></tbody>
@@ -52,12 +55,12 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 uppercase italic text-sm">Kinerja per PIC</div>
-          <div class="overflow-auto max-h-64 custom-scrollbar">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-4 bg-slate-100 font-bold text-slate-700 text-sm uppercase">Kinerja Per PIC (Solve)</div>
+          <div class="overflow-auto max-h-64 custom-scroll">
             <table class="w-full text-xs text-left">
-              <thead class="bg-slate-100 text-slate-500 uppercase sticky top-0">
-                <tr><th class="p-3">PIC (Solve)</th><th class="p-3">Closed</th><th class="p-3">SLA</th><th class="p-3">Puas</th><th class="p-3">Score</th></tr>
+              <thead class="bg-slate-50 text-slate-500 sticky top-0">
+                <tr><th class="p-3">Nama PIC</th><th class="p-3">Closed</th><th class="p-3">SLA</th><th class="p-3">Puas</th><th class="p-3">Score</th></tr>
               </thead>
               <tbody id="top-pics" class="divide-y divide-slate-100"></tbody>
             </table>
@@ -65,15 +68,15 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div class="p-4 bg-red-50 border-b border-red-100 font-bold text-red-600 uppercase italic text-sm flex justify-between">
-          <span>Problem Melewati / Mendekati Target</span>
-          <span class="text-[10px] text-red-400">* Status belum Closed</span>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-red-50 font-bold text-red-600 text-sm uppercase flex justify-between">
+          <span>Warning: Problem Melewati & Mendekati Target</span>
+          <span class="text-xs font-normal text-red-400">*Belum Closed</span>
         </div>
-        <div class="overflow-auto max-h-64 custom-scrollbar">
+        <div class="overflow-auto max-h-64 custom-scroll">
           <table class="w-full text-xs text-left">
-            <thead class="bg-slate-50 text-slate-500 uppercase sticky top-0">
-              <tr><th class="p-3">No Ticket</th><th class="p-3">Problem</th><th class="p-3">PIC</th><th class="p-3 text-center">Usia vs Target</th><th class="p-3">Kondisi</th></tr>
+            <thead class="bg-slate-50 text-slate-500 sticky top-0">
+              <tr><th class="p-3">No Ticket</th><th class="p-3">Problem</th><th class="p-3">PIC</th><th class="p-3">Usia / Target</th><th class="p-3">Status</th></tr>
             </thead>
             <tbody id="critical-tickets" class="divide-y divide-slate-100"></tbody>
           </table>
