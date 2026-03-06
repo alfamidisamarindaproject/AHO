@@ -36,7 +36,7 @@ function calculateMetrics(records) {
   const convK = getScale(avgPuas, 'puas');
   
   // Bobot: 30% Closed, 40% SLA, 20% Kepuasan (Anda bisa ganti *0.30 jika Kepuasan butuh 30%)
-  const finalScore = (convC * 0.3) + (convS * 0.4) + (convK * 0.2);
+  const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
   
   return {
     total: t, 
