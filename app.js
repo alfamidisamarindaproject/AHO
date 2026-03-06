@@ -1,191 +1,130 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwKYdKR1V5JOr8JaYTt3YU2MZfNwW9WzjxT2dOn_rFPQc8QWxZDMmuEpPNoYEl4Beia/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbyvSfkWd5J4jGoO0etu7JqGh3Ewu9BAT8dHWI7uYbg4-ibR57W7UB35m3wJcpCMl-RA/exec"; 
 
-let rawData = [];
-let deptRankings = [];
+let db = [];
+let ranked = [];
 
-// ==========================================
-// RUMUS SKOR (1-4)
-// ==========================================
-function getScale(val, type) {
-  if (type === 'closed') {
-    if (val < 85) return 1;
-    if (val >= 100) return 4;
-    return 1 + ((val - 85) / 15) * 3;
-  }
-  if (type === 'sla') {
-    if (val < 85) return 1;
-    if (val >= 130) return 4;
-    return 1 + ((val - 85) / 45) * 3;
-  }
-  if (type === 'puas') {
-    if (val >= 4) return 4;
-    return 1 + ((val - 1) / 3) * 3;
-  }
+// Fungsi Helper Angka
+const parse = (v) => parseFloat(String(v).replace(',', '.')) || 0;
+
+// Logika Skor 1-4
+function getValScale(val, type) {
+  if (type === 'clsd') return val < 85 ? 1 : (val >= 100 ? 4 : 1 + ((val - 85) / 15) * 3);
+  if (type === 'sla')  return val < 85 ? 1 : (val >= 130 ? 4 : 1 + ((val - 85) / 45) * 3);
+  if (type === 'puas') return val >= 4 ? 4 : 1 + ((val - 1) / 3) * 3;
   return 1;
 }
 
-function calc(rows) {
-  if (!rows || rows.length === 0) return { total: 0, clsd: 0, pct: "0%", cConv: "1.00", sla: 0, sConv: "1.00", puas: 0, pConv: "1.00", score: "1.00" };
-  
+function calculateAll(rows) {
   const total = rows.length;
-  const closed = rows.filter(r => r['Status'] === 'Closed').length;
-  const pct = (closed / total) * 100;
-  const sla = rows.reduce((s, r) => s + (parseFloat(r['ACH SLA']) || 0), 0) / total;
-  const puas = rows.reduce((s, r) => s + (parseFloat(r['Tingkat Kepuasan']) || 0), 0) / total;
+  if (total === 0) return { t:0, tc:0, pc:"0%", nkc:1, sla:0, nks:1, puas:0, nkp:1, final:1 };
   
-  const cConv = getScale(pct, 'closed');
-  const sConv = getScale(sla, 'sla');
-  const pConv = getScale(puas, 'puas');
+  const tc = rows.filter(r => r['Status'] === 'Closed').length;
+  const pc = (tc / total) * 100;
+  const sla = rows.reduce((s, r) => s + parse(r['ACH SLA']), 0) / total;
+  const puas = rows.reduce((s, r) => s + parse(r['Tingkat Kepuasan']), 0) / total;
   
-  // Weight: 30% Closed, 40% SLA, 20% Kepuasan
-  const finalScore = (cConv * 0.3) + (sConv * 0.4) + (pConv * 0.2);
+  const nkc = getValScale(pc, 'clsd');
+  const nks = getValScale(sla, 'sla');
+  const nkp = getValScale(puas, 'puas');
+  const final = (nkc * 0.3) + (nks * 0.4) + (nkp * 0.2);
   
-  return {
-    total, clsd: closed, pct: pct.toFixed(1) + "%",
-    cConv: cConv.toFixed(2), sla: sla.toFixed(1),
-    sConv: sConv.toFixed(2), puas: puas.toFixed(1),
-    pConv: pConv.toFixed(2), score: finalScore.toFixed(2)
+  return { 
+    t: total, tc, pc: pc.toFixed(1) + "%", nkc: nkc.toFixed(2),
+    sla: sla.toFixed(1), nks: nks.toFixed(2), 
+    puas: puas.toFixed(1), nkp: nkp.toFixed(2), 
+    final: final.toFixed(2)
   };
 }
 
-// ==========================================
-// SEARCH LOGIC
-// ==========================================
-function tableSearch(input, bodyId) {
-  const filter = input.value.toUpperCase();
-  const rows = document.getElementById(bodyId).getElementsByTagName("tr");
-  for (let i = 0; i < rows.length; i++) {
-    rows[i].style.display = rows[i].innerText.toUpperCase().includes(filter) ? "" : "none";
-  }
-}
-
-// ==========================================
-// VIEW NAVIGATION
-// ==========================================
+// Navigasi
 function showHome() {
   document.getElementById('view-home').classList.remove('hidden');
   document.getElementById('view-dept').classList.add('hidden');
-  document.querySelectorAll('.dept-item').forEach(el => el.classList.remove('active-dept'));
+  document.querySelectorAll('.dept-item').forEach(i => i.classList.remove('active-dept'));
 
-  const g = calc(rawData);
-  
-  // Render 9 Box Metrics
-  const labels = [
-    ["Total Problem", g.total, "slate-600"],
-    ["Total Closed", g.clsd, "emerald-600"],
-    ["% Closed", g.pct, "emerald-700"],
-    ["Nilai Konversi (C)", g.cConv, "emerald-500"],
-    ["Avg SLA", g.sla, "blue-600"],
-    ["Nilai Konversi (S)", g.sConv, "blue-500"],
-    ["Avg Kepuasan", g.puas, "amber-600"],
-    ["Nilai Konversi (K)", g.pConv, "amber-500"],
-    ["Score Layanan", g.score, "indigo-600 font-black text-2xl"]
+  const g = calculateAll(db);
+  const m = [
+    ["Total Problem", g.t], ["Total Closed", g.tc], ["% Closed", g.pc], ["Konversi (C)", g.nkc],
+    ["Avg SLA", g.sla], ["Konversi (S)", g.nks], ["Avg Kepuasan", g.puas], ["Konversi (K)", g.nkp],
+    ["Score Layanan", g.final]
   ];
 
-  document.getElementById('home-metrics').innerHTML = labels.map(l => `
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-      <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">${l[0]}</p>
-      <p class="text-xl font-bold text-${l[2]}">${l[1]}</p>
+  document.getElementById('home-metrics').innerHTML = m.map((x, i) => `
+    <div class="${i===8 ? 'bg-indigo-600 text-white' : 'bg-white'} p-4 rounded-xl shadow-sm border border-slate-200">
+      <p class="text-[9px] font-bold ${i===8 ? 'opacity-70' : 'text-slate-400'} uppercase">${x[0]}</p>
+      <p class="text-2xl font-black italic">${x[1]}</p>
     </div>
   `).join('');
 
-  // Render Global Tables
-  renderSubTable(rawData, 'Nama Problem', 'home-table-prob');
-  renderSubTable(rawData, 'Nama Solve', 'home-table-pic');
-  renderGlobalWarning(rawData);
+  renderTable(db, 'Nama Problem', 'home-body-prob');
+  renderTable(db, 'Nama Solve', 'home-body-pic');
+  renderWarning(db, 'home-body-warn');
 }
 
-function showDept(name, el, rank) {
+function selectDept(name, el, rank) {
   document.getElementById('view-home').classList.add('hidden');
   document.getElementById('view-dept').classList.remove('hidden');
   document.querySelectorAll('.dept-item').forEach(i => i.classList.remove('active-dept'));
   el.classList.add('active-dept');
 
-  const filtered = rawData.filter(r => r['Departemen'] === name);
-  const m = calc(filtered);
+  const filtered = db.filter(r => r['Departemen'] === name);
+  const d = calculateAll(filtered);
 
-  document.getElementById('dept-label-name').innerText = name;
-  document.getElementById('dept-label-rank').innerText = `RANK #${rank}`;
-  document.getElementById('dept-label-score').innerText = m.score;
+  document.getElementById('det-name').innerText = name;
+  document.getElementById('det-rank').innerText = `RANK #${rank}`;
+  document.getElementById('det-score').innerText = d.final;
 
-  renderSubTable(filtered, 'Nama Problem', 'dept-table-prob');
-  renderSubTable(filtered, 'Nama Solve', 'dept-table-pic');
+  renderTable(filtered, 'Nama Problem', 'dept-body-prob');
+  renderTable(filtered, 'Nama Solve', 'dept-body-pic');
 }
 
-// ==========================================
-// RENDER HELPERS
-// ==========================================
-function renderSubTable(data, key, bodyId) {
+// Helpers
+function renderTable(data, key, bodyId) {
   const groups = {};
-  data.forEach(r => {
-    const k = r[key] || 'Unassigned';
-    if (!groups[k]) groups[k] = [];
-    groups[k].push(r);
-  });
-
-  const sorted = Object.keys(groups).map(k => ({
-    name: k, ...calc(groups[k])
-  })).sort((a,b) => b.total - a.total).slice(0, 15);
+  data.forEach(r => { groups[r[key]] = groups[r[key]] || []; groups[r[key]].push(r); });
+  const sorted = Object.keys(groups).map(k => ({ name: k, ...calculateAll(groups[k]) }))
+                .sort((a,b) => b.t - a.t).slice(0, 15);
 
   document.getElementById(bodyId).innerHTML = sorted.map(i => `
-    <tr>
-      <td class="p-2 font-medium">${i.name}</td>
-      <td class="p-2">${i.total}</td>
-      <td class="p-2 font-bold text-indigo-600">${i.score}</td>
-    </tr>
+    <tr><td class="p-2 font-medium">${i.name} (${i.t})</td><td class="p-2 text-center">${i.pc}</td><td class="p-2 text-center font-bold text-indigo-600">${i.final}</td></tr>
   `).join('');
 }
 
-function renderGlobalWarning(data) {
+function renderWarning(data, bodyId) {
   const warn = data.filter(r => r['Status'] !== 'Closed').map(r => {
-    const u = parseFloat(r['Umur Problem']) || 0;
-    const t = parseFloat(r['Target Hari']) || 0;
-    let label = ''; let color = '';
-    if (u > t) { label = 'OVER'; color = 'bg-red-500 text-white'; }
-    else if (u >= t - 0.5) { label = 'NEAR'; color = 'bg-amber-500 text-white'; }
-    return { ...r, u, t, label, color };
-  }).filter(r => r.label !== '').sort((a,b) => b.u - a.u).slice(0, 20);
+    const u = parse(r['Umur Problem']); const t = parse(r['Target Hari']);
+    let l = ''; let c = '';
+    if (u > t) { l = 'OVER'; c = 'bg-red-500 text-white'; }
+    else if (u >= t - 0.5) { l = 'NEAR'; c = 'bg-amber-500 text-white'; }
+    return { ...r, u, t, l, c };
+  }).filter(x => x.l !== '').sort((a,b) => b.u - a.u);
 
-  document.getElementById('home-table-warn').innerHTML = warn.map(r => `
-    <tr>
-      <td class="p-2 font-bold text-[9px] uppercase">${r['Departemen']}</td>
-      <td class="p-2 font-mono">${r['No Problem']}</td>
-      <td class="p-2 truncate max-w-[150px]">${r['Nama Problem']}</td>
-      <td class="p-2 text-slate-500">${r['Nama Solve']}</td>
-      <td class="p-2 font-bold">${r.u}/${r.t}</td>
-      <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[8px] font-black ${r.color}">${r.label}</span></td>
-    </tr>
+  document.getElementById(bodyId).innerHTML = warn.map(r => `
+    <tr><td class="p-2 font-bold text-[9px] uppercase">${r['Departemen']}</td><td class="p-2 font-mono">${r['No Problem']}</td><td class="p-2 truncate max-w-[120px]">${r['Nama Problem']}</td><td class="p-2 text-slate-500">${r['Nama Solve']}</td><td class="p-2 font-bold">${r.u}/${r.t}</td><td class="p-2"><span class="px-1.5 py-0.5 rounded text-[8px] font-black ${r.c}">${r.l}</span></td></tr>
   `).join('');
 }
 
-// ==========================================
-// INIT
-// ==========================================
+function doSearch(input, bodyId) {
+  const f = input.value.toUpperCase();
+  const rows = document.getElementById(bodyId).getElementsByTagName("tr");
+  for (let i = 0; i < rows.length; i++) rows[i].style.display = rows[i].innerText.toUpperCase().includes(f) ? "" : "none";
+}
+
 async function init() {
   try {
     const res = await fetch(API_URL);
-    rawData = await res.json();
-    
-    const depts = [...new Set(rawData.map(r => r['Departemen']))].filter(n => n && n.trim() !== '');
-    deptRankings = depts.map(n => ({
-      name: n, ...calc(rawData.filter(r => r['Departemen'] === n))
-    })).sort((a,b) => b.score - a.score);
+    db = await res.json();
+    const depts = [...new Set(db.map(r => r['Departemen']))].filter(n => n);
+    ranked = depts.map(n => ({ name: n, ...calculateAll(db.filter(r => r['Departemen'] === n)) }))
+             .sort((a,b) => b.final - a.final);
 
-    document.getElementById('dept-list').innerHTML = deptRankings.map((d, i) => `
-      <div onclick="showDept('${d.name.replace(/'/g, "\\'")}', this, ${i + 1})" 
-           class="dept-item cursor-pointer p-3 rounded-lg transition-all border border-transparent hover:bg-slate-50 mb-1">
-        <div class="flex justify-between items-center text-[9px] mb-1">
-          <span class="text-slate-400 font-bold">RANK #${i + 1}</span>
-          <span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-black">${d.score}</span>
-        </div>
+    document.getElementById('dept-list').innerHTML = ranked.map((d, i) => `
+      <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${i+1})" class="dept-item cursor-pointer p-3 rounded-lg hover:bg-slate-50 border border-transparent">
+        <div class="flex justify-between text-[9px] mb-1 font-bold text-slate-400"><span>RANK #${i+1}</span><span class="text-indigo-600">${d.final}</span></div>
         <h3 class="text-[11px] uppercase truncate">${d.name}</h3>
       </div>
     `).join('');
-
     showHome();
-  } catch (e) {
-    document.getElementById('dept-list').innerHTML = `<div class="p-4 text-red-500 text-[10px]">Gagal memuat API. Pastikan URL benar & akses 'Anyone'.</div>`;
-  }
+  } catch (e) { console.error(e); }
 }
-
 document.addEventListener('DOMContentLoaded', init);
