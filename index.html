@@ -6,136 +6,167 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <title>AHO Monitoring Dashboard</title>
   <style>
-    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .active-dept { background-color: #f0f7ff; border-left: 4px solid #4f46e5; font-weight: bold; }
-    th { white-space: nowrap; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    .active-dept { 
+      background: linear-gradient(90deg, #eff6ff 0%, #ffffff 100%);
+      border-left: 4px solid #4f46e5; 
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
   </style>
 </head>
 <body class="bg-slate-50 flex h-screen overflow-hidden text-slate-800 text-xs">
 
-  <aside class="w-72 bg-white shadow-xl flex flex-col border-r border-slate-200">
-    <div onclick="window.location.reload()" class="p-6 bg-indigo-900 text-white cursor-pointer">
-      <h1 class="text-xl font-black italic tracking-tighter uppercase">AHO Dashboard</h1>
-      <p class="text-[10px] opacity-60 font-bold uppercase">Smart Monitoring System</p>
+  <aside class="w-72 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col border-r border-slate-100 z-20">
+    <div onclick="window.location.reload()" class="p-6 bg-gradient-to-br from-indigo-900 to-indigo-800 text-white cursor-pointer shadow-md">
+      <h1 class="text-2xl font-black italic tracking-tighter uppercase">AHO <span class="text-indigo-300">HUB</span></h1>
+      <p class="text-[9px] opacity-80 font-bold uppercase tracking-widest mt-1">Smart Monitoring System</p>
     </div>
     
-    <button onclick="showHome()" class="m-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100 transition-all border border-indigo-100">🏠 HOME (GAMBARAN BESAR)</button>
+    <div class="p-4 border-b border-slate-100">
+      <button onclick="showHome()" class="w-full py-2.5 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        GAMBARAN BESAR
+      </button>
+    </div>
 
-    <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
-      <div class="p-4 text-center animate-pulse text-slate-400 italic">Sinkronisasi data...</div>
+    <div class="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Peringkat Departemen</div>
+    
+    <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-3 pb-4 space-y-1">
+      <div class="p-6 text-center animate-pulse flex flex-col items-center">
+        <div class="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <span class="text-indigo-400 font-semibold">Sinkronisasi data...</span>
+      </div>
     </div>
   </aside>
 
-  <main class="flex-1 overflow-hidden flex flex-col">
+  <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-50/50">
     
-    <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-6">
-      <h2 class="text-2xl font-black text-slate-800 uppercase italic mb-6 border-b pb-2">AHO SAMARINDA | SGZ1</h2>
+    <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-8 transition-all duration-300">
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-2xl font-black text-slate-800 uppercase italic">AHO SAMARINDA | <span class="text-indigo-600">SGZ1</span></h2>
+        <span class="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 shadow-sm" id="global-last-update">Live Data</span>
+      </div>
       
-      <div id="home-metrics" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8"></div>
+      <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8"></div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
-        <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-          <span class="font-bold uppercase">Top Problem Cabang</span>
-          <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-[10px] border px-2 py-1 rounded w-48 outline-none">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[400px]">
+          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
+            <span class="font-bold uppercase text-slate-700">Top Problem Cabang</span>
+            <div class="relative">
+              <svg class="w-3 h-3 absolute left-2.5 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-[10px] border border-slate-200 pl-7 pr-3 py-1.5 rounded-full w-48 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all bg-slate-50">
+            </div>
+          </div>
+          <div class="overflow-auto flex-1 custom-scroll">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
+                <tr><th class="p-3">Masalah</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">% Clsd</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+              </thead>
+              <tbody id="home-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
+            </table>
+          </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
-              <tr>
-                <th class="p-3">Nama Masalah</th>
-                <th class="p-3 text-center">Total</th>
-                <th class="p-3 text-center">Closed</th>
-                <th class="p-3 text-center">% Closed</th>
-                <th class="p-3 text-center">SLA</th>
-                <th class="p-3 text-center">Kepuasan</th>
-                <th class="p-3 text-center">Score</th>
-              </tr>
-            </thead>
-            <tbody id="home-body-prob" class="divide-y divide-slate-100"></tbody>
-          </table>
+
+        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[400px]">
+          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
+            <span class="font-bold uppercase text-slate-700">Kinerja PIC Cabang</span>
+            <div class="relative">
+              <svg class="w-3 h-3 absolute left-2.5 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-200 pl-7 pr-3 py-1.5 rounded-full w-48 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all bg-slate-50">
+            </div>
+          </div>
+          <div class="overflow-auto flex-1 custom-scroll">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
+                <tr><th class="p-3">Nama PIC</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">% Clsd</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+              </thead>
+              <tbody id="home-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
-        <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-          <span class="font-bold uppercase">Top Kinerja PIC Cabang</span>
-          <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari nama PIC..." class="text-[10px] border px-2 py-1 rounded w-48 outline-none">
+      <div class="glass-card rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+        <div class="p-4 bg-red-50/80 border-b border-red-100 flex justify-between items-center backdrop-blur-md">
+          <span class="font-bold text-red-600 uppercase flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Warning: Melebihi / Mendekati Target
+          </span>
+          <div class="relative">
+            <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket/dept..." class="text-[10px] border border-red-200 pl-3 pr-3 py-1.5 rounded-full w-56 outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-all">
+          </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="max-h-64 overflow-auto custom-scroll bg-white">
           <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
-              <tr>
-                <th class="p-3">Nama PIC</th>
-                <th class="p-3 text-center">Total</th>
-                <th class="p-3 text-center">Closed</th>
-                <th class="p-3 text-center">% Closed</th>
-                <th class="p-3 text-center">SLA</th>
-                <th class="p-3 text-center">Kepuasan</th>
-                <th class="p-3 text-center">Score</th>
-              </tr>
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[9px] sticky top-0">
+              <tr><th class="p-3">Dept</th><th class="p-3">No Ticket</th><th class="p-3">Masalah</th><th class="p-3">PIC</th><th class="p-3 text-center">Usia / Target</th><th class="p-3 text-center">Status</th></tr>
             </thead>
-            <tbody id="home-body-pic" class="divide-y divide-slate-100"></tbody>
+            <tbody id="home-body-warn" class="divide-y divide-slate-50"></tbody>
           </table>
         </div>
-      </div>
-
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-3 bg-red-50 flex justify-between items-center border-b">
-          <span class="font-bold text-red-600 uppercase italic">Warning: Melebihi / Mendekati Target</span>
-          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket..." class="text-[10px] border border-red-200 px-2 py-1 rounded w-48 outline-none">
-        </div>
-        <table class="w-full text-left">
-          <thead class="bg-slate-50 text-slate-400 border-b uppercase text-[9px]">
-            <tr><th class="p-3">Dept</th><th class="p-3">Ticket</th><th class="p-3">Masalah</th><th class="p-3">PIC</th><th class="p-3 text-center">Usia/Target</th><th class="p-3 text-center">Status</th></tr>
-          </thead>
-          <tbody id="home-body-warn" class="divide-y divide-slate-100"></tbody>
-        </table>
       </div>
     </div>
 
-    <div id="view-dept" class="hidden flex-1 overflow-y-auto custom-scroll p-6">
-      <div class="flex justify-between items-end mb-6 border-b pb-4">
+    <div id="view-dept" class="hidden flex-1 overflow-y-auto custom-scroll p-8 transition-all duration-300">
+      
+      <div class="flex justify-between items-end mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
-          <button onclick="showHome()" class="text-[10px] font-bold text-indigo-600 hover:underline mb-1 italic">← KEMBALI KE HOME</button>
-          <div class="flex items-center gap-3">
-            <span id="det-rank" class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded font-black italic">RANK #</span>
-            <h2 id="det-name" class="text-3xl font-black text-slate-800 uppercase italic">NAMA DEPT</h2>
+          <button onclick="showHome()" class="text-[10px] font-bold text-slate-400 hover:text-indigo-600 mb-2 flex items-center gap-1 transition-colors">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            KEMBALI KE HOME
+          </button>
+          <div class="flex items-center gap-3 mt-1">
+            <span id="det-rank" class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-[10px] px-3 py-1 rounded-full font-black italic shadow-sm">RANK #</span>
+            <h2 id="det-name" class="text-3xl font-black text-slate-800 uppercase italic tracking-tight">NAMA DEPT</h2>
           </div>
         </div>
         <div class="text-right">
-          <p class="text-[10px] font-bold text-slate-400 uppercase">Department Score</p>
-          <div id="det-score" class="text-5xl font-black text-indigo-600 italic leading-none">0.00</div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Score Layanan</p>
+          <div id="det-score" class="text-5xl font-black text-indigo-600 italic leading-none drop-shadow-sm">0.00</div>
         </div>
       </div>
 
-      <div id="dept-metrics" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8"></div>
+      <div id="dept-metrics" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8"></div>
 
-      <div class="space-y-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-            <span class="font-bold uppercase">Masalah Departemen</span>
-            <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
+            <span class="font-bold uppercase text-slate-700">Detail Masalah</span>
+            <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari masalah..." class="text-[10px] border border-slate-200 px-3 py-1.5 rounded-full w-40 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 bg-slate-50">
           </div>
-          <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
-              <tr><th class="p-3">Nama Masalah</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
-            </thead>
-            <tbody id="dept-body-prob" class="divide-y divide-slate-100"></tbody>
-          </table>
+          <div class="overflow-auto flex-1 custom-scroll">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
+                <tr><th class="p-3">Nama Masalah</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Clsd</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+              </thead>
+              <tbody id="dept-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
-            <span class="font-bold uppercase">Kinerja PIC Departemen</span>
-            <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
+        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
+            <span class="font-bold uppercase text-slate-700">Detail Kinerja PIC</span>
+            <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-200 px-3 py-1.5 rounded-full w-40 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 bg-slate-50">
           </div>
-          <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
-              <tr><th class="p-3">Nama PIC</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
-            </thead>
-            <tbody id="dept-body-pic" class="divide-y divide-slate-100"></tbody>
-          </table>
+          <div class="overflow-auto flex-1 custom-scroll">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
+                <tr><th class="p-3">Nama PIC</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Clsd</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+              </thead>
+              <tbody id="dept-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
