@@ -1,5 +1,5 @@
 // PASTIKAN URL WEB APP INI SUDAH BENAR DAN DIAKSES SEBAGAI 'ANYONE'
-const API_URL = "https://script.google.com/macros/s/AKfycbzbmSVPRD_VAn0CEeuV4EGIcMhFSkv2pXiziVUBU8d9dR0WUodv9bENWVNGkVEBh-tC/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxMeXvqBc5aW_0P89u5mf1uRQKyIe2lcLIJks75qpVQoFdd4ismc4Ri7gTlT4m4MB7E/exec"; 
 
 let rawData = [];
 let rankedDepts = [];
@@ -7,8 +7,12 @@ let rankedDepts = [];
 // ==========================================
 // 1. HELPER PARSING & KONVERSI SKOR
 // ==========================================
-// Mengubah string angka Indonesia (koma) jadi float internasional
-const parseNum = (val) => parseFloat(String(val).replace(',', '.')) || 0;
+// Parsing angka super aman (menghapus % atau karakter aneh)
+const parseNum = (val) => {
+  if (!val) return 0;
+  const str = String(val).replace(',', '.').replace(/[^0-9.-]/g, '');
+  return parseFloat(str) || 0;
+};
 
 // Rumus Skala (1-4)
 function getScale(value, type) {
@@ -19,13 +23,14 @@ function getScale(value, type) {
 }
 
 // ==========================================
-// 2. MESIN PERHITUNGAN UTAMA (9 METRIK)
+// 2. MESIN PERHITUNGAN UTAMA (BOBOT BARU: SLA 50%)
 // ==========================================
 function calculateMetrics(records) {
   const t = records.length;
   if (t === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
   
-  const closedCount = records.filter(r => String(r['Status']).trim().toLowerCase() === 'closed').length;
+  // Mencari status "Closed" (Toleransi huruf besar/kecil & spasi)
+  const closedCount = records.filter(r => String(r['Status'] || '').trim().toLowerCase() === 'closed').length;
   const pctClosed = (closedCount / t) * 100;
   
   const avgSla = records.reduce((sum, r) => sum + parseNum(r['ACH SLA']), 0) / t;
@@ -35,7 +40,7 @@ function calculateMetrics(records) {
   const convS = getScale(avgSla, 'sla');
   const convK = getScale(avgPuas, 'puas');
   
-  // Bobot: 30% Closed, 40% SLA, 20% Kepuasan (Anda bisa ganti *0.30 jika Kepuasan butuh 30%)
+  // BOBOT BARU: 30% Closed, 50% SLA, 20% Kepuasan
   const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
   
   return {
@@ -52,21 +57,30 @@ function calculateMetrics(records) {
 }
 
 // ==========================================
-// 3. LOGIKA RENDER TABEL (7 KOLOM)
+// 3. LOGIKA RENDER TABEL (Mencegah Tabel Kosong)
 // ==========================================
 function renderDetailTable(data, groupKey, tableId) {
+  const tbody = document.getElementById(tableId);
+  
+  // Jika tidak ada data, beri info
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">Tidak ada data untuk ditampilkan</td></tr>`;
+    return;
+  }
+
   const groups = {};
   data.forEach(row => {
-    const key = row[groupKey] || 'Unassigned';
+    // Jika kolom kosong, jadikan "Tidak Terdefinisi"
+    const key = String(row[groupKey] || '').trim() || 'Tidak Terdefinisi';
     if (!groups[key]) groups[key] = [];
     groups[key].push(row);
   });
   
   const resultArr = Object.keys(groups)
     .map(key => ({ name: key, ...calculateMetrics(groups[key]) }))
-    .sort((a, b) => b.total - a.total).slice(0, 30); // Ambil Top 30
+    .sort((a, b) => b.total - a.total).slice(0, 30);
   
-  document.getElementById(tableId).innerHTML = resultArr.map(i => `
+  tbody.innerHTML = resultArr.map(i => `
     <tr class="hover:bg-slate-50 transition-colors cursor-default">
       <td class="p-3 font-semibold text-slate-700 max-w-[200px] truncate" title="${i.name}">${i.name}</td>
       <td class="p-3 text-center font-medium">${i.total}</td>
@@ -80,7 +94,8 @@ function renderDetailTable(data, groupKey, tableId) {
 }
 
 function renderWarningTable(data, tableId) {
-  const unclosed = data.filter(d => String(d.Status).trim().toLowerCase() !== 'closed');
+  const tbody = document.getElementById(tableId);
+  const unclosed = data.filter(d => String(d['Status'] || '').trim().toLowerCase() !== 'closed');
   
   const critical = unclosed.map(d => {
     const umur = parseNum(d['Umur Problem']);
@@ -96,16 +111,16 @@ function renderWarningTable(data, tableId) {
   }).filter(d => d.label !== '').sort((a, b) => (b.umur - b.target) - (a.umur - a.target)).slice(0, 50);
 
   if (critical.length === 0) {
-    document.getElementById(tableId).innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-bold italic">🎉 Yeay! Semua tiket terpantau aman.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-bold italic">🎉 Yeay! Semua tiket terpantau aman.</td></tr>`;
     return;
   }
   
-  document.getElementById(tableId).innerHTML = critical.map(d => `
+  tbody.innerHTML = critical.map(d => `
     <tr class="${d.rowColor} transition-colors border-b border-white">
-      <td class="p-3 font-bold text-[9px] uppercase text-slate-500">${d['Departemen']}</td>
-      <td class="p-3 font-mono font-bold text-indigo-600">${d['No Problem']}</td>
-      <td class="p-3 text-slate-700 font-medium truncate max-w-[200px]" title="${d['Nama Problem']}">${d['Nama Problem']}</td>
-      <td class="p-3 text-slate-500">${d['Nama Solve']}</td>
+      <td class="p-3 font-bold text-[9px] uppercase text-slate-500">${d['Departemen'] || '-'}</td>
+      <td class="p-3 font-mono font-bold text-indigo-600">${d['No Problem'] || '-'}</td>
+      <td class="p-3 text-slate-700 font-medium truncate max-w-[200px]" title="${d['Nama Problem']}">${d['Nama Problem'] || '-'}</td>
+      <td class="p-3 text-slate-500">${d['Nama Solve'] || '-'}</td>
       <td class="p-3 text-center font-bold text-slate-700">${d.umur} <span class="text-[10px] text-slate-400 font-normal">/ ${d.target}</span></td>
       <td class="p-3 text-center"><span class="px-2 py-1 rounded-md text-[8px] font-black tracking-wider ${d.badgeColor}">${d.label}</span></td>
     </tr>
@@ -149,7 +164,6 @@ function showHome() {
   renderDetailTable(rawData, 'Nama Solve', 'home-body-pic');
   renderWarningTable(rawData, 'home-body-warn');
   
-  // Kosongkan semua input pencarian
   document.querySelectorAll('input').forEach(i => i.value = '');
 }
 
@@ -160,7 +174,7 @@ function selectDept(deptName, el, rank) {
   document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
   el.classList.add('active-dept');
   
-  const deptData = rawData.filter(d => d.Departemen === deptName);
+  const deptData = rawData.filter(d => String(d.Departemen).trim() === deptName);
   const deptMetrik = calculateMetrics(deptData);
   
   document.getElementById('det-name').innerText = deptName;
@@ -168,7 +182,6 @@ function selectDept(deptName, el, rank) {
   document.getElementById('det-score').innerText = deptMetrik.final;
   
   renderMetrikBox('dept-metrics', deptMetrik);
-  
   renderDetailTable(deptData, 'Nama Problem', 'dept-body-prob');
   renderDetailTable(deptData, 'Nama Solve', 'dept-body-pic');
   
@@ -182,6 +195,8 @@ function doSearch(input, tableId) {
   const filter = input.value.toUpperCase();
   const rows = document.getElementById(tableId).getElementsByTagName("tr");
   for (let i = 0; i < rows.length; i++) {
+    // Abaikan baris "Tidak ada data" saat di-search
+    if(rows[i].innerText.includes('Tidak ada data')) continue;
     rows[i].style.display = rows[i].innerText.toUpperCase().includes(filter) ? "" : "none";
   }
 }
@@ -195,13 +210,16 @@ async function init() {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Gagal mengambil data dari Google Script.");
     
-    rawData = await res.json();
-    if (rawData.error) throw new Error(rawData.error);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
     
-    const uniqueDepts = [...new Set(rawData.map(d => d.Departemen).filter(n => n && String(n).trim() !== ''))];
+    // PENTING: Saring data kosong agar tidak merusak perhitungan Global
+    rawData = data.filter(r => r.Departemen && String(r.Departemen).trim() !== '');
+    
+    const uniqueDepts = [...new Set(rawData.map(d => String(d.Departemen).trim()))];
     
     rankedDepts = uniqueDepts.map(deptName => {
-      return { name: deptName, ...calculateMetrics(rawData.filter(d => d.Departemen === deptName)) };
+      return { name: deptName, ...calculateMetrics(rawData.filter(d => String(d.Departemen).trim() === deptName)) };
     });
     
     rankedDepts.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
