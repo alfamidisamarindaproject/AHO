@@ -1,153 +1,201 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyvSfkWd5J4jGoO0etu7JqGh3Ewu9BAT8dHWI7uYbg4-ibR57W7UB35m3wJcpCMl-RA/exec"; 
+// GANTI DENGAN URL WEB APP ANDA YANG BARU (Pastikan dari hasil deploy terbaru)
+const API_URL = "https://script.google.com/macros/s/AKfycbzbmSVPRD_VAn0CEeuV4EGIcMhFSkv2pXiziVUBU8d9dR0WUodv9bENWVNGkVEBh-tC/exec"; 
 
-let dbData = [];
-let rankedList = [];
+let rawData = [];
+let rankedDepts = [];
 
-// Konversi nilai ke skala 1-4
-const scaleVal = (val, type) => {
-  if (type === 'clsd') return val < 85 ? 1 : (val >= 100 ? 4 : 1 + ((val - 85) / 15) * 3);
-  if (type === 'sla')  return val < 85 ? 1 : (val >= 130 ? 4 : 1 + ((val - 85) / 45) * 3);
-  if (type === 'puas') return val >= 4 ? 4 : 1 + ((val - 1) / 3) * 3;
+// ==========================================
+// 1. RUMUS KONVERSI INTERVAL & PEMBOBOTAN (TETAP SAMA)
+// ==========================================
+function convertScale(value, type) {
+  if (type === 'closed') {
+    if (value < 85) return 1;
+    if (value >= 100) return 4;
+    return 1 + ((value - 85) / 14.99) * 2.99; // Range 85 - 99.99 -> 1 - 3.99
+  }
+  if (type === 'sla') {
+    if (value < 85) return 1;
+    if (value >= 130) return 4;
+    return 1 + ((value - 85) / 44.99) * 2.99; // Range 85 - 129.99 -> 1 - 3.99
+  }
+  if (type === 'puas') {
+    if (value < 1) return 1;
+    if (value >= 4) return 4;
+    return 1 + ((value - 1) / 3) * 2.99;
+  }
   return 1;
-};
+}
 
-// Fungsi inti perhitungan
-function calculate(rows) {
-  const t = rows.length;
-  if (t === 0) return { t:0, tc:0, pc:0, nkc:1, sla:0, nks:1, puas:0, nkp:1, final:1 };
+function calculateMetrics(records) {
+  if (records.length === 0) return { closedRaw: '0%', slaRaw: 0, puasRaw: 0, score: 0, count: 0 };
   
-  const tc = rows.filter(r => r['Status'] === 'Closed').length;
-  const pc = (tc / t) * 100;
-  const sla = rows.reduce((s, r) => s + (parseFloat(String(r['ACH SLA']).replace(',','.')) || 0), 0) / t;
-  const puas = rows.reduce((s, r) => s + (parseFloat(String(r['Tingkat Kepuasan']).replace(',','.')) || 0), 0) / t;
+  const total = records.length;
+  const closedCount = records.filter(r => r.Status === 'Closed').length;
+  const closedPerc = (closedCount / total) * 100;
   
-  const nkc = scaleVal(pc, 'clsd');
-  const nks = scaleVal(sla, 'sla');
-  const nkp = scaleVal(puas, 'puas');
-  // Weighting 30-40-30
-  const final = (nkc * 0.3) + (nks * 0.4) + (nkp * 0.3);
+  const avgSla = records.reduce((sum, r) => sum + (parseFloat(r['ACH SLA']) || 0), 0) / total;
+  const avgPuas = records.reduce((sum, r) => sum + (parseFloat(r['Tingkat Kepuasan']) || 0), 0) / total;
   
-  return { 
-    t, tc, pc: pc.toFixed(1), nkc: nkc.toFixed(2),
-    sla: sla.toFixed(1), nks: nks.toFixed(2), 
-    puas: puas.toFixed(1), nkp: nkp.toFixed(2), 
-    final: final.toFixed(2)
+  const valClosed = convertScale(closedPerc, 'closed');
+  const valSla = convertScale(avgSla, 'sla');
+  const valPuas = convertScale(avgPuas, 'puas');
+  
+  // Bobot: 30% Closed, 40% SLA, 20% Kepuasan (Total 90% sesuai instruksi Anda, jika 100% sisa 10% diabaikan)
+  const finalScore = (valClosed * 0.3) + (valSla * 0.4) + (valPuas * 0.2);
+  
+  return {
+    closedRaw: closedPerc.toFixed(1) + '%',
+    slaRaw: avgSla.toFixed(1),
+    puasRaw: avgPuas.toFixed(1),
+    score: finalScore.toFixed(2),
+    count: total
   };
 }
 
-// Navigasi
-function showHome() {
-  document.getElementById('view-home').classList.remove('hidden');
-  document.getElementById('view-dept').classList.add('hidden');
-  document.querySelectorAll('.dept-item').forEach(i => i.classList.remove('active-dept'));
-
-  const g = calculate(dbData);
-  const m = [
-    ["Total Problem", g.t], ["Total Closed", g.tc], ["% Closed", g.pc+"%"], ["Konversi (C)", g.nkc],
-    ["Avg SLA", g.sla], ["Konversi (S)", g.nks], ["Avg Kepuasan", g.puas], ["Konversi (K)", g.nkp],
-    ["Score Layanan", g.final]
-  ];
-
-  document.getElementById('home-metrics').innerHTML = m.map((x, i) => `
-    <div class="${i===8 ? 'bg-indigo-600 text-white' : 'bg-white'} p-4 rounded-xl shadow-sm border border-slate-200">
-      <p class="text-[9px] font-bold ${i===8 ? 'opacity-70' : 'text-slate-400'} uppercase">${x[0]}</p>
-      <p class="text-2xl font-black italic">${x[1]}</p>
-    </div>
-  `).join('');
-
-  renderTable(dbData, 'Nama Problem', 'home-body-prob');
-  renderTable(dbData, 'Nama Solve', 'home-body-pic');
-  renderWarning(dbData, 'home-body-warn');
-}
-
-function selectDept(name, el, rank) {
-  document.getElementById('view-home').classList.add('hidden');
-  document.getElementById('view-dept').classList.remove('hidden');
-  document.querySelectorAll('.dept-item').forEach(i => i.classList.remove('active-dept'));
-  el.classList.add('active-dept');
-
-  const filtered = dbData.filter(r => r['Departemen'] === name);
-  const d = calculate(filtered);
-
-  document.getElementById('det-name').innerText = name;
-  document.getElementById('det-rank').innerText = `RANK #${rank}`;
-  document.getElementById('det-score').innerText = d.final;
-
-  renderTable(filtered, 'Nama Problem', 'dept-body-prob');
-  renderTable(filtered, 'Nama Solve', 'dept-body-pic');
-}
-
-// Render Tabel Detail 6 Kolom
-function renderTable(data, key, bodyId) {
-  const groups = {};
-  data.forEach(r => { 
-    const val = r[key] || "Unknown";
-    groups[val] = groups[val] || []; 
-    groups[val].push(r); 
-  });
-  
-  const sorted = Object.keys(groups)
-    .map(k => ({ name: k, ...calculate(groups[k]) }))
-    .sort((a,b) => b.t - a.t).slice(0, 20);
-
-  document.getElementById(bodyId).innerHTML = sorted.map(i => `
-    <tr>
-      <td class="p-3 font-bold text-slate-700">${i.name}</td>
-      <td class="p-3 text-center">${i.t}</td>
-      <td class="p-3 text-center text-emerald-600">${i.tc}</td>
-      <td class="p-3 text-center">${i.pc}%</td>
-      <td class="p-3 text-center text-blue-600">${i.sla}</td>
-      <td class="p-3 text-center text-amber-600">${i.puas}</td>
-      <td class="p-3 text-center font-black text-indigo-600 italic text-sm">${i.final}</td>
-    </tr>
-  `).join('');
-}
-
-function renderWarning(data, bodyId) {
-  const warn = data.filter(r => r['Status'] !== 'Closed').map(r => {
-    const u = parseFloat(String(r['Umur Problem']).replace(',','.')) || 0; 
-    const t = parseFloat(String(r['Target Hari']).replace(',','.')) || 0;
-    let l = ''; let c = '';
-    if (u > t) { l = 'OVER'; c = 'bg-red-500 text-white'; }
-    else if (u >= t - 0.5) { l = 'NEAR'; c = 'bg-amber-500 text-white'; }
-    return { ...r, u, t, l, c };
-  }).filter(x => x.l !== '').sort((a,b) => b.u - a.u).slice(0, 30);
-
-  document.getElementById(bodyId).innerHTML = warn.map(r => `
-    <tr>
-      <td class="p-3 font-bold text-[9px] uppercase">${r['Departemen']}</td>
-      <td class="p-3 font-mono text-indigo-600">${r['No Problem']}</td>
-      <td class="p-3 truncate max-w-[150px]">${r['Nama Problem']}</td>
-      <td class="p-3 text-slate-500">${r['Nama Solve']}</td>
-      <td class="p-3 text-center font-bold">${r.u} / ${r.t} H</td>
-      <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[8px] font-black ${r.c}">${r.l}</span></td>
-    </tr>
-  `).join('');
-}
-
-function doSearch(input, bodyId) {
-  const f = input.value.toUpperCase();
-  const rows = document.getElementById(bodyId).getElementsByTagName("tr");
-  for (let i = 0; i < rows.length; i++) {
-    rows[i].style.display = rows[i].innerText.toUpperCase().includes(f) ? "" : "none";
+// ==========================================
+// 2. FETCH DATA DARI GOOGLE SHEETS
+// ==========================================
+async function fetchDatabase() {
+  const listEl = document.getElementById('dept-list');
+  try {
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error("Gagal mengambil respon jaringan.");
+    
+    const data = await response.json();
+    
+    // Cek jika API mengembalikan objek error
+    if (data.error) throw new Error(data.error);
+    
+    rawData = data;
+    processDepartments();
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    listEl.innerHTML = `
+      <div class="p-4 bg-red-100 text-red-700 rounded-lg text-sm border border-red-200">
+        <b>Gagal memuat data!</b><br>
+        Pastikan URL API benar dan Deployment diset ke "Anyone".<br>
+        <span class="text-xs italic text-red-500 mt-2 block">${error.message}</span>
+      </div>`;
   }
 }
 
-async function init() {
-  try {
-    const res = await fetch(API_URL);
-    dbData = await res.json();
-    const depts = [...new Set(dbData.map(r => r['Departemen']))].filter(n => n && n.trim() !== "");
-    rankedList = depts.map(n => ({ name: n, ...calculate(dbData.filter(r => r['Departemen'] === n)) }))
-                 .sort((a,b) => b.final - a.final);
-
-    document.getElementById('dept-list').innerHTML = rankedList.map((d, i) => `
-      <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${i+1})" class="dept-item cursor-pointer p-3 rounded-lg hover:bg-slate-50 border border-transparent transition-all">
-        <div class="flex justify-between text-[9px] mb-1 font-bold text-slate-400"><span>RANK #${i+1}</span><span class="text-indigo-600">${d.final}</span></div>
-        <h3 class="text-[11px] uppercase truncate font-medium">${d.name}</h3>
+function processDepartments() {
+  // Filter Departemen (Ambil hanya yang unik & tidak kosong)
+  const uniqueDepts = [...new Set(rawData.map(d => d.Departemen).filter(n => n && String(n).trim() !== ''))];
+  
+  rankedDepts = uniqueDepts.map(deptName => {
+    const deptData = rawData.filter(d => d.Departemen === deptName);
+    return { name: deptName, ...calculateMetrics(deptData) };
+  });
+  
+  // Urutkan Rank dari Score Tertinggi
+  rankedDepts.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+  
+  // Render List Sidebar
+  const listEl = document.getElementById('dept-list');
+  listEl.innerHTML = rankedDepts.map((d, index) => `
+    <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${index + 1})" 
+         class="dept-item cursor-pointer p-4 rounded-lg hover:bg-slate-50 border-l-4 border-transparent transition-all group mb-1 bg-white border border-slate-100 shadow-sm">
+      <div class="flex justify-between items-center mb-1">
+        <span class="text-[10px] font-black text-slate-400 group-hover:text-indigo-500 uppercase">Rank #${index + 1}</span>
+        <span class="text-xs font-black bg-indigo-50 text-indigo-700 px-2 py-1 rounded">${d.score}</span>
       </div>
-    `).join('');
-    showHome();
-  } catch (e) { console.error("Error loading data:", e); }
+      <h3 class="text-sm font-bold text-slate-700 uppercase italic truncate">${d.name}</h3>
+    </div>
+  `).join('');
 }
-document.addEventListener('DOMContentLoaded', init);
+
+// ==========================================
+// 3. TAMPILKAN DETAIL SAAT DI-KLIK
+// ==========================================
+function selectDept(deptName, el, rank) {
+  document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
+  el.classList.add('active-dept');
+  
+  document.getElementById('detail-view').classList.remove('hidden');
+  document.getElementById('dept-name').innerText = deptName;
+  document.getElementById('dept-rank').innerText = `RANK #${rank}`;
+  document.getElementById('dept-score').innerText = rankedDepts.find(d => d.name === deptName).score;
+  
+  const deptData = rawData.filter(d => d.Departemen === deptName);
+  
+  // Render Tabel
+  renderGroupedTable(deptData, 'Nama Problem', 'top-problems');
+  renderGroupedTable(deptData, 'Nama Solve', 'top-pics');
+  renderCriticalTickets(deptData);
+}
+
+function renderGroupedTable(data, groupKey, elementId) {
+  const grouped = {};
+  data.forEach(row => {
+    const key = row[groupKey] || 'Tidak Ada Data';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(row);
+  });
+  
+  let resultArr = Object.keys(grouped).map(key => ({
+    name: key, 
+    ...calculateMetrics(grouped[key])
+  }));
+  
+  resultArr.sort((a, b) => b.count - a.count); // Urut terbanyak
+  
+  document.getElementById(elementId).innerHTML = resultArr.map(item => `
+    <tr class="hover:bg-slate-50 transition-colors">
+      <td class="p-3 font-semibold text-slate-700 truncate max-w-[200px]" title="${item.name}">
+        ${item.name} <span class="text-[9px] font-bold text-white bg-slate-300 px-1.5 py-0.5 rounded ml-1">${item.count}</span>
+      </td>
+      <td class="p-3">${item.closedRaw}</td>
+      <td class="p-3">${item.slaRaw}</td>
+      <td class="p-3">${item.puasRaw}</td>
+      <td class="p-3 font-black text-indigo-600">${item.score}</td>
+    </tr>
+  `).join('');
+}
+
+function renderCriticalTickets(data) {
+  let unclosed = data.filter(d => d.Status !== 'Closed');
+  
+  let criticalData = unclosed.map(d => {
+    const umur = parseFloat(d['Umur Problem']) || 0;
+    const target = parseFloat(d['Target Hari']) || 0;
+    
+    let isWarning = false;
+    let label = 'Aman';
+    let colorClass = '';
+    
+    if (umur > target) {
+      label = 'MELEBIHI TARGET';
+      isWarning = true;
+      colorClass = 'bg-red-100 text-red-700';
+    } else if (umur >= target - 1) {
+      label = 'MENDEKATI TARGET';
+      isWarning = true;
+      colorClass = 'bg-amber-100 text-amber-700';
+    }
+    
+    return { ...d, umur, target, label, isWarning, colorClass };
+  }).filter(d => d.isWarning).sort((a, b) => (b.umur - b.target) - (a.umur - a.target));
+
+  const tbody = document.getElementById('critical-tickets');
+  
+  if (criticalData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold">Semua tiket terpantau aman.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = criticalData.map(d => `
+    <tr class="border-b border-white ${d.label === 'MELEBIHI TARGET' ? 'bg-red-50/40' : 'bg-amber-50/40'}">
+      <td class="p-3 font-mono font-bold text-slate-600">${d['No Problem']}</td>
+      <td class="p-3 text-slate-600 truncate max-w-[150px]">${d['Nama Problem']}</td>
+      <td class="p-3 text-slate-600">${d['Nama Solve']}</td>
+      <td class="p-3 font-bold">${d.umur} <span class="font-normal text-[10px] text-slate-400">/ ${d.target}</span></td>
+      <td class="p-3">
+        <span class="px-2 py-1 rounded text-[10px] font-black ${d.colorClass}">${d.label}</span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Jalankan fetch saat web dimuat
+document.addEventListener('DOMContentLoaded', fetchDatabase);
