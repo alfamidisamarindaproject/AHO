@@ -3,20 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <script src="https://cdn.tailwindcss.com"></script>
+  <title>AHO Performance Dashboard</title>
 </head>
-<body class="bg-gray-50 flex h-screen overflow-hidden">
-  <aside class="w-80 bg-white border-r p-4 overflow-y-auto" id="sidebar">
-    <h2 class="font-bold text-lg mb-4">Departemen</h2>
-    <div id="dept-list" class="space-y-2">Memuat...</div>
+<body class="bg-gray-50 flex h-screen">
+  <aside class="w-72 bg-white border-r p-4 overflow-y-auto">
+    <h2 class="font-bold text-lg mb-4 text-indigo-900 uppercase italic">13 Departemen</h2>
+    <div id="dept-list" class="space-y-1"></div>
   </aside>
   <main class="flex-1 p-8 overflow-y-auto">
-    <div id="dashboard-content" class="hidden">
-      <h1 id="dept-title" class="text-2xl font-black italic mb-6"></h1>
-      <div id="stats" class="grid grid-cols-3 gap-4 mb-6"></div>
-      <table class="w-full bg-white rounded shadow text-sm" id="data-table">
-        <thead class="bg-gray-800 text-white"><tr><th class="p-2">No</th><th class="p-2">Status</th><th class="p-2">Target</th></tr></thead>
-        <tbody id="table-body"></tbody>
-      </table>
+    <div id="content" class="hidden space-y-6">
+      <h1 id="dept-name" class="text-3xl font-black uppercase italic"></h1>
+      <div id="score-cards" class="grid grid-cols-4 gap-4"></div>
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow border">
+          <h3 class="font-bold mb-4">Problem Terbanyak</h3>
+          <div id="top-probs"></div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border">
+          <h3 class="font-bold mb-4 text-red-600">SLA Kritis & Mendekati</h3>
+          <table class="w-full text-xs" id="sla-table"></table>
+        </div>
+      </div>
     </div>
   </main>
   <script src="app.js"></script>
