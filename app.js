@@ -1,23 +1,22 @@
-// Konfigurasi API
-// Gunakan URL Deployment Web App Anda, tambahkan ?api=true di belakangnya
-const API_URL = "https://script.google.com/macros/s/AKfycbzyuvfQKpXqP-1ukcNCcc7CxIJ6QjY5HPkhT3sFbPI_yerr0eaRY1Fz-jgwc32mAsJ5/exec?api=true"; 
+// GANTI DENGAN URL WEB APP ANDA YANG BARU (Pastikan dari hasil deploy terbaru)
+const API_URL = "https://script.google.com/macros/s/AKfycbx88ftcwoGdcIehAYeywTLyeeO1HxwQSxnGBOFA_qHowXNoLhfz_ELVsvOjC7iBkbE/exec"; 
 
 let rawData = [];
 let rankedDepts = [];
 
 // ==========================================
-// 1. RUMUS KONVERSI INTERVAL & PEMBOBOTAN
+// 1. RUMUS KONVERSI INTERVAL & PEMBOBOTAN (TETAP SAMA)
 // ==========================================
 function convertScale(value, type) {
   if (type === 'closed') {
     if (value < 85) return 1;
     if (value >= 100) return 4;
-    return 1 + ((value - 85) / 14.99) * 2.99;
+    return 1 + ((value - 85) / 14.99) * 2.99; // Range 85 - 99.99 -> 1 - 3.99
   }
   if (type === 'sla') {
     if (value < 85) return 1;
     if (value >= 130) return 4;
-    return 1 + ((value - 85) / 44.99) * 2.99;
+    return 1 + ((value - 85) / 44.99) * 2.99; // Range 85 - 129.99 -> 1 - 3.99
   }
   if (type === 'puas') {
     if (value < 1) return 1;
@@ -28,7 +27,7 @@ function convertScale(value, type) {
 }
 
 function calculateMetrics(records) {
-  if (records.length === 0) return { closed: 0, sla: 0, puas: 0, score: 0, count: 0 };
+  if (records.length === 0) return { closedRaw: '0%', slaRaw: 0, puasRaw: 0, score: 0, count: 0 };
   
   const total = records.length;
   const closedCount = records.filter(r => r.Status === 'Closed').length;
@@ -37,12 +36,11 @@ function calculateMetrics(records) {
   const avgSla = records.reduce((sum, r) => sum + (parseFloat(r['ACH SLA']) || 0), 0) / total;
   const avgPuas = records.reduce((sum, r) => sum + (parseFloat(r['Tingkat Kepuasan']) || 0), 0) / total;
   
-  // Konversi
   const valClosed = convertScale(closedPerc, 'closed');
   const valSla = convertScale(avgSla, 'sla');
   const valPuas = convertScale(avgPuas, 'puas');
   
-  // Sesuai requirement: bobot 30% closed, 40% sla, 20% kepuasan
+  // Bobot: 30% Closed, 40% SLA, 20% Kepuasan (Total 90% sesuai instruksi Anda, jika 100% sisa 10% diabaikan)
   const finalScore = (valClosed * 0.3) + (valSla * 0.4) + (valPuas * 0.2);
   
   return {
@@ -55,52 +53,62 @@ function calculateMetrics(records) {
 }
 
 // ==========================================
-// 2. INISIALISASI & FETCH DATA
+// 2. FETCH DATA DARI GOOGLE SHEETS
 // ==========================================
-async function init() {
+async function fetchDatabase() {
+  const listEl = document.getElementById('dept-list');
   try {
-    const res = await fetch(API_URL);
-    rawData = await res.json();
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error("Gagal mengambil respon jaringan.");
+    
+    const data = await response.json();
+    
+    // Cek jika API mengembalikan objek error
+    if (data.error) throw new Error(data.error);
+    
+    rawData = data;
     processDepartments();
   } catch (error) {
-    document.getElementById('dept-list').innerHTML = `<div class="p-4 text-red-500 text-xs font-bold">Gagal memuat API.</div>`;
-    console.error(error);
+    console.error("Fetch Error:", error);
+    listEl.innerHTML = `
+      <div class="p-4 bg-red-100 text-red-700 rounded-lg text-sm border border-red-200">
+        <b>Gagal memuat data!</b><br>
+        Pastikan URL API benar dan Deployment diset ke "Anyone".<br>
+        <span class="text-xs italic text-red-500 mt-2 block">${error.message}</span>
+      </div>`;
   }
 }
 
 function processDepartments() {
-  // Ambil departemen unik (Abaikan yang kosong)
-  const uniqueDepts = [...new Set(rawData.map(d => d.Departemen).filter(n => n && n.trim() !== ''))];
+  // Filter Departemen (Ambil hanya yang unik & tidak kosong)
+  const uniqueDepts = [...new Set(rawData.map(d => d.Departemen).filter(n => n && String(n).trim() !== ''))];
   
-  // Hitung score per departemen
   rankedDepts = uniqueDepts.map(deptName => {
     const deptData = rawData.filter(d => d.Departemen === deptName);
-    const metrics = calculateMetrics(deptData);
-    return { name: deptName, ...metrics };
+    return { name: deptName, ...calculateMetrics(deptData) };
   });
   
-  // Urutkan berdasarkan Score tertinggi
-  rankedDepts.sort((a, b) => b.score - a.score);
+  // Urutkan Rank dari Score Tertinggi
+  rankedDepts.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
   
-  // Render Sidebar
+  // Render List Sidebar
   const listEl = document.getElementById('dept-list');
   listEl.innerHTML = rankedDepts.map((d, index) => `
     <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${index + 1})" 
-         class="dept-item cursor-pointer p-3 rounded-lg hover:bg-slate-50 border-l-4 border-transparent transition-all group">
+         class="dept-item cursor-pointer p-4 rounded-lg hover:bg-slate-50 border-l-4 border-transparent transition-all group mb-1 bg-white border border-slate-100 shadow-sm">
       <div class="flex justify-between items-center mb-1">
-        <span class="text-[9px] font-black text-slate-400 group-hover:text-indigo-500 uppercase">Rank #${index + 1}</span>
-        <span class="text-[10px] font-black bg-slate-100 text-indigo-700 px-2 py-0.5 rounded">${d.score}</span>
+        <span class="text-[10px] font-black text-slate-400 group-hover:text-indigo-500 uppercase">Rank #${index + 1}</span>
+        <span class="text-xs font-black bg-indigo-50 text-indigo-700 px-2 py-1 rounded">${d.score}</span>
       </div>
-      <h3 class="text-xs font-bold text-slate-700 uppercase italic truncate">${d.name}</h3>
+      <h3 class="text-sm font-bold text-slate-700 uppercase italic truncate">${d.name}</h3>
     </div>
   `).join('');
 }
 
 // ==========================================
-// 3. RENDER DETAIL DEPARTEMEN
+// 3. TAMPILKAN DETAIL SAAT DI-KLIK
 // ==========================================
 function selectDept(deptName, el, rank) {
-  // Styling active state
   document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
   el.classList.add('active-dept');
   
@@ -111,89 +119,83 @@ function selectDept(deptName, el, rank) {
   
   const deptData = rawData.filter(d => d.Departemen === deptName);
   
-  renderTableData(deptData, 'Nama Problem', 'top-problems');
-  renderTableData(deptData, 'Nama Solve', 'top-pics');
+  // Render Tabel
+  renderGroupedTable(deptData, 'Nama Problem', 'top-problems');
+  renderGroupedTable(deptData, 'Nama Solve', 'top-pics');
   renderCriticalTickets(deptData);
 }
 
-function renderTableData(data, groupByField, elementId) {
-  // Grouping Data
+function renderGroupedTable(data, groupKey, elementId) {
   const grouped = {};
   data.forEach(row => {
-    const key = row[groupByField] || 'Unassigned';
+    const key = row[groupKey] || 'Tidak Ada Data';
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(row);
   });
   
-  // Mapping ke Array & Kalkulasi Score
-  let resultArr = Object.keys(grouped).map(key => {
-    return { name: key, ...calculateMetrics(grouped[key]) };
-  });
+  let resultArr = Object.keys(grouped).map(key => ({
+    name: key, 
+    ...calculateMetrics(grouped[key])
+  }));
   
-  // Urutkan dari problem/tiket terbanyak
-  resultArr.sort((a, b) => b.count - a.count);
+  resultArr.sort((a, b) => b.count - a.count); // Urut terbanyak
   
-  const tbody = document.getElementById(elementId);
-  tbody.innerHTML = resultArr.map(item => `
-    <tr class="hover:bg-slate-50">
+  document.getElementById(elementId).innerHTML = resultArr.map(item => `
+    <tr class="hover:bg-slate-50 transition-colors">
       <td class="p-3 font-semibold text-slate-700 truncate max-w-[200px]" title="${item.name}">
-        ${item.name} <span class="text-[9px] text-indigo-500 ml-1">(${item.count})</span>
+        ${item.name} <span class="text-[9px] font-bold text-white bg-slate-300 px-1.5 py-0.5 rounded ml-1">${item.count}</span>
       </td>
-      <td class="p-3 text-slate-500">${item.closedRaw}</td>
-      <td class="p-3 text-slate-500">${item.slaRaw}</td>
-      <td class="p-3 text-slate-500">${item.puasRaw}</td>
+      <td class="p-3">${item.closedRaw}</td>
+      <td class="p-3">${item.slaRaw}</td>
+      <td class="p-3">${item.puasRaw}</td>
       <td class="p-3 font-black text-indigo-600">${item.score}</td>
     </tr>
   `).join('');
 }
 
 function renderCriticalTickets(data) {
-  // Ambil yang status belum Closed
   let unclosed = data.filter(d => d.Status !== 'Closed');
   
-  // Identifikasi Kritis & Mendekati
-  unclosed = unclosed.map(d => {
+  let criticalData = unclosed.map(d => {
     const umur = parseFloat(d['Umur Problem']) || 0;
     const target = parseFloat(d['Target Hari']) || 0;
     
-    let statusKondisi = '';
-    let isCritical = false;
+    let isWarning = false;
+    let label = 'Aman';
+    let colorClass = '';
     
     if (umur > target) {
-      statusKondisi = 'MELEBIHI TARGET';
-      isCritical = true;
+      label = 'MELEBIHI TARGET';
+      isWarning = true;
+      colorClass = 'bg-red-100 text-red-700';
     } else if (umur >= target - 1) {
-      statusKondisi = 'MENDEKATI TARGET';
-    } else {
-      statusKondisi = 'AMAN';
+      label = 'MENDEKATI TARGET';
+      isWarning = true;
+      colorClass = 'bg-amber-100 text-amber-700';
     }
     
-    return { ...d, umur, target, statusKondisi, isCritical };
-  });
-  
-  // Filter hanya yang Melebihi & Mendekati, lalu urutkan
-  const criticalData = unclosed.filter(d => d.statusKondisi !== 'AMAN')
-                               .sort((a, b) => (b.umur - b.target) - (a.umur - a.target));
+    return { ...d, umur, target, label, isWarning, colorClass };
+  }).filter(d => d.isWarning).sort((a, b) => (b.umur - b.target) - (a.umur - a.target));
 
   const tbody = document.getElementById('critical-tickets');
+  
   if (criticalData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada tiket kritis. Kinerja sangat baik!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold">Semua tiket terpantau aman.</td></tr>`;
     return;
   }
   
   tbody.innerHTML = criticalData.map(d => `
-    <tr class="${d.isCritical ? 'bg-red-50/50' : 'bg-amber-50/50'} border-b border-white hover:bg-slate-100 transition-colors">
-      <td class="p-3 font-mono font-bold text-slate-700">${d['No Problem']}</td>
-      <td class="p-3 text-slate-600 truncate max-w-[150px]" title="${d['Nama Problem']}">${d['Nama Problem']}</td>
+    <tr class="border-b border-white ${d.label === 'MELEBIHI TARGET' ? 'bg-red-50/40' : 'bg-amber-50/40'}">
+      <td class="p-3 font-mono font-bold text-slate-600">${d['No Problem']}</td>
+      <td class="p-3 text-slate-600 truncate max-w-[150px]">${d['Nama Problem']}</td>
       <td class="p-3 text-slate-600">${d['Nama Solve']}</td>
-      <td class="p-3 text-center font-bold text-slate-700">${d.umur} <span class="text-[10px] text-slate-400 font-normal">/ ${d.target} Hari</span></td>
+      <td class="p-3 font-bold">${d.umur} <span class="font-normal text-[10px] text-slate-400">/ ${d.target}</span></td>
       <td class="p-3">
-        <span class="px-2 py-1 rounded text-[9px] font-black uppercase ${d.isCritical ? 'bg-red-200 text-red-700' : 'bg-amber-200 text-amber-700'}">
-          ${d.statusKondisi}
-        </span>
+        <span class="px-2 py-1 rounded text-[10px] font-black ${d.colorClass}">${d.label}</span>
       </td>
     </tr>
   `).join('');
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Jalankan fetch saat web dimuat
+document.addEventListener('DOMContentLoaded', fetchDatabase);
