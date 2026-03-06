@@ -4,112 +4,178 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>AHO Monitoring Dashboard</title>
+  <title>AHO Monitoring Dashboard Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
     
-    .active-dept { 
-      background: linear-gradient(90deg, #eff6ff 0%, #ffffff 100%);
-      border-left: 4px solid #4f46e5; 
-    }
+    /* Scrollbar Styling */
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+    /* Glass Effect */
     .glass-card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Animation */
+    .slide-in { transition: transform 0.3s ease-in-out; }
+    @media (max-width: 1024px) {
+      .sidebar-closed { transform: translateX(-100%); }
+    }
+    
+    /* Active State */
+    .nav-item-active {
+      background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%);
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
   </style>
 </head>
-<body class="bg-slate-50 flex h-screen overflow-hidden text-slate-800 text-xs">
+<body class="bg-[#f8fafc] flex h-screen overflow-hidden text-slate-900 text-[11px] sm:text-xs">
 
-  <aside class="w-72 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col border-r border-slate-100 z-20">
-    <div onclick="window.location.reload()" class="p-6 bg-gradient-to-br from-indigo-900 to-indigo-800 text-white cursor-pointer shadow-md">
-      <h1 class="text-2xl font-black italic tracking-tighter uppercase">AHO <span class="text-indigo-300">HUB</span></h1>
-      <p class="text-[9px] opacity-80 font-bold uppercase tracking-widest mt-1">Smart Monitoring System</p>
+  <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
+
+  <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-none flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-100">
+    <div class="p-6 flex items-center justify-between bg-white border-b border-slate-50">
+      <div>
+        <h1 class="text-2xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">HUB</span></h1>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+          <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">System Monitoring</p>
+        </div>
+      </div>
+      <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-slate-100 rounded-lg">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
     </div>
     
-    <div class="p-4 border-b border-slate-100">
-      <button onclick="showHome()" class="w-full py-2.5 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        HOME
+    <div class="p-4">
+      <button onclick="showHome()" class="nav-item-active w-full py-3 px-4 rounded-xl font-bold flex items-center gap-3 transition-all duration-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        DASHBOARD UTAMA
       </button>
     </div>
 
-    <div class="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Peringkat Departemen</div>
+    <div class="px-6 py-2 flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Peringkat Dept</span>
+        <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px]">Live</span>
+    </div>
     
-    <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-3 pb-4 space-y-1">
-      <div class="p-6 text-center animate-pulse flex flex-col items-center">
-        <div class="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-        <span class="text-indigo-400 font-semibold">Sinkronisasi data...</span>
+    <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-3 pb-6 space-y-1">
+      <div class="p-4 space-y-3">
+          <div class="h-10 bg-slate-50 rounded-lg animate-pulse"></div>
+          <div class="h-10 bg-slate-50 rounded-lg animate-pulse"></div>
+          <div class="h-10 bg-slate-50 rounded-lg animate-pulse"></div>
       </div>
     </div>
   </aside>
 
-  <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-50/50">
+  <main class="flex-1 overflow-hidden flex flex-col relative">
     
-    <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-8 transition-all duration-300">
-      <div class="flex items-center justify-between mb-8">
-        <h2 class="text-2xl font-black text-slate-800 uppercase italic">AHO SAMARINDA | <span class="text-indigo-600">SGZ1</span></h2>
-        <span class="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 shadow-sm" id="global-last-update">Live Data</span>
-      </div>
+    <header class="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 z-20 shrink-0">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg lg:hidden transition-colors">
+                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <h2 class="text-sm sm:text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                AHO SAMARINDA <span class="hidden sm:inline text-slate-300">|</span> <span class="text-indigo-600">SGZ1</span>
+            </h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="hidden md:flex flex-col text-right">
+                <span class="text-[10px] font-bold text-slate-400">LAST UPDATE</span>
+                <span id="global-last-update" class="text-[10px] font-medium text-slate-600">Syncing...</span>
+            </div>
+            <button onclick="window.location.reload()" class="p-2 hover:bg-indigo-50 text-indigo-600 rounded-full transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6">
       
-      <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8"></div>
+      <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          </div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[400px]">
-          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
-            <span class="font-bold uppercase text-slate-700">Top Problem Cabang</span>
-            <div class="relative">
-              <svg class="w-3 h-3 absolute left-2.5 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-[10px] border border-slate-200 pl-7 pr-3 py-1.5 rounded-full w-48 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all bg-slate-50">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
+          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2">
+                <div class="p-2 bg-indigo-50 rounded-lg"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></div>
+                <span class="font-bold uppercase text-slate-700 tracking-tight">Top Problem Cabang</span>
+            </div>
+            <div class="relative w-full sm:w-auto">
+              <svg class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="w-full text-[10px] border border-slate-200 pl-9 pr-4 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
             </div>
           </div>
           <div class="overflow-auto flex-1 custom-scroll">
-            <table class="w-full text-left">
-              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
-                <tr><th class="p-3">Masalah</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">% Clsd</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-50/50 text-slate-500 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 backdrop-blur-md">
+                <tr>
+                    <th class="p-4">Masalah</th>
+                    <th class="p-4 text-center">Total</th>
+                    <th class="p-4 text-center">Clsd</th>
+                    <th class="p-4 text-center text-indigo-600">Score</th>
+                </tr>
               </thead>
-              <tbody id="home-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
+              <tbody id="home-body-prob" class="divide-y divide-slate-50"></tbody>
             </table>
           </div>
         </div>
 
-        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[400px]">
-          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
-            <span class="font-bold uppercase text-slate-700">Kinerja PIC Cabang</span>
-            <div class="relative">
-              <svg class="w-3 h-3 absolute left-2.5 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-200 pl-7 pr-3 py-1.5 rounded-full w-48 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all bg-slate-50">
+        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
+          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2">
+                <div class="p-2 bg-emerald-50 rounded-lg"><svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>
+                <span class="font-bold uppercase text-slate-700 tracking-tight">Kinerja PIC Cabang</span>
+            </div>
+            <div class="relative w-full sm:w-auto">
+                <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="w-full text-[10px] border border-slate-200 pl-9 pr-4 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
             </div>
           </div>
           <div class="overflow-auto flex-1 custom-scroll">
-            <table class="w-full text-left">
-              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
-                <tr><th class="p-3">Nama PIC</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">% Clsd</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-50/50 text-slate-500 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 backdrop-blur-md">
+                <tr>
+                    <th class="p-4">Nama PIC</th>
+                    <th class="p-4 text-center">Total</th>
+                    <th class="p-4 text-center">Clsd</th>
+                    <th class="p-4 text-center text-indigo-600">Score</th>
+                </tr>
               </thead>
-              <tbody id="home-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
+              <tbody id="home-body-pic" class="divide-y divide-slate-50"></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <div class="glass-card rounded-2xl shadow-sm border border-red-100 overflow-hidden">
-        <div class="p-4 bg-red-50/80 border-b border-red-100 flex justify-between items-center backdrop-blur-md">
-          <span class="font-bold text-red-600 uppercase flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            Warning: Melebihi / Mendekati Target
+      <div class="bg-white rounded-2xl shadow-sm border-2 border-red-50 overflow-hidden">
+        <div class="p-4 bg-red-50/50 border-b border-red-100 flex justify-between items-center">
+          <span class="font-bold text-red-600 uppercase flex items-center gap-2 tracking-tighter">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+            </span>
+            Critical: Melebihi Target
           </span>
-          <div class="relative">
-            <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket/dept..." class="text-[10px] border border-red-200 pl-3 pr-3 py-1.5 rounded-full w-56 outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-all">
-          </div>
         </div>
-        <div class="max-h-64 overflow-auto custom-scroll bg-white">
-          <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[9px] sticky top-0">
-              <tr><th class="p-3">Dept</th><th class="p-3">No Ticket</th><th class="p-3">Masalah</th><th class="p-3">PIC</th><th class="p-3 text-center">Usia / Target</th><th class="p-3 text-center">Status</th></tr>
+        <div class="max-h-80 overflow-auto custom-scroll">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10">
+              <tr>
+                  <th class="p-4 hidden md:table-cell">Dept</th>
+                  <th class="p-4">No Ticket</th>
+                  <th class="p-4">PIC</th>
+                  <th class="p-4 text-center">Usia / Target</th>
+              </tr>
             </thead>
             <tbody id="home-body-warn" class="divide-y divide-slate-50"></tbody>
           </table>
@@ -117,61 +183,45 @@
       </div>
     </div>
 
-    <div id="view-dept" class="hidden flex-1 overflow-y-auto custom-scroll p-8 transition-all duration-300">
-      
-      <div class="flex justify-between items-end mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-        <div>
-          <button onclick="showHome()" class="text-[10px] font-bold text-slate-400 hover:text-indigo-600 mb-2 flex items-center gap-1 transition-colors">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            KEMBALI KE HOME
-          </button>
-          <div class="flex items-center gap-3 mt-1">
-            <span id="det-rank" class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-[10px] px-3 py-1 rounded-full font-black italic shadow-sm">RANK #</span>
-            <h2 id="det-name" class="text-3xl font-black text-slate-800 uppercase italic tracking-tight">NAMA DEPT</h2>
-          </div>
-        </div>
-        <div class="text-right">
-          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Score Layanan</p>
-          <div id="det-score" class="text-5xl font-black text-indigo-600 italic leading-none drop-shadow-sm">0.00</div>
-        </div>
-      </div>
-
-      <div id="dept-metrics" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8"></div>
-
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
-          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
-            <span class="font-bold uppercase text-slate-700">Detail Masalah</span>
-            <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari masalah..." class="text-[10px] border border-slate-200 px-3 py-1.5 rounded-full w-40 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 bg-slate-50">
-          </div>
-          <div class="overflow-auto flex-1 custom-scroll">
-            <table class="w-full text-left">
-              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
-                <tr><th class="p-3">Nama Masalah</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Clsd</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
-              </thead>
-              <tbody id="dept-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
-            </table>
-          </div>
+    <div id="view-dept" class="hidden flex-1 overflow-y-auto custom-scroll p-4 lg:p-8">
         </div>
 
-        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
-          <div class="p-4 bg-white/50 border-b border-slate-100 flex justify-between items-center backdrop-blur-md">
-            <span class="font-bold uppercase text-slate-700">Detail Kinerja PIC</span>
-            <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-200 px-3 py-1.5 rounded-full w-40 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 bg-slate-50">
-          </div>
-          <div class="overflow-auto flex-1 custom-scroll">
-            <table class="w-full text-left">
-              <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 shadow-sm">
-                <tr><th class="p-3">Nama PIC</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Clsd</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
-              </thead>
-              <tbody id="dept-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
   </main>
 
+  <script>
+    // UX Helper: Sidebar Toggle
+    function toggleSidebar() {
+        const sidebar = document.getElementById('main-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        if (sidebar.classList.contains('sidebar-closed')) {
+            sidebar.classList.remove('sidebar-closed');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('block');
+        } else {
+            sidebar.classList.add('sidebar-closed');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('block');
+        }
+    }
+
+    // Animasi angka saat load (Contoh UX)
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = (progress * (end - start) + start).toFixed(2);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Panggil fungsi ini saat data selesai diload
+    // animateValue(document.getElementById('det-score'), 0, currentScore, 1000);
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
