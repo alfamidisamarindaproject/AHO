@@ -1,6 +1,6 @@
 // Konfigurasi API
 // Gunakan URL Deployment Web App Anda, tambahkan ?api=true di belakangnya
-const API_URL = "https://script.google.com/macros/s/AKfycbzyuvfQKpXqP-1ukcNCcc7CxIJ6QjY5HPkhT3sFbPI_yerr0eaRY1Fz-jgwc32mAsJ5/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzyuvfQKpXqP-1ukcNCcc7CxIJ6QjY5HPkhT3sFbPI_yerr0eaRY1Fz-jgwc32mAsJ5/exec?api=true"; 
 
 let rawData = [];
 let rankedDepts = [];
