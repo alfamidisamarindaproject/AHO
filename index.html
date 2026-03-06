@@ -4,85 +4,140 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>AHO Performance Dashboard</title>
+  <title>AHO Monitoring Dashboard</title>
   <style>
-    .custom-scroll::-webkit-scrollbar { width: 5px; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .active-dept { background-color: #eef2ff; border-left: 4px solid #4f46e5; }
+    .active-dept { background-color: #f0f7ff; border-left: 4px solid #4f46e5; font-weight: bold; }
+    th { white-space: nowrap; }
   </style>
 </head>
-<body class="bg-slate-50 flex h-screen font-sans text-slate-800 overflow-hidden">
+<body class="bg-slate-50 flex h-screen overflow-hidden text-slate-800 text-xs">
 
-  <aside class="w-80 bg-white shadow-xl flex flex-col z-10 border-r border-slate-200">
-    <div class="p-6 bg-indigo-900 text-white shadow-md">
-      <h1 class="text-xl font-black italic tracking-tight">LEADERBOARD</h1>
-      <p class="text-[10px] font-bold tracking-widest uppercase text-indigo-300">Peringkat Kinerja AHO</p>
+  <aside class="w-72 bg-white shadow-xl flex flex-col border-r border-slate-200">
+    <div onclick="window.location.reload()" class="p-6 bg-indigo-900 text-white cursor-pointer">
+      <h1 class="text-xl font-black italic tracking-tighter uppercase">AHO Dashboard</h1>
+      <p class="text-[10px] opacity-60 font-bold uppercase">Smart Monitoring System</p>
     </div>
     
+    <button onclick="showHome()" class="m-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100 transition-all border border-indigo-100">🏠 HOME (GAMBARAN BESAR)</button>
+
     <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
-      <div id="loading-indicator" class="p-6 text-center text-indigo-600 font-bold animate-pulse">
-        Menghubungkan ke Database...
-      </div>
+      <div class="p-4 text-center animate-pulse text-slate-400 italic">Sinkronisasi data...</div>
     </div>
   </aside>
 
-  <main class="flex-1 flex flex-col overflow-hidden relative">
-    <div id="detail-view" class="hidden flex-1 overflow-y-auto custom-scroll p-8">
+  <main class="flex-1 overflow-hidden flex flex-col">
+    
+    <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-6">
+      <h2 class="text-2xl font-black text-slate-800 uppercase italic mb-6 border-b pb-2">Gambaran Besar (All Dept)</h2>
       
-      <div class="flex justify-between items-end mb-8 border-b border-slate-200 pb-4">
-        <div>
-          <span id="dept-rank" class="text-xs font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase italic tracking-widest"></span>
-          <h2 id="dept-name" class="text-3xl font-black text-slate-800 uppercase italic mt-2"></h2>
-        </div>
-        <div class="text-right">
-          <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Total Score Layanan</p>
-          <div class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md">
-            <span id="dept-score" class="text-3xl font-black italic">0.00</span>
-          </div>
-        </div>
-      </div>
+      <div id="home-metrics" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8"></div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="p-4 bg-slate-100 font-bold text-slate-700 text-sm uppercase">Top Problem Terbanyak</div>
-          <div class="overflow-auto max-h-64 custom-scroll">
-            <table class="w-full text-xs text-left">
-              <thead class="bg-slate-50 text-slate-500 sticky top-0">
-                <tr><th class="p-3">Problem</th><th class="p-3">Closed</th><th class="p-3">SLA</th><th class="p-3">Puas</th><th class="p-3">Score</th></tr>
-              </thead>
-              <tbody id="top-problems" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+        <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
+          <span class="font-bold uppercase">Top Problem Global</span>
+          <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-[10px] border px-2 py-1 rounded w-48 outline-none">
         </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="p-4 bg-slate-100 font-bold text-slate-700 text-sm uppercase">Kinerja Per PIC (Solve)</div>
-          <div class="overflow-auto max-h-64 custom-scroll">
-            <table class="w-full text-xs text-left">
-              <thead class="bg-slate-50 text-slate-500 sticky top-0">
-                <tr><th class="p-3">Nama PIC</th><th class="p-3">Closed</th><th class="p-3">SLA</th><th class="p-3">Puas</th><th class="p-3">Score</th></tr>
-              </thead>
-              <tbody id="top-pics" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-4 bg-red-50 font-bold text-red-600 text-sm uppercase flex justify-between">
-          <span>Warning: Problem Melewati & Mendekati Target</span>
-          <span class="text-xs font-normal text-red-400">*Belum Closed</span>
-        </div>
-        <div class="overflow-auto max-h-64 custom-scroll">
-          <table class="w-full text-xs text-left">
-            <thead class="bg-slate-50 text-slate-500 sticky top-0">
-              <tr><th class="p-3">No Ticket</th><th class="p-3">Problem</th><th class="p-3">PIC</th><th class="p-3">Usia / Target</th><th class="p-3">Status</th></tr>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
+              <tr>
+                <th class="p-3">Nama Masalah</th>
+                <th class="p-3 text-center">Total</th>
+                <th class="p-3 text-center">Closed</th>
+                <th class="p-3 text-center">% Closed</th>
+                <th class="p-3 text-center">SLA</th>
+                <th class="p-3 text-center">Kepuasan</th>
+                <th class="p-3 text-center">Score</th>
+              </tr>
             </thead>
-            <tbody id="critical-tickets" class="divide-y divide-slate-100"></tbody>
+            <tbody id="home-body-prob" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
 
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+        <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
+          <span class="font-bold uppercase">Top Kinerja PIC Global</span>
+          <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari nama PIC..." class="text-[10px] border px-2 py-1 rounded w-48 outline-none">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
+              <tr>
+                <th class="p-3">Nama PIC</th>
+                <th class="p-3 text-center">Total</th>
+                <th class="p-3 text-center">Closed</th>
+                <th class="p-3 text-center">% Closed</th>
+                <th class="p-3 text-center">SLA</th>
+                <th class="p-3 text-center">Kepuasan</th>
+                <th class="p-3 text-center">Score</th>
+              </tr>
+            </thead>
+            <tbody id="home-body-pic" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 bg-red-50 flex justify-between items-center border-b">
+          <span class="font-bold text-red-600 uppercase italic">Warning: Melebihi / Mendekati Target</span>
+          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket..." class="text-[10px] border border-red-200 px-2 py-1 rounded w-48 outline-none">
+        </div>
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 text-slate-400 border-b uppercase text-[9px]">
+            <tr><th class="p-3">Dept</th><th class="p-3">Ticket</th><th class="p-3">Masalah</th><th class="p-3">PIC</th><th class="p-3 text-center">Usia/Target</th><th class="p-3 text-center">Status</th></tr>
+          </thead>
+          <tbody id="home-body-warn" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-dept" class="hidden flex-1 overflow-y-auto custom-scroll p-6">
+      <div class="flex justify-between items-end mb-6 border-b pb-4">
+        <div>
+          <button onclick="showHome()" class="text-[10px] font-bold text-indigo-600 hover:underline mb-1 italic">← KEMBALI KE HOME</button>
+          <div class="flex items-center gap-3">
+            <span id="det-rank" class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded font-black italic">RANK #</span>
+            <h2 id="det-name" class="text-3xl font-black text-slate-800 uppercase italic">NAMA DEPT</h2>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] font-bold text-slate-400 uppercase">Department Score</p>
+          <div id="det-score" class="text-5xl font-black text-indigo-600 italic leading-none">0.00</div>
+        </div>
+      </div>
+
+      <div id="dept-metrics" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8"></div>
+
+      <div class="space-y-8">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
+            <span class="font-bold uppercase">Masalah Departemen</span>
+            <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
+          </div>
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
+              <tr><th class="p-3">Nama Masalah</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+            </thead>
+            <tbody id="dept-body-prob" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
+            <span class="font-bold uppercase">Kinerja PIC Departemen</span>
+            <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari..." class="text-[10px] border px-2 py-1 rounded w-32 outline-none">
+          </div>
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 font-bold border-b uppercase text-[9px]">
+              <tr><th class="p-3">Nama PIC</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Closed</th><th class="p-3 text-center">%</th><th class="p-3 text-center">SLA</th><th class="p-3 text-center">Puas</th><th class="p-3 text-center text-indigo-600">Score</th></tr>
+            </thead>
+            <tbody id="dept-body-pic" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </main>
 
