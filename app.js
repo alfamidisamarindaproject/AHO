@@ -1,5 +1,5 @@
 // GANTI DENGAN URL WEB APP ANDA YANG BARU (Pastikan dari hasil deploy terbaru)
-const API_URL = "https://script.google.com/macros/s/AKfycbx88ftcwoGdcIehAYeywTLyeeO1HxwQSxnGBOFA_qHowXNoLhfz_ELVsvOjC7iBkbE/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzMSZ4iMywUiPTZGjoiMczkviWl9qKTvZowhlTT0wMSD8JY65N49y3KkwATgScrgq8_/exec"; 
 
 let rawData = [];
 let rankedDepts = [];
