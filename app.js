@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbx88ftcwoGdcIehAYeywTLyeeO1HxwQSxnGBOFA_qHowXNoLhfz_ELVsvOjC7iBkbE/exec; 
+const API_URL = "https://script.google.com/macros/s/AKfycbx88ftcwoGdcIehAYeywTLyeeO1HxwQSxnGBOFA_qHowXNoLhfz_ELVsvOjC7iBkbE/exec"; 
 
 let rawData = [];
 let rankedDepts = [];
