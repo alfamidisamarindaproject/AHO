@@ -145,8 +145,9 @@
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm border-2 border-red-50 overflow-hidden">
-        <div class="p-4 bg-red-50/50 border-b border-red-100 flex justify-between items-center font-bold text-red-600 uppercase">
-          Critical: Melebihi Target
+        <div class="p-4 bg-red-50/50 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <span class="font-bold text-red-600 uppercase">Critical: Melebihi Target</span>
+          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket/PIC..." class="text-[10px] border border-red-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500/20 w-full sm:w-48">
         </div>
         <div class="max-h-80 overflow-auto custom-scroll">
           <table class="w-full text-left border-collapse">
