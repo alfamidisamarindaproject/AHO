@@ -3,12 +3,43 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxMeXvqBc5aW_0P89u5mf1u
 let rawData = [];
 let rankedDepts = [];
 
-// Helper Parsing
+// Helper Parsing Angka
 const parseNum = (val) => {
   if (!val) return 0;
   const str = String(val).replace(',', '.').replace(/[^0-9.-]/g, '');
   return parseFloat(str) || 0;
 };
+
+// HELPER BARU: Parsing Tanggal (Format DD/MM/YYYY HH:mm:ss) dan Hitung Selisih Hari s/d Sekarang
+function calculateAgeInDays(row) {
+  const tglEskalasi = row['Tgl Eskalasi'];
+  const tglProblem = row['Tgl Problem'];
+  
+  // Ambil eskalasi jika ada, jika tidak ambil tgl problem
+  const dateStr = (tglEskalasi && String(tglEskalasi).trim() !== '') ? String(tglEskalasi) : String(tglProblem);
+  
+  if (!dateStr || dateStr === 'undefined') return 0;
+
+  try {
+    // Parsing manual format DD/MM/YYYY
+    const parts = dateStr.split(' ');
+    const dateParts = parts[0].split('/');
+    if (dateParts.length !== 3) return 0;
+    
+    // year, month (0-index), day, hour, min, sec
+    const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
+    const startDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+    const now = new Date();
+    
+    const diffMs = now - startDate;
+    if (diffMs < 0) return 0;
+    
+    // Konversi ke hari (dibulatkan ke bawah)
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  } catch (e) {
+    return 0;
+  }
+}
 
 // Rumus Skala (1-4)
 function getScale(value, type) {
@@ -41,7 +72,7 @@ function calculateMetrics(records) {
   };
 }
 
-// RENDER TABEL DETAIL (MASALAH & PIC) - DIPERBAIKI (7 Kolom)
+// RENDER TABEL DETAIL (MASALAH & PIC)
 function renderDetailTable(data, groupKey, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -75,19 +106,34 @@ function renderDetailTable(data, groupKey, tableId) {
   `).join('');
 }
 
-// Render Tabel Warning
+// LOGIKA BARU UNTUK RENDER TABEL WARNING (CRITICAL)
 function renderWarningTable(data, tableId) {
   const tbody = document.getElementById(tableId);
+  if (!tbody) return;
+
+  // Filter hanya yang belum Closed
   const unclosed = data.filter(d => String(d['Status'] || '').trim().toLowerCase() !== 'closed');
   
   const critical = unclosed.map(d => {
-    const umur = parseNum(d['Umur Problem']);
+    const umurRealtime = calculateAgeInDays(d); // Logic hitung dari Tgl Problem / Eskalasi
     const target = parseNum(d['Target Hari']);
-    let label = ''; let badge = '';
-    if (umur > target) { label = 'OVER'; badge = 'bg-red-500'; }
-    else if (umur >= target - 1) { label = 'WARN'; badge = 'bg-amber-400'; }
-    return { ...d, umur, target, label, badge };
-  }).filter(d => d.label !== '').sort((a, b) => (b.umur - b.target) - (a.umur - a.target)).slice(0, 30);
+    
+    let label = ''; 
+    let badge = '';
+    
+    if (umurRealtime > target) { 
+        label = 'OVER'; 
+        badge = 'bg-red-500'; 
+    } else if (umurRealtime >= target - 1 && target > 0) { 
+        label = 'WARN'; 
+        badge = 'bg-amber-400'; 
+    }
+    
+    return { ...d, umur: umurRealtime, target, label, badge };
+  })
+  .filter(d => d.label !== '') // Hanya tampilkan yang OVER atau WARN
+  .sort((a, b) => (b.umur - b.target) - (a.umur - a.target))
+  .slice(0, 50);
 
   if (critical.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Semua aman</td></tr>`;
@@ -95,17 +141,17 @@ function renderWarningTable(data, tableId) {
   }
   
   tbody.innerHTML = critical.map(d => `
-    <tr class="text-[9px]">
+    <tr class="text-[9px] hover:bg-red-50/30 transition-colors">
       <td class="p-3 font-bold text-slate-400">${d['Departemen'] || '-'}</td>
       <td class="p-3 font-mono font-bold text-indigo-600">${d['No Problem'] || '-'}</td>
-      <td class="p-3 truncate max-w-[100px]">${d['Nama Solve'] || '-'}</td>
-      <td class="p-3 text-center font-bold">${d.umur}/${d.target}</td>
-      <td class="p-3 text-center"><span class="${d.badge} text-white px-1.5 py-0.5 rounded text-[8px]">${d.label}</span></td>
+      <td class="p-3 truncate max-w-[100px]" title="${d['Nama Penangung']}">${d['Nama Penangung'] || '-'}</td>
+      <td class="p-3 text-center font-bold text-slate-700">${d.umur} / ${d.target} Hari</td>
+      <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-0.5 rounded-full text-[8px] font-black">${d.label}</span></td>
     </tr>
   `).join('');
 }
 
-// Render Kotak Metrik (9 Kotak)
+// Render Kotak Metrik
 function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
@@ -140,7 +186,7 @@ function showHome() {
   const m = calculateMetrics(rawData);
   renderMetrikBox('home-metrics', m);
   renderDetailTable(rawData, 'Nama Problem', 'home-body-prob');
-  renderDetailTable(rawData, 'Nama Solve', 'home-body-pic');
+  renderDetailTable(rawData, 'Nama Penangung', 'home-body-pic');
   renderWarningTable(rawData, 'home-body-warn');
 }
 
@@ -161,11 +207,12 @@ function selectDept(deptName, el, rank) {
   
   renderMetrikBox('dept-metrics', m);
   renderDetailTable(deptData, 'Nama Problem', 'dept-body-prob');
-  renderDetailTable(deptData, 'Nama Solve', 'dept-body-pic');
+  renderDetailTable(deptData, 'Nama Penangung', 'dept-body-pic');
   
   if(window.innerWidth < 1024) toggleSidebar();
 }
 
+// Fungsi Search Universal
 function doSearch(input, tableId) {
   const filter = input.value.toUpperCase();
   const rows = document.getElementById(tableId).getElementsByTagName("tr");
