@@ -41,29 +41,25 @@ function parseCustomDate(dateStr) {
 }
 
 /**
- * LOGIKA SLA
- * Menggunakan durasi menit untuk akurasi skor
+ * LOGIKA SLA (Perbaikan Sesuai Permintaan)
+ * Menghitung SLA berdasarkan perbandingan selisih Hari Aktual vs Target Hari
  */
 function calculateNewSLAScore(row) {
-  const tglTerimaStr = getVal(row, 'Tgl Terima');
-  const tglClosedStr = getVal(row, 'Tgl Closed');
-  const targetHariVal = getVal(row, 'Target Hari');
+  const tglStart = parseCustomDate(getVal(row, 'Tgl Terima'));
+  const tglEnd = parseCustomDate(getVal(row, 'Tgl Closed')) || new Date(); 
+  const targetDays = parseNum(getVal(row, 'Target Hari'));
 
-  const tglStart = parseCustomDate(tglTerimaStr);
-  const tglEnd = parseCustomDate(tglClosedStr) || new Date(); 
-  
   if (!tglStart) return 0;
+  if (targetDays <= 0) return 100; // Jika tidak ada target, berikan nilai sempurna
 
-  const targetDays = parseNum(targetHariVal);
-  const targetMinutes = targetDays * 1440; 
-  
-  if (targetMinutes <= 0) return 100;
-
+  // Hitung selisih waktu dalam millisecond, lalu convert ke Hari
   const diffMs = tglEnd.getTime() - tglStart.getTime();
-  const actualMinutes = diffMs / 60000; 
-  
-  let score = (1 - (actualMinutes - targetMinutes) / targetMinutes) * 100;
+  const actualDays = diffMs / (1000 * 60 * 60 * 24); 
 
+  // Hitung persentase ketercapaian SLA
+  let score = (1 - ((actualDays - targetDays) / targetDays)) * 100;
+
+  // Batasi batas atas dan bawah agar tidak ekstrem
   if (score > 200) score = 200;
   if (score < -200) score = -200;
 
@@ -79,7 +75,6 @@ function getScale(value, type) {
 
 /**
  * HITUNG METRIK
- * Memastikan kolom terbaca meskipun ada perbedaan spasi di header data
  */
 function calculateMetrics(records) {
   const totalTicket = records.length;
@@ -127,6 +122,9 @@ function calculateMetrics(records) {
   };
 }
 
+/**
+ * FILTERING DATA (Perbaikan MTD/YTD & Report Monitoring vs Score)
+ */
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
   const selectedMonth = parseInt(document.getElementById('f-month').value);
@@ -137,18 +135,30 @@ function applyFilters() {
     const tglTerima = parseCustomDate(getVal(row, 'Tgl Terima'));
     if (!tglTerima) return false;
 
-    const rowMonth = tglTerima.getMonth();
     const rowYear = tglTerima.getFullYear();
     if (rowYear !== currentYear) return false;
 
-    if (analysis === 'MTD') { if (rowMonth !== selectedMonth) return false; } 
-    else if (analysis === 'YTD') { if (rowMonth > selectedMonth) return false; }
+    const rowMonth = tglTerima.getMonth();
+    
+    // Perhitungan Bulan Target Jatuh Tempo
+    const targetDays = parseNum(getVal(row, 'Target Hari'));
+    const tglTarget = new Date(tglTerima.getTime());
+    tglTarget.setDate(tglTarget.getDate() + targetDays);
+    const targetMonth = tglTarget.getMonth();
 
-    if (reportType === 'score') {
-        const targetDays = parseNum(getVal(row, 'Target Hari'));
-        const tglTarget = new Date(tglTerima);
-        tglTarget.setDate(tglTarget.getDate() + targetDays);
-        if (tglTarget.getMonth() !== tglTerima.getMonth()) return false;
+    // Logika Pemisahan Sesuai Permintaan
+    if (analysis === 'MTD') {
+        if (reportType === 'monitoring') {
+            return rowMonth === selectedMonth; // Hanya terima di bulan tsb
+        } else if (reportType === 'score') {
+            return targetMonth === selectedMonth; // Target jatuh temponya di bulan tsb
+        }
+    } else if (analysis === 'YTD') {
+        if (reportType === 'monitoring') {
+            return rowMonth <= selectedMonth; // Dari Jan s.d Bulan tsb
+        } else if (reportType === 'score') {
+            return targetMonth <= selectedMonth; // Target jatuh temponya Jan s.d Bulan tsb
+        }
     }
     return true;
   });
@@ -167,7 +177,7 @@ function refreshDashboard() {
   if (listEl) {
     listEl.innerHTML = rankedDepts.map((d, i) => `
       <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${i + 1})" 
-           class="dept-item cursor-pointer p-3 rounded-xl hover:bg-slate-50 border-l-4 border-transparent transition-all group ${activeDeptName === d.name ? 'active-dept' : ''}">
+           class="dept-item cursor-pointer p-3 rounded-xl hover:bg-slate-100 border-l-4 border-transparent transition-all group ${activeDeptName === d.name ? 'active-dept shadow-sm' : ''}">
         <div class="flex justify-between items-center mb-1">
           <span class="text-[8px] font-bold text-slate-400 uppercase">Rank #${i + 1}</span>
           <span class="text-[10px] font-black text-indigo-600">${d.final}</span>
@@ -183,25 +193,28 @@ function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
   const layout = [
-    ["Total Ticket", m.total, "text-slate-600"],
+    ["Total Ticket", m.total, "text-slate-700"],
     ["Closed", m.closed, "text-emerald-600"],
     ["% Closed", m.pct + "%", "text-emerald-600"],
-    ["Konv (C)", m.convC, "text-emerald-400"],
+    ["Konv (C)", m.convC, "text-emerald-500"],
     ["Avg SLA %", m.sla, "text-blue-600"],
-    ["Konv (S)", m.convS, "text-blue-400"],
+    ["Konv (S)", m.convS, "text-blue-500"],
     ["Avg Puas", m.puas, "text-amber-600"],
-    ["Konv (K)", m.convK, "text-amber-400"],
+    ["Konv (K)", m.convK, "text-amber-500"],
     ["Score Layanan", m.final, "text-white"]
   ];
   container.innerHTML = layout.map((item, i) => `
-    <div class="${i === 8 ? 'bg-indigo-600 shadow-lg' : 'bg-white border border-slate-100'} p-3 rounded-xl">
-      <p class="text-[8px] font-bold ${i === 8 ? 'text-indigo-200' : 'text-slate-400'} uppercase">${item[0]}</p>
-      <p class="text-lg font-black italic ${item[2]}">${item[1]}</p>
+    <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-lg border-transparent' : 'bg-white border border-slate-200'} p-4 rounded-xl flex flex-col justify-center">
+      <p class="text-[8px] font-bold ${i === 8 ? 'text-indigo-100' : 'text-slate-400'} uppercase mb-1">${item[0]}</p>
+      <p class="text-xl font-black italic ${item[2]}">${item[1]}</p>
     </div>
   `).join('');
 }
 
-function renderDetailTable(data, groupKey, tableId) {
+/**
+ * RENDER TABEL (Ditambahkan parameter sortByScore = false defaultnya)
+ */
+function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
   const groups = {};
@@ -210,24 +223,33 @@ function renderDetailTable(data, groupKey, tableId) {
     if (!groups[key]) groups[key] = [];
     groups[key].push(row);
   });
-  const resultArr = Object.keys(groups).map(k => ({ name: k, ...calculateMetrics(groups[k]) }))
-    .sort((a, b) => b.total - a.total).slice(0, 50);
+  
+  let resultArr = Object.keys(groups).map(k => ({ name: k, ...calculateMetrics(groups[k]) }));
+  
+  // Mengurutkan PIC berdasarkan SCORE (final) jika parameter sortByScore di-set true
+  if (sortByScore) {
+      resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
+  } else {
+      resultArr.sort((a, b) => b.total - a.total);
+  }
+  
+  resultArr = resultArr.slice(0, 50);
+
   tbody.innerHTML = resultArr.map(i => `
     <tr class="hover:bg-slate-50 transition-colors">
       <td class="p-3 font-semibold text-slate-700 truncate max-w-[150px]" title="${i.name}">${i.name}</td>
       <td class="p-3 text-center font-medium">${i.total}</td>
       <td class="p-3 text-center text-emerald-600 font-medium">${i.closed}</td>
-      <td class="p-3 text-center text-slate-400">${i.pct}%</td>
+      <td class="p-3 text-center text-slate-500">${i.pct}%</td>
       <td class="p-3 text-center text-blue-600 font-medium">${i.sla}</td>
       <td class="p-3 text-center text-amber-600 font-medium">${i.puas}</td>
-      <td class="p-3 text-center font-black text-indigo-600 bg-indigo-50/30">${i.final}</td>
+      <td class="p-3 text-center font-black text-indigo-700 bg-indigo-50/50">${i.final}</td>
     </tr>
   `).join('');
 }
 
 /**
  * RENDER TABEL WARNING
- * Mengubah satuan output ke HARI
  */
 function renderWarningTable(data, tableId) {
   const tbody = document.getElementById(tableId);
@@ -242,30 +264,30 @@ function renderWarningTable(data, tableId) {
     const tgl = parseCustomDate(getVal(d, 'Tgl Terima'));
     const targetDays = parseNum(getVal(d, 'Target Hari'));
     
-    // Hitung Usia dalam Hari
     const diffMs = tgl ? (new Date() - tgl) : 0;
     const usiaHari = (diffMs / (1000 * 60 * 60 * 24)).toFixed(1);
     
     let label = '', badge = '';
     if (targetDays > 0) {
-        if (parseFloat(usiaHari) > targetDays) { label = 'OVER'; badge = 'bg-red-500'; }
-        else if (parseFloat(usiaHari) >= targetDays - 1) { label = 'WARN'; badge = 'bg-amber-400'; }
+        if (parseFloat(usiaHari) > targetDays) { label = 'OVER'; badge = 'bg-red-500 shadow-sm shadow-red-500/30'; }
+        else if (parseFloat(usiaHari) >= targetDays - 1) { label = 'WARN'; badge = 'bg-amber-400 shadow-sm shadow-amber-400/30'; }
     }
     
     return { ...d, usiaHari, targetDays, label, badge };
   }).filter(d => d.label !== '').sort((a,b) => b.usiaHari - a.usiaHari).slice(0, 50);
 
   if (critical.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Semua aman</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium italic bg-slate-50/30">Semua problem terpantau aman terkendali.</td></tr>`;
     return;
   }
+  
   tbody.innerHTML = critical.map(d => `
-    <tr class="text-[9px] hover:bg-red-50/30">
-      <td class="p-3 font-bold text-slate-400">${getVal(d, 'Departemen') || '-'}</td>
-      <td class="p-3 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || '-'}</td>
-      <td class="p-3 truncate max-w-[100px]">${getVal(d, 'Nama Penangung') || '-'}</td>
-      <td class="p-3 text-center font-bold text-slate-700">${d.usiaHari} / ${d.targetDays} Hari</td>
-      <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-0.5 rounded-full font-black">${d.label}</span></td>
+    <tr class="text-[9px] hover:bg-red-50/40 transition-colors">
+      <td class="p-4 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
+      <td class="p-4 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || '-'}</td>
+      <td class="p-4 truncate max-w-[150px] font-medium text-slate-700">${getVal(d, 'Nama Penangung') || '-'}</td>
+      <td class="p-4 text-center font-bold text-slate-700">${d.usiaHari} <span class="text-slate-300 mx-1">/</span> ${d.targetDays} Hari</td>
+      <td class="p-4 text-center"><span class="${d.badge} text-white px-2.5 py-1 rounded-full font-black tracking-wide">${d.label}</span></td>
     </tr>
   `).join('');
 }
@@ -279,8 +301,11 @@ function showHome() {
 
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
-  renderDetailTable(filteredData, 'Nama Problem', 'home-body-prob');
-  renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic');
+  
+  // Sort problem berdasarkan total, PIC berdasarkan Final Score
+  renderDetailTable(filteredData, 'Nama Problem', 'home-body-prob', false);
+  renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
+  
   renderWarningTable(filteredData, 'home-body-warn');
 }
 
@@ -302,8 +327,14 @@ function updateDeptView(deptName, rank) {
   document.getElementById('det-score').innerText = m.final;
   
   renderMetrikBox('dept-metrics', m);
-  renderDetailTable(deptData, 'Nama Problem', 'dept-body-prob');
-  renderDetailTable(deptData, 'Nama Penangung', 'dept-body-pic');
+  
+  // Sort problem berdasarkan total, PIC berdasarkan Final Score
+  renderDetailTable(deptData, 'Nama Problem', 'dept-body-prob', false);
+  renderDetailTable(deptData, 'Nama Penangung', 'dept-body-pic', true); 
+  
+  // Render Tabel Warning Khusus Dept ini saja
+  renderWarningTable(deptData, 'dept-body-warn');
+
   if(window.innerWidth < 1024 && typeof toggleSidebar === 'function') toggleSidebar();
 }
 
@@ -321,11 +352,11 @@ async function init() {
     const data = await res.json();
     rawData = data.filter(r => getVal(r, 'Departemen') && String(getVal(r, 'Departemen')).trim() !== '');
     const fM = document.getElementById('f-month');
-    if(fM) fM.value = new Date().getMonth();
+    if(fM) fM.value = new Date().getMonth(); // Set default ke bulan ini berjalan
     applyFilters();
   } catch (e) {
     const dL = document.getElementById('dept-list');
-    if(dL) dL.innerHTML = `<div class="p-4 text-red-500 text-[10px]">Koneksi Gagal: ${e.message}</div>`;
+    if(dL) dL.innerHTML = `<div class="p-4 text-red-500 font-medium text-xs bg-red-50 rounded-lg border border-red-100 mx-4">Koneksi Gagal: Silakan refresh halaman atau cek script google anda.</div>`;
   }
 }
 
