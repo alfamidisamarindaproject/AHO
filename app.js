@@ -24,22 +24,23 @@ function parseCustomDate(dateStr) {
   } catch (e) { return null; }
 }
 
-// LOGIKA BARU: Patokan Tgl Terima (Kolom Y) ke Tgl Closed (Kolom AB)
+// LOGIKA BARU: Hitungan SLA dalam MENIT
 function calculateNewSLAScore(row) {
-  // Patokan baru: Tgl Terima (Kolom Y)
   const tglStart = parseCustomDate(row['Tgl Terima']);
-  // Patokan akhir: Tgl Closed (Kolom AB)
   const tglEnd = parseCustomDate(row['Tgl Closed']) || new Date(); 
-  // Target Hari (Kolom AG)
-  const targetSLA = parseNum(row['Target Hari']);
   
-  if (!tglStart || targetSLA <= 0) return 100;
+  // Konversi Target Hari ke Menit (1 hari = 1440 menit)
+  const targetDays = parseNum(row['Target Hari']);
+  const targetMinutes = targetDays * 1440;
+  
+  if (!tglStart || targetMinutes <= 0) return 100;
 
+  // Hitung selisih dalam menit
   const diffMs = tglEnd - tglStart;
-  const actualDays = diffMs / (1000 * 60 * 60 * 24);
+  const actualMinutes = diffMs / (1000 * 60);
   
-  // Rumus: (1 - (actualDays - Target SLA)/Target SLA)) x 100
-  let score = (1 - (actualDays - targetSLA) / targetSLA) * 100;
+  // Rumus Skor (tetap dalam skala persentase)
+  let score = (1 - (actualMinutes - targetMinutes) / targetMinutes) * 100;
 
   if (score > 200) score = 200;
   if (score < -200) score = -200;
@@ -79,7 +80,7 @@ function calculateMetrics(records) {
   };
 }
 
-// FILTER LOGIC BARU: MTD vs YTD berdasar Tgl Terima
+// FILTER LOGIC: MTD vs YTD berdasar Tgl Terima
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
   const selectedMonth = parseInt(document.getElementById('f-month').value);
@@ -93,25 +94,19 @@ function applyFilters() {
     const rowMonth = tglTerima.getMonth();
     const rowYear = tglTerima.getFullYear();
 
-    // Hanya proses tahun berjalan
     if (rowYear !== currentYear) return false;
 
-    // Logika MTD: Hanya bulan yang dipilih
     if (analysis === 'MTD') {
         if (rowMonth !== selectedMonth) return false;
     } 
-    // Logika YTD: Bulan Januari (0) sampai Bulan yang dipilih
     else if (analysis === 'YTD') {
         if (rowMonth > selectedMonth) return false;
     }
 
-    // Filter Jenis Report (Score Akhir Bulan)
     if (reportType === 'score') {
         const targetDays = parseNum(row['Target Hari']);
         const tglTarget = new Date(tglTerima);
         tglTarget.setDate(tglTarget.getDate() + targetDays);
-        
-        // Exclude jika target hari menyeberang ke bulan berikutnya dari tglTerima
         if (tglTarget.getMonth() !== tglTerima.getMonth()) return false;
     }
 
@@ -199,18 +194,24 @@ function renderDetailTable(data, groupKey, tableId) {
   `).join('');
 }
 
+// LOGIKA BARU: renderWarningTable menggunakan satuan MENIT
 function renderWarningTable(data, tableId) {
   const tbody = document.getElementById(tableId);
   const unclosed = data.filter(d => String(d['Status'] || '').toLowerCase() !== 'closed');
   const critical = unclosed.map(d => {
     const tgl = parseCustomDate(d['Tgl Terima']);
-    const target = parseNum(d['Target Hari']);
-    const umur = tgl ? Math.floor((new Date() - tgl) / (1000 * 60 * 60 * 24)) : 0;
+    const targetDays = parseNum(d['Target Hari']);
+    const targetMin = targetDays * 1440;
+    
+    // Umur dalam menit
+    const umurMin = tgl ? Math.floor((new Date() - tgl) / (1000 * 60)) : 0;
+    
     let label = '', badge = '';
-    if (umur > target) { label = 'OVER'; badge = 'bg-red-500'; }
-    else if (umur >= target - 1 && target > 0) { label = 'WARN'; badge = 'bg-amber-400'; }
-    return { ...d, umur, target, label, badge };
-  }).filter(d => d.label !== '').sort((a,b) => (b.umur-b.target)-(a.umur-a.target)).slice(0, 50);
+    if (umurMin > targetMin) { label = 'OVER'; badge = 'bg-red-500'; }
+    else if (umurMin >= targetMin - 60 && targetMin > 0) { label = 'WARN'; badge = 'bg-amber-400'; }
+    
+    return { ...d, umurMin, targetMin, label, badge };
+  }).filter(d => d.label !== '').sort((a,b) => (b.umurMin-b.targetMin)-(a.umurMin-a.targetMin)).slice(0, 50);
 
   if (critical.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Semua aman</td></tr>`;
@@ -221,7 +222,7 @@ function renderWarningTable(data, tableId) {
       <td class="p-3 font-bold text-slate-400">${d['Departemen'] || '-'}</td>
       <td class="p-3 font-mono font-bold text-indigo-600">${d['No Problem'] || '-'}</td>
       <td class="p-3 truncate max-w-[100px]">${d['Nama Penangung'] || '-'}</td>
-      <td class="p-3 text-center font-bold text-slate-700">${d.umur} / ${d.target} Hari</td>
+      <td class="p-3 text-center font-bold text-slate-700">${d.umurMin} / ${d.targetMin} Min</td>
       <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-0.5 rounded-full font-black">${d.label}</span></td>
     </tr>
   `).join('');
@@ -279,7 +280,6 @@ async function init() {
     const data = await res.json();
     rawData = data.filter(r => r.Departemen && String(r.Departemen).trim() !== '');
     
-    // Set default filter ke bulan sekarang
     document.getElementById('f-month').value = new Date().getMonth();
     
     applyFilters();
