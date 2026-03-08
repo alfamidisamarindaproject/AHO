@@ -11,20 +11,20 @@
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-    .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
     .slide-in { transition: transform 0.3s ease-in-out; }
     @media (max-width: 1024px) { .sidebar-closed { transform: translateX(-100%); } }
     .nav-item-active { background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%); color: white !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-    .active-dept { background-color: #f1f5f9; border-left: 4px solid #4f46e5 !important; }
+    .active-dept { background-color: #f8fafc; border-left: 4px solid #4f46e5 !important; }
   </style>
 </head>
-<body class="bg-[#f8fafc] flex h-screen overflow-hidden text-slate-900 text-[11px] sm:text-xs">
+<body class="bg-[#f1f5f9] flex h-screen overflow-hidden text-slate-800 text-[11px] sm:text-xs">
 
   <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
 
-  <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-none flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-100">
-    <div class="p-6 flex items-center justify-between bg-white border-b border-slate-50">
+  <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-none flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
+    <div class="p-6 flex items-center justify-between bg-white border-b border-slate-100">
       <div>
         <h1 class="text-2xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
         <div class="flex items-center gap-1.5 mt-0.5">
@@ -41,22 +41,22 @@
       </button>
     </div>
 
-    <div class="px-6 py-2 flex items-center justify-between border-t border-slate-50 mt-2 pt-4">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Peringkat Dept</span>
-        <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px]">Live</span>
+    <div class="px-6 py-2 flex items-center justify-between border-t border-slate-100 mt-2 pt-4">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Peringkat Dept</span>
+        <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px] font-semibold">Live</span>
     </div>
     
     <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-3 pb-6 space-y-1">
       <div class="p-4 space-y-3">
-          <div class="h-10 bg-slate-50 rounded-lg animate-pulse"></div>
-          <div class="h-10 bg-slate-50 rounded-lg animate-pulse"></div>
+          <div class="h-10 bg-slate-100 rounded-lg animate-pulse"></div>
+          <div class="h-10 bg-slate-100 rounded-lg animate-pulse"></div>
       </div>
     </div>
   </aside>
 
   <main class="flex-1 overflow-hidden flex flex-col relative">
     
-    <header class="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 z-20 shrink-0">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-20 shrink-0">
         <div class="flex items-center gap-4">
             <button onclick="toggleSidebar()" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg lg:hidden transition-colors">
                 <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -68,25 +68,25 @@
         <div class="flex items-center gap-3">
             <div class="hidden md:flex flex-col text-right">
                 <span class="text-[10px] font-bold text-slate-400">SYNC STATUS</span>
-                <span id="global-last-update" class="text-[10px] font-medium text-emerald-500 uppercase">Connected</span>
+                <span id="global-last-update" class="text-[10px] font-bold text-emerald-500 uppercase">Connected</span>
             </div>
-            <button onclick="window.location.reload()" class="p-2 hover:bg-indigo-50 text-indigo-600 rounded-full transition-colors">
+            <button onclick="window.location.reload()" class="p-2 hover:bg-indigo-50 text-indigo-600 rounded-full transition-colors" title="Refresh Data">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             </button>
         </div>
     </header>
 
-    <div class="bg-white border-b border-slate-100 px-4 lg:px-8 py-3 flex flex-wrap gap-4 z-10 shadow-sm">
+    <div class="bg-white border-b border-slate-200 px-4 lg:px-8 py-3 flex flex-wrap gap-4 z-10 shadow-sm">
       <div class="flex flex-col">
         <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Analisis</label>
-        <select id="f-analysis" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500">
+        <select id="f-analysis" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500 cursor-pointer">
           <option value="MTD">MTD (Month to Date)</option>
           <option value="YTD">YTD (Year to Date)</option>
         </select>
       </div>
       <div class="flex flex-col">
-        <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Periode</label>
-        <select id="f-month" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500">
+        <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Periode Bulan</label>
+        <select id="f-month" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500 cursor-pointer">
           <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
           <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
           <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
@@ -95,7 +95,7 @@
       </div>
       <div class="flex flex-col">
         <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Jenis Report</label>
-        <select id="f-report" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500 text-indigo-600">
+        <select id="f-report" onchange="applyFilters()" class="text-[10px] font-bold border border-indigo-200 rounded-lg px-3 py-1.5 bg-indigo-50 outline-none focus:border-indigo-500 text-indigo-700 cursor-pointer">
           <option value="monitoring">Monitoring (Realtime)</option>
           <option value="score">Score Akhir Bulan</option>
         </select>
@@ -103,17 +103,18 @@
     </div>
 
     <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6">
+      
       <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
-          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <span class="font-bold uppercase text-slate-700 tracking-tight">Top Problem Cabang</span>
-            <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-[10px] border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-40">
+        <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
+          <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <span class="font-bold uppercase text-slate-800 tracking-tight">Top Problem Cabang</span>
+            <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-[10px] border border-slate-300 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-48 bg-white">
           </div>
           <div class="overflow-auto flex-1 custom-scroll">
             <table class="w-full text-left border-collapse">
-              <thead class="bg-slate-50/50 text-slate-500 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 backdrop-blur-md">
+              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10">
                 <tr>
                   <th class="p-3">Masalah</th>
                   <th class="p-3 text-center">Total</th>
@@ -121,22 +122,22 @@
                   <th class="p-3 text-center">% Clsd</th>
                   <th class="p-3 text-center">SLA</th>
                   <th class="p-3 text-center">Puas</th>
-                  <th class="p-3 text-center text-indigo-600">Score</th>
+                  <th class="p-3 text-center text-indigo-700">Score</th>
                 </tr>
               </thead>
-              <tbody id="home-body-prob" class="divide-y divide-slate-50"></tbody>
+              <tbody id="home-body-prob" class="divide-y divide-slate-100 bg-white"></tbody>
             </table>
           </div>
         </div>
 
-        <div class="glass-card rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
-          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <span class="font-bold uppercase text-slate-700 tracking-tight">Kinerja PIC Cabang</span>
-            <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-40">
+        <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
+          <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <span class="font-bold uppercase text-slate-800 tracking-tight">Kinerja PIC Cabang <span class="text-[9px] font-medium text-slate-400 normal-case ml-1">(Berdasarkan Score)</span></span>
+            <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-300 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-48 bg-white">
           </div>
           <div class="overflow-auto flex-1 custom-scroll">
             <table class="w-full text-left border-collapse">
-              <thead class="bg-slate-50/50 text-slate-500 font-bold border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10 backdrop-blur-md">
+              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10">
                 <tr>
                   <th class="p-3">Nama PIC</th>
                   <th class="p-3 text-center">Total</th>
@@ -144,59 +145,61 @@
                   <th class="p-3 text-center">% Clsd</th>
                   <th class="p-3 text-center">SLA</th>
                   <th class="p-3 text-center">Puas</th>
-                  <th class="p-3 text-center text-indigo-600">Score</th>
+                  <th class="p-3 text-center text-indigo-700">Score</th>
                 </tr>
               </thead>
-              <tbody id="home-body-pic" class="divide-y divide-slate-50"></tbody>
+              <tbody id="home-body-pic" class="divide-y divide-slate-100 bg-white"></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border-2 border-red-50 overflow-hidden">
-        <div class="p-4 bg-red-50/50 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <span class="font-bold text-red-600 uppercase">Problem Melebihi Target Hari</span>
-          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket/PIC..." class="text-[10px] border border-red-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500/20 w-full sm:w-48">
+      <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
+        <div class="p-4 bg-red-50 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <span class="font-bold text-red-600 uppercase">Problem Melebihi Target Hari (Semua Dept)</span>
+          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket/PIC/Dept..." class="text-[10px] border border-red-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500/20 w-full sm:w-56 bg-white">
         </div>
         <div class="max-h-80 overflow-auto custom-scroll">
-          <table class="w-full text-left border-collapse">
-            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[9px] sticky top-0 z-10">
+          <table class="w-full text-left border-collapse bg-white">
+            <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 font-bold">
               <tr><th class="p-4">Dept</th><th class="p-4">No Ticket</th><th class="p-4">PIC</th><th class="p-4 text-center">Usia / Target</th><th class="p-4 text-center">Status</th></tr>
             </thead>
-            <tbody id="home-body-warn" class="divide-y divide-slate-50"></tbody>
+            <tbody id="home-body-warn" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
     </div>
 
     <div id="view-dept" class="hidden flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6">
-        <div class="flex justify-between items-end bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
             <div>
-              <button onclick="showHome()" class="text-[10px] font-bold text-slate-400 hover:text-indigo-600 mb-2 flex items-center gap-1">
-                ← KEMBALI KE HOME
+              <button onclick="showHome()" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 mb-3 flex items-center gap-1.5 transition-colors bg-slate-50 px-3 py-1.5 rounded-lg w-max">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                KEMBALI KE HOME
               </button>
               <div class="flex items-center gap-3">
-                <span id="det-rank" class="bg-indigo-600 text-white text-[10px] px-3 py-1 rounded-full font-black italic">RANK #</span>
+                <span id="det-rank" class="bg-indigo-600 text-white text-[10px] px-3 py-1 rounded-md font-black italic shadow-md">RANK #</span>
                 <h2 id="det-name" class="text-2xl font-black text-slate-800 uppercase italic tracking-tight">NAMA DEPT</h2>
               </div>
             </div>
-            <div class="text-right">
-              <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Score</p>
-              <div id="det-score" class="text-4xl font-black text-indigo-600 italic leading-none">0.00</div>
+            <div class="text-left sm:text-right bg-indigo-50 p-4 rounded-xl border border-indigo-100 w-full sm:w-auto">
+              <p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Total Score Layanan</p>
+              <div id="det-score" class="text-4xl font-black text-indigo-700 italic leading-none">0.00</div>
             </div>
         </div>
 
         <div id="dept-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="glass-card rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                    <span class="font-bold uppercase text-slate-700">Detail Masalah Dept</span>
-                    <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari..." class="text-[10px] border px-3 py-1.5 rounded-xl w-32 outline-none">
+            <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl">
+                    <span class="font-bold uppercase text-slate-800">Detail Masalah Dept</span>
+                    <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari..." class="text-[10px] border border-slate-300 px-3 py-1.5 rounded-xl w-36 outline-none focus:ring-2 focus:ring-indigo-500/20">
                 </div>
                 <div class="overflow-auto flex-1 custom-scroll">
                     <table class="w-full text-left border-collapse text-[10px]">
-                        <thead class="bg-slate-50 sticky top-0 uppercase font-bold text-slate-500 border-b">
+                        <thead class="bg-slate-100 sticky top-0 uppercase font-bold text-slate-600 border-b border-slate-200">
                             <tr>
                                 <th class="p-3">Masalah</th>
                                 <th class="p-3 text-center">Total</th>
@@ -204,22 +207,22 @@
                                 <th class="p-3 text-center">%</th>
                                 <th class="p-3 text-center">SLA</th>
                                 <th class="p-3 text-center">Puas</th>
-                                <th class="p-3 text-center text-indigo-600">Score</th>
+                                <th class="p-3 text-center text-indigo-700">Score</th>
                             </tr>
                         </thead>
-                        <tbody id="dept-body-prob" class="divide-y divide-slate-50"></tbody>
+                        <tbody id="dept-body-prob" class="divide-y divide-slate-100 bg-white"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="glass-card rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                    <span class="font-bold uppercase text-slate-700">Kinerja PIC Dept</span>
-                    <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari..." class="text-[10px] border px-3 py-1.5 rounded-xl w-32 outline-none">
+            <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl">
+                    <span class="font-bold uppercase text-slate-800">Kinerja PIC Dept <span class="text-[9px] font-medium text-slate-400 normal-case ml-1">(Urut by Score)</span></span>
+                    <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-300 px-3 py-1.5 rounded-xl w-36 outline-none focus:ring-2 focus:ring-indigo-500/20">
                 </div>
                 <div class="overflow-auto flex-1 custom-scroll">
                     <table class="w-full text-left border-collapse text-[10px]">
-                        <thead class="bg-slate-50 sticky top-0 uppercase font-bold text-slate-500 border-b">
+                        <thead class="bg-slate-100 sticky top-0 uppercase font-bold text-slate-600 border-b border-slate-200">
                             <tr>
                                 <th class="p-3">Nama PIC</th>
                                 <th class="p-3 text-center">Total</th>
@@ -227,22 +230,38 @@
                                 <th class="p-3 text-center">%</th>
                                 <th class="p-3 text-center">SLA</th>
                                 <th class="p-3 text-center">Puas</th>
-                                <th class="p-3 text-center text-indigo-600">Score</th>
+                                <th class="p-3 text-center text-indigo-700">Score</th>
                             </tr>
                         </thead>
-                        <tbody id="dept-body-pic" class="divide-y divide-slate-50"></tbody>
+                        <tbody id="dept-body-pic" class="divide-y divide-slate-100 bg-white"></tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
+            <div class="p-4 bg-red-50 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <span class="font-bold text-red-600 uppercase">Problem Melebihi Target Hari (Dept Internal)</span>
+              <input type="text" onkeyup="doSearch(this, 'dept-body-warn')" placeholder="Cari tiket/PIC..." class="text-[10px] border border-red-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500/20 w-full sm:w-56 bg-white">
+            </div>
+            <div class="max-h-80 overflow-auto custom-scroll">
+              <table class="w-full text-left border-collapse bg-white">
+                <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 font-bold">
+                  <tr><th class="p-4">Dept</th><th class="p-4">No Ticket</th><th class="p-4">PIC</th><th class="p-4 text-center">Usia / Target</th><th class="p-4 text-center">Status</th></tr>
+                </thead>
+                <tbody id="dept-body-warn" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+        </div>
+
     </div>
 
-    <footer class="h-10 bg-white border-t border-slate-100 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20">
+    <footer class="h-10 bg-white border-t border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
       <div class="flex items-center gap-2">
         <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
         <span class="text-[9px] font-black text-red-500 tracking-[0.15em] uppercase">Internal Use Only</span>
       </div>
-      <div class="text-[9px] font-bold text-slate-400 tracking-wide uppercase">
+      <div class="text-[9px] font-bold text-slate-500 tracking-wide uppercase">
         Made by : <span class="text-indigo-600">Akbar Rasyid - SQR</span>
       </div>
     </footer>
