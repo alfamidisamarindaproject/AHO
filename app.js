@@ -24,21 +24,28 @@ function parseCustomDate(dateStr) {
   } catch (e) { return null; }
 }
 
-// LOGIKA: Hitungan SLA dalam MENIT
+/**
+ * FIX LOGIKA SLA:
+ * Menggunakan satuan MENIT agar sesuai dengan hasil simulasi manual.
+ */
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(row['Tgl Terima']);
   const tglEnd = parseCustomDate(row['Tgl Closed']) || new Date(); 
   
+  // Target dalam Menit (1 Hari = 1440 Menit)
   const targetDays = parseNum(row['Target Hari']);
   const targetMinutes = targetDays * 1440;
   
   if (!tglStart || targetMinutes <= 0) return 100;
 
+  // Durasi Aktual dalam Menit
   const diffMs = tglEnd - tglStart;
   const actualMinutes = diffMs / (1000 * 60);
   
+  // Rumus: (1 - (Actual Menit - Target Menit) / Target Menit) * 100
   let score = (1 - (actualMinutes - targetMinutes) / targetMinutes) * 100;
 
+  // Clamping skor agar tidak terlalu ekstrem
   if (score > 200) score = 200;
   if (score < -200) score = -200;
 
@@ -52,17 +59,23 @@ function getScale(value, type) {
   return 1;
 }
 
-// --- PERUBAHAN LOGIKA DI SINI ---
+/**
+ * FIX LOGIKA METRICS:
+ * SLA dan Kepuasan hanya dihitung dari data yang statusnya 'Closed'.
+ */
+
 function calculateMetrics(records) {
   const totalTicket = records.length;
   if (totalTicket === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
   
-  // 1. Hitung % Closed (Tetap menggunakan total seluruh ticket)
+  // 1. Filter data yang sudah Closed
   const closedRecords = records.filter(r => String(r['Status'] || '').trim().toLowerCase() === 'closed');
   const closedCount = closedRecords.length;
+  
+  // 2. Hitung % Closed (Beban kerja vs penyelesaian)
   const pctClosed = (closedCount / totalTicket) * 100;
   
-  // 2. Logika Baru: SLA dan Kepuasan HANYA dihitung dari ticket yang sudah CLOSED
+  // 3. Hitung Rata-rata SLA & Kepuasan (HANYA dari tiket yang Closed)
   let avgSla = 0;
   let avgPuas = 0;
 
@@ -72,10 +85,6 @@ function calculateMetrics(records) {
 
     const totalPuasScore = closedRecords.reduce((sum, r) => sum + parseNum(r['Tingkat Kepuasan']), 0);
     avgPuas = totalPuasScore / closedCount;
-  } else {
-    // Jika tidak ada yang closed, nilai rata-rata dianggap 0 atau minimal
-    avgSla = 0;
-    avgPuas = 0;
   }
   
   const convC = getScale(pctClosed, 'closed');
@@ -91,7 +100,6 @@ function calculateMetrics(records) {
   };
 }
 
-// FILTER LOGIC: MTD vs YTD berdasar Tgl Terima
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
   const selectedMonth = parseInt(document.getElementById('f-month').value);
@@ -212,7 +220,6 @@ function renderWarningTable(data, tableId) {
     const tgl = parseCustomDate(d['Tgl Terima']);
     const targetDays = parseNum(d['Target Hari']);
     const targetMin = targetDays * 1440;
-    
     const umurMin = tgl ? Math.floor((new Date() - tgl) / (1000 * 60)) : 0;
     
     let label = '', badge = '';
@@ -288,9 +295,7 @@ async function init() {
     const res = await fetch(API_URL);
     const data = await res.json();
     rawData = data.filter(r => r.Departemen && String(r.Departemen).trim() !== '');
-    
     document.getElementById('f-month').value = new Date().getMonth();
-    
     applyFilters();
   } catch (e) {
     document.getElementById('dept-list').innerHTML = `<div class="p-4 text-red-500 text-[10px]">Koneksi Gagal.</div>`;
