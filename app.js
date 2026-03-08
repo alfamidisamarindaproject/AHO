@@ -5,21 +5,19 @@ let filteredData = [];
 let rankedDepts = [];
 let activeDeptName = null;
 
-// Helper Pencarian Key Properti (Case Insensitive & Trim)
+// --- HELPER FUNCTIONS ---
 const getVal = (obj, keyName) => {
   const keys = Object.keys(obj);
   const foundKey = keys.find(k => k.trim().toLowerCase() === keyName.toLowerCase());
   return foundKey ? obj[foundKey] : null;
 };
 
-// Helper Parsing Angka
 const parseNum = (val) => {
   if (!val) return 0;
   const str = String(val).replace(',', '.').replace(/[^0-9.-]/g, '');
   return parseFloat(str) || 0;
 };
 
-// Helper Parsing Tanggal format DD/MM/YYYY HH:mm:ss
 function parseCustomDate(dateStr) {
   if (!dateStr || dateStr === 'undefined' || dateStr === '-') return null;
   try {
@@ -27,7 +25,6 @@ function parseCustomDate(dateStr) {
     const parts = sStr.split(' ');
     const dateParts = parts[0].split('/');
     if (dateParts.length !== 3) return null;
-    
     const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
     return new Date(
       parseInt(dateParts[2]), 
@@ -41,8 +38,8 @@ function parseCustomDate(dateStr) {
 }
 
 /**
- * LOGIKA SLA (Diperbarui)
- * Menggunakan rasio presisi: (Target / Aktual) * 100
+ * LOGIKA SLA PENALTY & REWARD (PRESERVASI MENIT)
+ * Batas: -200 s/d 200
  */
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(getVal(row, 'Tgl Terima'));
@@ -50,28 +47,43 @@ function calculateNewSLAScore(row) {
   const targetDays = parseNum(getVal(row, 'Target Hari'));
 
   if (!tglStart) return 0;
-  if (targetDays <= 0) return 100; // Jika tidak ada target, berikan nilai sempurna
+  if (targetDays <= 0) return 100;
 
-  // Hitung selisih waktu
+  const targetMinutes = targetDays * 1440;
   const diffMs = tglEnd.getTime() - tglStart.getTime();
-  let actualDays = diffMs / (1000 * 60 * 60 * 24); 
+  let actualMinutes = diffMs / (1000 * 60); 
+  if (actualMinutes < 1) actualMinutes = 1;
 
-  // Jika selesai di hari yang sama/kurang dari 1 jam, set batas minimal agar pembagi tidak 0 atau minus
-  if (actualDays <= 0) actualDays = 0.1;
+  // RULE KHUSUS: Bonus jika selesai < 24 Jam (1440 Menit)
+  if (actualMinutes <= 1440) return 200;
 
-  // Hitung persentase ketercapaian SLA
-  let score = (targetDays / actualDays) * 100;
+  // RUMUS UTAMA: (1 - (Actual - Target) / Target) * 100
+  let score = (1 - (actualMinutes - targetMinutes) / targetMinutes) * 100;
 
-  // Batasi batas atas agar nilai terlalu cepat tidak merusak rata-rata secara ekstrem
+  // Clamp / Batasi hasil sesuai permintaan
   if (score > 200) score = 200;
+  if (score < -200) score = -200;
 
   return score;
 }
 
+
+
+/**
+ * KONVERSI SKALA 1-4
+ * SLA: Rentang -200 (Skala 1) sampai 200 (Skala 4)
+ */
 function getScale(value, type) {
   if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
-  if (type === 'sla')    return value < 85 ? 1 : (value >= 130 ? 4 : 1 + ((value - 85) / 44.99) * 2.99);
-  if (type === 'puas')   return value >= 4 ? 4 : (value <= 1 ? 1 : 1 + ((value - 1) / 3) * 2.99);
+  
+  if (type === 'sla') {
+    // Normalisasi range -200 s/d 200 ke skala 1 s/d 4
+    // Rumus: SkalaMin + ((Val - ValMin) / (ValMax - ValMin)) * (SkalaMax - SkalaMin)
+    let scaled = 1 + ((value - (-200)) / 400) * 3;
+    return Math.max(1, Math.min(4, scaled));
+  }
+
+  if (type === 'puas') return value >= 4 ? 4 : (value <= 1 ? 1 : 1 + ((value - 1) / 3) * 2.99);
   return 1;
 }
 
@@ -112,9 +124,10 @@ function calculateMetrics(records) {
   }
   
   const convC = getScale(pctClosed, 'closed');
-  const convS = getScale(avgSla, 'sla');
+  const convS = getScale(avgSla, 'sla'); // Menggunakan logika konversi -200 ke 200
   const convK = getScale(avgPuas, 'puas');
   
+  // Bobot: 30% Closed, 50% SLA, 20% Kepuasan
   const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
   
   return {
@@ -124,9 +137,9 @@ function calculateMetrics(records) {
   };
 }
 
-/**
- * FILTERING DATA 
- */
+// --- RENDER & FILTER FUNCTIONS ---
+// (Tetap sama seperti sebelumnya namun menggunakan calculateMetrics yang sudah diperbarui)
+
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
   const selectedMonth = parseInt(document.getElementById('f-month').value);
@@ -136,34 +149,21 @@ function applyFilters() {
   filteredData = rawData.filter(row => {
     const tglTerima = parseCustomDate(getVal(row, 'Tgl Terima'));
     if (!tglTerima) return false;
-
     const rowYear = tglTerima.getFullYear();
     if (rowYear !== currentYear) return false;
-
     const rowMonth = tglTerima.getMonth();
-    
-    // Perhitungan Bulan Target Jatuh Tempo
     const targetDays = parseNum(getVal(row, 'Target Hari'));
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
     const targetMonth = tglTarget.getMonth();
 
     if (analysis === 'MTD') {
-        if (reportType === 'monitoring') {
-            return rowMonth === selectedMonth; 
-        } else if (reportType === 'score') {
-            return targetMonth === selectedMonth; 
-        }
+        return (reportType === 'monitoring' ? rowMonth : targetMonth) === selectedMonth;
     } else if (analysis === 'YTD') {
-        if (reportType === 'monitoring') {
-            return rowMonth <= selectedMonth; 
-        } else if (reportType === 'score') {
-            return targetMonth <= selectedMonth; 
-        }
+        return (reportType === 'monitoring' ? rowMonth : targetMonth) <= selectedMonth;
     }
     return true;
   });
-
   refreshDashboard();
 }
 
@@ -212,9 +212,6 @@ function renderMetrikBox(containerId, m) {
   `).join('');
 }
 
-/**
- * RENDER TABEL
- */
 function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -224,20 +221,13 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
     if (!groups[key]) groups[key] = [];
     groups[key].push(row);
   });
-  
   let resultArr = Object.keys(groups).map(k => ({ name: k, ...calculateMetrics(groups[k]) }));
+  if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
+  else resultArr.sort((a, b) => b.total - a.total);
   
-  if (sortByScore) {
-      resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
-  } else {
-      resultArr.sort((a, b) => b.total - a.total);
-  }
-  
-  resultArr = resultArr.slice(0, 50);
-
-  tbody.innerHTML = resultArr.map(i => `
-    <tr class="hover:bg-slate-50 transition-colors">
-      <td class="p-3 font-semibold text-slate-700 truncate max-w-[150px]" title="${i.name}">${i.name}</td>
+  tbody.innerHTML = resultArr.slice(0, 50).map(i => `
+    <tr class="hover:bg-slate-50 transition-colors text-[10px]">
+      <td class="p-3 font-semibold text-slate-700 truncate max-w-[150px]">${i.name}</td>
       <td class="p-3 text-center font-medium">${i.total}</td>
       <td class="p-3 text-center text-emerald-600 font-medium">${i.closed}</td>
       <td class="p-3 text-center text-slate-500">${i.pct}%</td>
@@ -248,82 +238,47 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   `).join('');
 }
 
-/**
- * RENDER TABEL WARNING (Diperbarui Logika Mendekati SLA)
- */
 function renderWarningTable(data, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
-  
   const unclosed = data.filter(d => {
     const status = String(getVal(d, 'Status') || '').trim().toLowerCase();
     return status !== 'closed' && status !== 'selesai';
   });
-
   const critical = unclosed.map(d => {
     const tgl = parseCustomDate(getVal(d, 'Tgl Terima'));
     const targetDays = parseNum(getVal(d, 'Target Hari'));
-    
     if (!tgl || targetDays <= 0) return null;
-
     const diffMs = new Date() - tgl.getTime();
     const usiaHari = diffMs / (1000 * 60 * 60 * 24);
-    
-    let label = '', badge = '';
+    let label = 'ON TRACK', badge = '';
     const sisaHari = targetDays - usiaHari;
-    
-    // OVERDUE: Waktu habis
-    if (usiaHari > targetDays) { 
-        label = 'OVERDUE'; 
-        badge = 'bg-red-500 shadow-sm shadow-red-500/30'; 
-    }
-    // WARNING: Jika waktu terpakai sdh 70% ATAU sisa waktu tinggal 1.5 hari
-    else if (usiaHari >= (targetDays * 0.7) || sisaHari <= 1.5) { 
-        label = 'WARNING'; 
-        badge = 'bg-amber-400 shadow-sm shadow-amber-400/30'; 
-    } 
-    // Sisanya ON TRACK (tapi kita sembunyikan agar fokus ke warning)
-    else {
-        label = 'ON TRACK';
-    }
-    
+    if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
+    else if (usiaHari >= (targetDays * 0.7) || sisaHari <= 1.5) { label = 'WARNING'; badge = 'bg-amber-400'; } 
     return { ...d, usiaHari: usiaHari.toFixed(1), targetDays, label, badge };
-  }).filter(d => d !== null && d.label !== 'ON TRACK'); // Hapus null & On Track
-
-  // Urutkan dari usia hari yang paling tua
+  }).filter(d => d !== null && d.label !== 'ON TRACK');
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
-  
-  const sliced = critical.slice(0, 50);
-
-  if (sliced.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium italic bg-slate-50/30">Semua problem terpantau aman terkendali.</td></tr>`;
-    return;
-  }
-  
-  tbody.innerHTML = sliced.map(d => `
-    <tr class="text-[9px] hover:bg-slate-50 transition-colors">
+  tbody.innerHTML = critical.slice(0, 50).map(d => `
+    <tr class="text-[9px] hover:bg-slate-50">
       <td class="p-4 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
       <td class="p-4 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || '-'}</td>
       <td class="p-4 truncate max-w-[150px] font-medium text-slate-700">${getVal(d, 'Nama Penangung') || '-'}</td>
-      <td class="p-4 text-center font-bold text-slate-700">${d.usiaHari} <span class="text-slate-300 mx-1">/</span> ${d.targetDays} Hari</td>
-      <td class="p-4 text-center"><span class="${d.badge} text-white px-2.5 py-1 rounded-full font-black tracking-wide">${d.label}</span></td>
+      <td class="p-4 text-center font-bold text-slate-700">${d.usiaHari} / ${d.targetDays} Hari</td>
+      <td class="p-4 text-center"><span class="${d.badge} text-white px-2.5 py-1 rounded-full font-black">${d.label}</span></td>
     </tr>
   `).join('');
 }
 
 function showHome() {
   activeDeptName = null;
-  const vH = document.getElementById('view-home'), vD = document.getElementById('view-dept');
-  if(vH) vH.classList.remove('hidden'); if(vD) vD.classList.add('hidden');
+  document.getElementById('view-home')?.classList.remove('hidden');
+  document.getElementById('view-dept')?.classList.add('hidden');
   document.getElementById('btn-home')?.classList.add('nav-item-active');
   document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
-
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
-  
   renderDetailTable(filteredData, 'Nama Problem', 'home-body-prob', false);
   renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
-  
   renderWarningTable(filteredData, 'home-body-warn');
 }
 
@@ -333,25 +288,18 @@ function selectDept(deptName, el, rank) {
 }
 
 function updateDeptView(deptName, rank) {
-  const vH = document.getElementById('view-home'), vD = document.getElementById('view-dept');
-  if(vH) vH.classList.add('hidden'); if(vD) vD.classList.remove('hidden');
+  document.getElementById('view-home')?.classList.add('hidden');
+  document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
-  
   const deptData = filteredData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
   const m = calculateMetrics(deptData);
-  
   document.getElementById('det-name').innerText = deptName;
   document.getElementById('det-rank').innerText = `RANK #${rank}`;
   document.getElementById('det-score').innerText = m.final;
-  
   renderMetrikBox('dept-metrics', m);
-  
   renderDetailTable(deptData, 'Nama Problem', 'dept-body-prob', false);
   renderDetailTable(deptData, 'Nama Penangung', 'dept-body-pic', true); 
-  
-  // Render Tabel Warning Khusus Dept
   renderWarningTable(deptData, 'dept-body-warn');
-
   if(window.innerWidth < 1024 && typeof toggleSidebar === 'function') toggleSidebar();
 }
 
@@ -373,7 +321,7 @@ async function init() {
     applyFilters();
   } catch (e) {
     const dL = document.getElementById('dept-list');
-    if(dL) dL.innerHTML = `<div class="p-4 text-red-500 font-medium text-xs bg-red-50 rounded-lg border border-red-100 mx-4">Koneksi Gagal: Silakan refresh halaman atau cek script google anda.</div>`;
+    if(dL) dL.innerHTML = `<div class="p-4 text-red-500 text-xs bg-red-50 rounded-lg border border-red-100 mx-4">Koneksi Gagal: Cek script google anda.</div>`;
   }
 }
 
