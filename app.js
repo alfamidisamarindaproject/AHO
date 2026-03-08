@@ -38,8 +38,8 @@ function parseCustomDate(dateStr) {
 }
 
 /**
- * LOGIKA SLA PENALTY & REWARD (PRESERVASI MENIT)
- * Batas: -200 s/d 200
+ * LOGIKA SLA BERJENJANG (TIERED SCORING)
+ * Sesuai Milestone: 200, 175, 150, 100, 0, -100, -200
  */
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(getVal(row, 'Tgl Terima'));
@@ -49,36 +49,39 @@ function calculateNewSLAScore(row) {
   if (!tglStart) return 0;
   if (targetDays <= 0) return 100;
 
-  const targetMinutes = targetDays * 1440;
-  const diffMs = tglEnd.getTime() - tglStart.getTime();
-  let actualMinutes = diffMs / (1000 * 60); 
-  if (actualMinutes < 1) actualMinutes = 1;
+  const targetMins = targetDays * 1440;
+  const actualMins = (tglEnd.getTime() - tglStart.getTime()) / (1000 * 60);
 
-  // RULE KHUSUS: Bonus jika selesai < 24 Jam (1440 Menit)
-  if (actualMinutes <= 1440) return 200;
+  // 1. Bonus < 24 Jam
+  if (actualMins <= 1440) return 200;
 
-  // RUMUS UTAMA: (1 - (Actual - Target) / Target) * 100
-  let score = (1 - (actualMinutes - targetMinutes) / targetMinutes) * 100;
+  // 2. Reward Cepat
+  if (actualMins <= targetMins / 4) return 175;
+  if (actualMins <= targetMins / 2) return 150;
+  
+  // 3. Tepat Target (Toleransi 1 Jam)
+  if (Math.abs(actualMins - targetMins) < 60) return 100;
 
-  // Clamp / Batasi hasil sesuai permintaan
-  if (score > 200) score = 200;
-  if (score < -200) score = -200;
+  // 4. Penalty Lambat
+  if (actualMins >= targetMins * 4) return -200;
+  if (actualMins >= targetMins * 3) return -100;
+  if (actualMins >= targetMins * 2) return 0;
 
-  return score;
+  // 5. Interpolasi untuk area di antara poin (misal antara 1x dan 2x target)
+  let score = 100 - ((actualMins - targetMins) / targetMins) * 100;
+
+  return Math.max(-200, Math.min(200, score));
 }
-
-
 
 /**
  * KONVERSI SKALA 1-4
- * SLA: Rentang -200 (Skala 1) sampai 200 (Skala 4)
+ * Mapping rentang -200 sampai 200 ke skala 1 sampai 4
  */
 function getScale(value, type) {
   if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
   
   if (type === 'sla') {
-    // Normalisasi range -200 s/d 200 ke skala 1 s/d 4
-    // Rumus: SkalaMin + ((Val - ValMin) / (ValMax - ValMin)) * (SkalaMax - SkalaMin)
+    // Rumus: 1 + ( (nilai - nilaiMin) / (nilaiMax - nilaiMin) ) * (skalaMax - skalaMin)
     let scaled = 1 + ((value - (-200)) / 400) * 3;
     return Math.max(1, Math.min(4, scaled));
   }
@@ -112,10 +115,8 @@ function calculateMetrics(records) {
 
     closedRecords.forEach(r => {
       const s = calculateNewSLAScore(r);
-      if (parseCustomDate(getVal(r, 'Tgl Terima')) !== null) {
-        sumSla += s;
-        validSlaCount++;
-      }
+      sumSla += s;
+      validSlaCount++;
       sumPuas += parseNum(getVal(r, 'Tingkat Kepuasan'));
     });
 
@@ -124,10 +125,9 @@ function calculateMetrics(records) {
   }
   
   const convC = getScale(pctClosed, 'closed');
-  const convS = getScale(avgSla, 'sla'); // Menggunakan logika konversi -200 ke 200
+  const convS = getScale(avgSla, 'sla');
   const convK = getScale(avgPuas, 'puas');
   
-  // Bobot: 30% Closed, 50% SLA, 20% Kepuasan
   const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
   
   return {
@@ -137,9 +137,8 @@ function calculateMetrics(records) {
   };
 }
 
-// --- RENDER & FILTER FUNCTIONS ---
-// (Tetap sama seperti sebelumnya namun menggunakan calculateMetrics yang sudah diperbarui)
-
+// --- RENDER & DASHBOARD FUNCTIONS ---
+// (Fungsi UI, Filter, dan Rendering lainnya tetap sama)
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
   const selectedMonth = parseInt(document.getElementById('f-month').value);
@@ -149,19 +148,14 @@ function applyFilters() {
   filteredData = rawData.filter(row => {
     const tglTerima = parseCustomDate(getVal(row, 'Tgl Terima'));
     if (!tglTerima) return false;
-    const rowYear = tglTerima.getFullYear();
-    if (rowYear !== currentYear) return false;
     const rowMonth = tglTerima.getMonth();
     const targetDays = parseNum(getVal(row, 'Target Hari'));
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
     const targetMonth = tglTarget.getMonth();
 
-    if (analysis === 'MTD') {
-        return (reportType === 'monitoring' ? rowMonth : targetMonth) === selectedMonth;
-    } else if (analysis === 'YTD') {
-        return (reportType === 'monitoring' ? rowMonth : targetMonth) <= selectedMonth;
-    }
+    if (analysis === 'MTD') return (reportType === 'monitoring' ? rowMonth : targetMonth) === selectedMonth;
+    else if (analysis === 'YTD') return (reportType === 'monitoring' ? rowMonth : targetMonth) <= selectedMonth;
     return true;
   });
   refreshDashboard();
@@ -205,7 +199,7 @@ function renderMetrikBox(containerId, m) {
     ["Score Layanan", m.final, "text-white"]
   ];
   container.innerHTML = layout.map((item, i) => `
-    <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-lg border-transparent' : 'bg-white border border-slate-200'} p-4 rounded-xl flex flex-col justify-center">
+    <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-lg' : 'bg-white border'} p-4 rounded-xl flex flex-col justify-center">
       <p class="text-[8px] font-bold ${i === 8 ? 'text-indigo-100' : 'text-slate-400'} uppercase mb-1">${item[0]}</p>
       <p class="text-xl font-black italic ${item[2]}">${item[1]}</p>
     </div>
@@ -224,16 +218,15 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   let resultArr = Object.keys(groups).map(k => ({ name: k, ...calculateMetrics(groups[k]) }));
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
-  
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
     <tr class="hover:bg-slate-50 transition-colors text-[10px]">
-      <td class="p-3 font-semibold text-slate-700 truncate max-w-[150px]">${i.name}</td>
-      <td class="p-3 text-center font-medium">${i.total}</td>
-      <td class="p-3 text-center text-emerald-600 font-medium">${i.closed}</td>
-      <td class="p-3 text-center text-slate-500">${i.pct}%</td>
-      <td class="p-3 text-center text-blue-600 font-medium">${i.sla}</td>
-      <td class="p-3 text-center text-amber-600 font-medium">${i.puas}</td>
-      <td class="p-3 text-center font-black text-indigo-700 bg-indigo-50/50">${i.final}</td>
+      <td class="p-3 font-semibold text-slate-700 truncate">${i.name}</td>
+      <td class="p-3 text-center">${i.total}</td>
+      <td class="p-3 text-center text-emerald-600">${i.closed}</td>
+      <td class="p-3 text-center">${i.pct}%</td>
+      <td class="p-3 text-center text-blue-600">${i.sla}</td>
+      <td class="p-3 text-center text-amber-600">${i.puas}</td>
+      <td class="p-3 text-center font-black text-indigo-700">${i.final}</td>
     </tr>
   `).join('');
 }
@@ -252,9 +245,8 @@ function renderWarningTable(data, tableId) {
     const diffMs = new Date() - tgl.getTime();
     const usiaHari = diffMs / (1000 * 60 * 60 * 24);
     let label = 'ON TRACK', badge = '';
-    const sisaHari = targetDays - usiaHari;
     if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
-    else if (usiaHari >= (targetDays * 0.7) || sisaHari <= 1.5) { label = 'WARNING'; badge = 'bg-amber-400'; } 
+    else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
     return { ...d, usiaHari: usiaHari.toFixed(1), targetDays, label, badge };
   }).filter(d => d !== null && d.label !== 'ON TRACK');
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
@@ -262,8 +254,8 @@ function renderWarningTable(data, tableId) {
     <tr class="text-[9px] hover:bg-slate-50">
       <td class="p-4 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
       <td class="p-4 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || '-'}</td>
-      <td class="p-4 truncate max-w-[150px] font-medium text-slate-700">${getVal(d, 'Nama Penangung') || '-'}</td>
-      <td class="p-4 text-center font-bold text-slate-700">${d.usiaHari} / ${d.targetDays} Hari</td>
+      <td class="p-4 truncate">${getVal(d, 'Nama Penangung') || '-'}</td>
+      <td class="p-4 text-center">${d.usiaHari} / ${d.targetDays} Hari</td>
       <td class="p-4 text-center"><span class="${d.badge} text-white px-2.5 py-1 rounded-full font-black">${d.label}</span></td>
     </tr>
   `).join('');
@@ -300,15 +292,6 @@ function updateDeptView(deptName, rank) {
   renderDetailTable(deptData, 'Nama Problem', 'dept-body-prob', false);
   renderDetailTable(deptData, 'Nama Penangung', 'dept-body-pic', true); 
   renderWarningTable(deptData, 'dept-body-warn');
-  if(window.innerWidth < 1024 && typeof toggleSidebar === 'function') toggleSidebar();
-}
-
-function doSearch(input, tableId) {
-  const filter = input.value.toUpperCase();
-  const rows = document.getElementById(tableId).getElementsByTagName("tr");
-  for (let i = 0; i < rows.length; i++) {
-    rows[i].style.display = rows[i].innerText.toUpperCase().includes(filter) ? "" : "none";
-  }
 }
 
 async function init() {
@@ -316,12 +299,9 @@ async function init() {
     const res = await fetch(API_URL);
     const data = await res.json();
     rawData = data.filter(r => getVal(r, 'Departemen') && String(getVal(r, 'Departemen')).trim() !== '');
-    const fM = document.getElementById('f-month');
-    if(fM) fM.value = new Date().getMonth(); 
     applyFilters();
   } catch (e) {
-    const dL = document.getElementById('dept-list');
-    if(dL) dL.innerHTML = `<div class="p-4 text-red-500 text-xs bg-red-50 rounded-lg border border-red-100 mx-4">Koneksi Gagal: Cek script google anda.</div>`;
+    console.error("Gagal memuat data:", e);
   }
 }
 
