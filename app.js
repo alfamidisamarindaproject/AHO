@@ -24,22 +24,19 @@ function parseCustomDate(dateStr) {
   } catch (e) { return null; }
 }
 
-// LOGIKA BARU: Hitungan SLA dalam MENIT
+// LOGIKA: Hitungan SLA dalam MENIT
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(row['Tgl Terima']);
   const tglEnd = parseCustomDate(row['Tgl Closed']) || new Date(); 
   
-  // Konversi Target Hari ke Menit (1 hari = 1440 menit)
   const targetDays = parseNum(row['Target Hari']);
   const targetMinutes = targetDays * 1440;
   
   if (!tglStart || targetMinutes <= 0) return 100;
 
-  // Hitung selisih dalam menit
   const diffMs = tglEnd - tglStart;
   const actualMinutes = diffMs / (1000 * 60);
   
-  // Rumus Skor (tetap dalam skala persentase)
   let score = (1 - (actualMinutes - targetMinutes) / targetMinutes) * 100;
 
   if (score > 200) score = 200;
@@ -55,17 +52,31 @@ function getScale(value, type) {
   return 1;
 }
 
+// --- PERUBAHAN LOGIKA DI SINI ---
 function calculateMetrics(records) {
-  const t = records.length;
-  if (t === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
+  const totalTicket = records.length;
+  if (totalTicket === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
   
-  const closedCount = records.filter(r => String(r['Status'] || '').trim().toLowerCase() === 'closed').length;
-  const pctClosed = (closedCount / t) * 100;
+  // 1. Hitung % Closed (Tetap menggunakan total seluruh ticket)
+  const closedRecords = records.filter(r => String(r['Status'] || '').trim().toLowerCase() === 'closed');
+  const closedCount = closedRecords.length;
+  const pctClosed = (closedCount / totalTicket) * 100;
   
-  const totalSLAScore = records.reduce((sum, r) => sum + calculateNewSLAScore(r), 0);
-  const avgSla = totalSLAScore / t;
-  
-  const avgPuas = records.reduce((sum, r) => sum + parseNum(r['Tingkat Kepuasan']), 0) / t;
+  // 2. Logika Baru: SLA dan Kepuasan HANYA dihitung dari ticket yang sudah CLOSED
+  let avgSla = 0;
+  let avgPuas = 0;
+
+  if (closedCount > 0) {
+    const totalSLAScore = closedRecords.reduce((sum, r) => sum + calculateNewSLAScore(r), 0);
+    avgSla = totalSLAScore / closedCount;
+
+    const totalPuasScore = closedRecords.reduce((sum, r) => sum + parseNum(r['Tingkat Kepuasan']), 0);
+    avgPuas = totalPuasScore / closedCount;
+  } else {
+    // Jika tidak ada yang closed, nilai rata-rata dianggap 0 atau minimal
+    avgSla = 0;
+    avgPuas = 0;
+  }
   
   const convC = getScale(pctClosed, 'closed');
   const convS = getScale(avgSla, 'sla');
@@ -74,7 +85,7 @@ function calculateMetrics(records) {
   const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
   
   return {
-    total: t, closed: closedCount, pct: pctClosed.toFixed(1), convC: convC.toFixed(2),
+    total: totalTicket, closed: closedCount, pct: pctClosed.toFixed(1), convC: convC.toFixed(2),
     sla: avgSla.toFixed(1), convS: convS.toFixed(2), puas: avgPuas.toFixed(1), convK: convK.toFixed(2),
     final: finalScore.toFixed(2)
   };
@@ -194,7 +205,6 @@ function renderDetailTable(data, groupKey, tableId) {
   `).join('');
 }
 
-// LOGIKA BARU: renderWarningTable menggunakan satuan MENIT
 function renderWarningTable(data, tableId) {
   const tbody = document.getElementById(tableId);
   const unclosed = data.filter(d => String(d['Status'] || '').toLowerCase() !== 'closed');
@@ -203,7 +213,6 @@ function renderWarningTable(data, tableId) {
     const targetDays = parseNum(d['Target Hari']);
     const targetMin = targetDays * 1440;
     
-    // Umur dalam menit
     const umurMin = tgl ? Math.floor((new Date() - tgl) / (1000 * 60)) : 0;
     
     let label = '', badge = '';
