@@ -4,33 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="URL_GAMBAR_KAMU">
-  <link rel="apple-touch-icon" href="URL_GAMBAR_KAMU">
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>AHO Monitoring</title>
+  <title>AHO Monitoring - SGZ1</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-    .glass-card {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
+    .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
     .slide-in { transition: transform 0.3s ease-in-out; }
     @media (max-width: 1024px) { .sidebar-closed { transform: translateX(-100%); } }
-    .nav-item-active {
-      background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%);
-      color: white !important;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-    }
-    .active-dept {
-      background-color: #f1f5f9;
-      border-left: 4px solid #4f46e5 !important;
-    }
+    .nav-item-active { background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%); color: white !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+    .active-dept { background-color: #f1f5f9; border-left: 4px solid #4f46e5 !important; }
   </style>
 </head>
 <body class="bg-[#f8fafc] flex h-screen overflow-hidden text-slate-900 text-[11px] sm:text-xs">
@@ -43,12 +29,9 @@
         <h1 class="text-2xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
         <div class="flex items-center gap-1.5 mt-0.5">
           <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-          <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Dasboard Monitoring</p>
+          <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Dashboard Monitoring</p>
         </div>
       </div>
-      <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-slate-100 rounded-lg">
-        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
     </div>
     
     <div class="p-4">
@@ -58,7 +41,7 @@
       </button>
     </div>
 
-    <div class="px-6 py-2 flex items-center justify-between">
+    <div class="px-6 py-2 flex items-center justify-between border-t border-slate-50 mt-2 pt-4">
         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Peringkat Dept</span>
         <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px]">Live</span>
     </div>
@@ -78,20 +61,48 @@
             <button onclick="toggleSidebar()" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg lg:hidden transition-colors">
                 <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
-            <h2 class="text-sm sm:text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <h2 class="text-sm sm:text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2 uppercase">
                 AHO SAMARINDA <span class="hidden sm:inline text-slate-300">|</span> <span class="text-indigo-600">SGZ1</span>
             </h2>
         </div>
         <div class="flex items-center gap-3">
             <div class="hidden md:flex flex-col text-right">
-                <span class="text-[10px] font-bold text-slate-400">LAST UPDATE</span>
-                <span id="global-last-update" class="text-[10px] font-medium text-slate-600">Syncing...</span>
+                <span class="text-[10px] font-bold text-slate-400">SYNC STATUS</span>
+                <span id="global-last-update" class="text-[10px] font-medium text-emerald-500 uppercase">Connected</span>
             </div>
             <button onclick="window.location.reload()" class="p-2 hover:bg-indigo-50 text-indigo-600 rounded-full transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             </button>
         </div>
     </header>
+
+    <div class="bg-white border-b border-slate-100 px-4 lg:px-8 py-3 flex flex-wrap gap-4 z-10 shadow-sm">
+      <div class="flex flex-col">
+        <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Analisis</label>
+        <select id="f-analysis" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500">
+          <option value="ALL">All Time</option>
+          <option value="MTD">MTD (Month to Date)</option>
+          <option value="YTD">YTD (Year to Date)</option>
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Periode</label>
+        <select id="f-month" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500">
+          <option value="ALL">Semua Bulan</option>
+          <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
+          <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
+          <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
+          <option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Jenis Report</label>
+        <select id="f-report" onchange="applyFilters()" class="text-[10px] font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:border-indigo-500 text-indigo-600">
+          <option value="monitoring">Monitoring (Realtime)</option>
+          <option value="score">Score Akhir Bulan</option>
+        </select>
+      </div>
+    </div>
 
     <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6">
       <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
@@ -227,7 +238,8 @@
             </div>
         </div>
     </div>
-    </div> <footer class="h-10 bg-white border-t border-slate-100 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20">
+
+    <footer class="h-10 bg-white border-t border-slate-100 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20">
       <div class="flex items-center gap-2">
         <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
         <span class="text-[9px] font-black text-red-500 tracking-[0.15em] uppercase">Internal Use Only</span>
