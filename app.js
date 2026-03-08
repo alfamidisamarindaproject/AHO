@@ -5,7 +5,6 @@ let filteredData = [];
 let rankedDepts = [];
 let activeDeptName = null;
 
-// --- HELPER FUNCTIONS ---
 const getVal = (obj, keyName) => {
   const keys = Object.keys(obj);
   const foundKey = keys.find(k => k.trim().toLowerCase() === keyName.toLowerCase());
@@ -26,21 +25,11 @@ function parseCustomDate(dateStr) {
     const dateParts = parts[0].split('/');
     if (dateParts.length !== 3) return null;
     const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-    return new Date(
-      parseInt(dateParts[2]), 
-      parseInt(dateParts[1]) - 1, 
-      parseInt(dateParts[0]), 
-      parseInt(timeParts[0] || 0), 
-      parseInt(timeParts[1] || 0), 
-      parseInt(timeParts[2] || 0)
-    );
+    return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]), parseInt(timeParts[0] || 0), parseInt(timeParts[1] || 0), parseInt(timeParts[2] || 0));
   } catch (e) { return null; }
 }
 
-/**
- * LOGIKA SLA BERJENJANG (TIERED SCORING)
- * Sesuai Milestone: 200, 175, 150, 100, 0, -100, -200
- */
+// LOGIKA SLA TERBARU & TELITI
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(getVal(row, 'Tgl Terima'));
   const tglEnd = parseCustomDate(getVal(row, 'Tgl Closed')) || new Date(); 
@@ -51,89 +40,50 @@ function calculateNewSLAScore(row) {
 
   const targetMins = targetDays * 1440;
   const actualMins = (tglEnd.getTime() - tglStart.getTime()) / (1000 * 60);
+  const ratio = actualMins / targetMins;
 
-  // 1. Bonus < 24 Jam
   if (actualMins <= 1440) return 200;
-
-  // 2. Reward Cepat
-  if (actualMins <= targetMins / 4) return 175;
-  if (actualMins <= targetMins / 2) return 150;
-  
-  // 3. Tepat Target (Toleransi 1 Jam)
+  if (ratio <= 0.25) return 175;
+  if (ratio <= 0.50) return 150;
   if (Math.abs(actualMins - targetMins) < 60) return 100;
+  if (ratio >= 4) return -200;
+  if (ratio >= 3) return -100;
+  if (ratio >= 2) return 0;
 
-  // 4. Penalty Lambat
-  if (actualMins >= targetMins * 4) return -200;
-  if (actualMins >= targetMins * 3) return -100;
-  if (actualMins >= targetMins * 2) return 0;
-
-  // 5. Interpolasi untuk area di antara poin (misal antara 1x dan 2x target)
-  let score = 100 - ((actualMins - targetMins) / targetMins) * 100;
-
-  return Math.max(-200, Math.min(200, score));
+  return Math.round(100 - ((ratio - 1) * 100));
 }
 
-/**
- * KONVERSI SKALA 1-4
- * Mapping rentang -200 sampai 200 ke skala 1 sampai 4
- */
 function getScale(value, type) {
   if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
-  
   if (type === 'sla') {
-    // Rumus: 1 + ( (nilai - nilaiMin) / (nilaiMax - nilaiMin) ) * (skalaMax - skalaMin)
-    let scaled = 1 + ((value - (-200)) / 400) * 3;
+    // Normalisasi -200 (skala 1) ke 200 (skala 4)
+    let scaled = 1 + ((value + 200) / 400) * 3;
     return Math.max(1, Math.min(4, scaled));
   }
-
   if (type === 'puas') return value >= 4 ? 4 : (value <= 1 ? 1 : 1 + ((value - 1) / 3) * 2.99);
   return 1;
 }
 
-/**
- * HITUNG METRIK
- */
 function calculateMetrics(records) {
-  const totalTicket = records.length;
-  if (totalTicket === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
+  const closedRecords = records.filter(r => ['closed', 'selesai'].includes(String(getVal(r, 'Status') || '').trim().toLowerCase()));
+  const total = records.length;
+  const closed = closedRecords.length;
+  if (total === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
   
-  const closedRecords = records.filter(r => {
-    const status = String(getVal(r, 'Status') || '').trim().toLowerCase();
-    return status === 'closed' || status === 'selesai';
-  });
-  
-  const closedCount = closedRecords.length;
-  const pctClosed = (closedCount / totalTicket) * 100;
-  
-  let avgSla = 0;
-  let avgPuas = 0;
-
-  if (closedCount > 0) {
-    let sumSla = 0;
-    let sumPuas = 0;
-    let validSlaCount = 0;
-
-    closedRecords.forEach(r => {
-      const s = calculateNewSLAScore(r);
-      sumSla += s;
-      validSlaCount++;
-      sumPuas += parseNum(getVal(r, 'Tingkat Kepuasan'));
-    });
-
-    avgSla = validSlaCount > 0 ? sumSla / validSlaCount : 0;
-    avgPuas = sumPuas / closedCount;
+  let avgSla = 0, avgPuas = 0;
+  if (closed > 0) {
+    avgSla = closedRecords.reduce((sum, r) => sum + calculateNewSLAScore(r), 0) / closed;
+    avgPuas = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, 'Tingkat Kepuasan')), 0) / closed;
   }
   
-  const convC = getScale(pctClosed, 'closed');
+  const convC = getScale((closed / total) * 100, 'closed');
   const convS = getScale(avgSla, 'sla');
   const convK = getScale(avgPuas, 'puas');
   
-  const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
-  
   return {
-    total: totalTicket, closed: closedCount, pct: pctClosed.toFixed(1), convC: convC.toFixed(2),
+    total, closed, pct: ((closed / total) * 100).toFixed(1), convC: convC.toFixed(2),
     sla: avgSla.toFixed(1), convS: convS.toFixed(2), puas: avgPuas.toFixed(1), convK: convK.toFixed(2),
-    final: finalScore.toFixed(2)
+    final: ((convC * 0.3) + (convS * 0.5) + (convK * 0.2)).toFixed(2)
   };
 }
 
