@@ -19,33 +19,45 @@ function parseCustomDate(dateStr) {
     const parts = String(dateStr).split(' ');
     const dateParts = parts[0].split('/');
     if (dateParts.length !== 3) return null;
+    
+    // dateParts[2]=Year, dateParts[1]-1=MonthIndex, dateParts[0]=Day
     const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-    return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+    return new Date(
+      parseInt(dateParts[2]), 
+      parseInt(dateParts[1]) - 1, 
+      parseInt(dateParts[0]), 
+      parseInt(timeParts[0] || 0), 
+      parseInt(timeParts[1] || 0), 
+      parseInt(timeParts[2] || 0)
+    );
   } catch (e) { return null; }
 }
 
 /**
  * FIX LOGIKA SLA:
- * Menggunakan satuan MENIT agar sesuai dengan hasil simulasi manual.
+ * Dipastikan menggunakan perhitungan menit murni sesuai simulasi manual.
  */
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(row['Tgl Terima']);
-  const tglEnd = parseCustomDate(row['Tgl Closed']) || new Date(); 
+  const tglEnd = parseCustomDate(row['Tgl Closed']); // Harus Closed untuk masuk hitungan SLA
   
-  // Target dalam Menit (1 Hari = 1440 Menit)
-  const targetDays = parseNum(row['Target Hari']);
-  const targetMinutes = targetDays * 1440;
-  
-  if (!tglStart || targetMinutes <= 0) return 100;
+  if (!tglStart || !tglEnd) return 0;
 
-  // Durasi Aktual dalam Menit
-  const diffMs = tglEnd - tglStart;
-  const actualMinutes = diffMs / (1000 * 60);
+  // 1. Hitung Target dalam Menit
+  const targetDays = parseNum(row['Target Hari']);
+  const targetMinutes = targetDays * 1440; // 12 hari = 17280 menit
   
-  // Rumus: (1 - (Actual Menit - Target Menit) / Target Menit) * 100
+  if (targetMinutes <= 0) return 100;
+
+  // 2. Hitung Durasi Aktual dalam Menit (milidetik / 1000 / 60)
+  const diffMs = tglEnd.getTime() - tglStart.getTime();
+  const actualMinutes = diffMs / 60000; 
+  
+  // 3. Rumus Skor: (1 - (Actual - Target) / Target) * 100
+  // Sesuai Simulasi: (1 - (5813.96 - 17280) / 17280) * 100 = 166.35
   let score = (1 - (actualMinutes - targetMinutes) / targetMinutes) * 100;
 
-  // Clamping skor agar tidak terlalu ekstrem
+  // Clamping skor agar tidak merusak grafik (Opsional, bisa dihapus jika ingin nilai murni)
   if (score > 200) score = 200;
   if (score < -200) score = -200;
 
@@ -72,7 +84,7 @@ function calculateMetrics(records) {
   const closedRecords = records.filter(r => String(r['Status'] || '').trim().toLowerCase() === 'closed');
   const closedCount = closedRecords.length;
   
-  // 2. Hitung % Closed (Beban kerja vs penyelesaian)
+  // 2. Hitung % Closed
   const pctClosed = (closedCount / totalTicket) * 100;
   
   // 3. Hitung Rata-rata SLA & Kepuasan (HANYA dari tiket yang Closed)
