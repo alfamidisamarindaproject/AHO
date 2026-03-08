@@ -24,39 +24,36 @@ function parseCustomDate(dateStr) {
   } catch (e) { return null; }
 }
 
-// LOGIKA BARU: Perhitungan SLA Sesuai Permintaan
-// Rumus: (1 - (waktu penyelesaian - Target SLA)/Target SLA)) x 100
+// LOGIKA BARU: Patokan Tgl Terima (Kolom Y) ke Tgl Closed (Kolom AB)
 function calculateNewSLAScore(row) {
-  const tglStart = parseCustomDate(row['Tgl Eskalasi']) || parseCustomDate(row['Tgl Problem']);
-  const tglEnd = parseCustomDate(row['Tgl Closed']) || new Date(); // Jika open, gunakan waktu sekarang
+  // Patokan baru: Tgl Terima (Kolom Y)
+  const tglStart = parseCustomDate(row['Tgl Terima']);
+  // Patokan akhir: Tgl Closed (Kolom AB)
+  const tglEnd = parseCustomDate(row['Tgl Closed']) || new Date(); 
+  // Target Hari (Kolom AG)
   const targetSLA = parseNum(row['Target Hari']);
   
-  if (!tglStart || targetSLA <= 0) return 100; // Default jika data tidak lengkap
+  if (!tglStart || targetSLA <= 0) return 100;
 
   const diffMs = tglEnd - tglStart;
   const actualDays = diffMs / (1000 * 60 * 60 * 24);
   
-  // Hitung Skor
+  // Rumus: (1 - (actualDays - Target SLA)/Target SLA)) x 100
   let score = (1 - (actualDays - targetSLA) / targetSLA) * 100;
 
-  // Batas Atas 200, Batas Bawah -200
   if (score > 200) score = 200;
   if (score < -200) score = -200;
 
   return score;
 }
 
-// Rumus Skala Konversi (1-4)
 function getScale(value, type) {
   if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
-  // SLA Baru sekarang berkisar -200 s/d 200. 
-  // Kita asumsikan 100% adalah baseline (Skor ~2.0). 130% keatas adalah 4.0
   if (type === 'sla')    return value < 85 ? 1 : (value >= 130 ? 4 : 1 + ((value - 85) / 44.99) * 2.99);
   if (type === 'puas')   return value >= 4 ? 4 : (value <= 1 ? 1 : 1 + ((value - 1) / 3) * 2.99);
   return 1;
 }
 
-// Kalkulasi Metrik Core
 function calculateMetrics(records) {
   const t = records.length;
   if (t === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
@@ -64,7 +61,6 @@ function calculateMetrics(records) {
   const closedCount = records.filter(r => String(r['Status'] || '').trim().toLowerCase() === 'closed').length;
   const pctClosed = (closedCount / t) * 100;
   
-  // Gunakan Logika SLA Baru
   const totalSLAScore = records.reduce((sum, r) => sum + calculateNewSLAScore(r), 0);
   const avgSla = totalSLAScore / t;
   
@@ -83,38 +79,40 @@ function calculateMetrics(records) {
   };
 }
 
-// FILTER LOGIC
+// FILTER LOGIC BARU: MTD vs YTD berdasar Tgl Terima
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
-  const month = document.getElementById('f-month').value;
+  const selectedMonth = parseInt(document.getElementById('f-month').value);
   const reportType = document.getElementById('f-report').value;
-  const now = new Date();
+  const currentYear = new Date().getFullYear();
 
   filteredData = rawData.filter(row => {
-    const tglProb = parseCustomDate(row['Tgl Problem']);
-    if (!tglProb) return false;
+    const tglTerima = parseCustomDate(row['Tgl Terima']);
+    if (!tglTerima) return false;
 
-    // 1. Filter Analisis (MTD/YTD)
+    const rowMonth = tglTerima.getMonth();
+    const rowYear = tglTerima.getFullYear();
+
+    // Hanya proses tahun berjalan
+    if (rowYear !== currentYear) return false;
+
+    // Logika MTD: Hanya bulan yang dipilih
     if (analysis === 'MTD') {
-        if (tglProb.getMonth() !== now.getMonth() || tglProb.getFullYear() !== now.getFullYear()) return false;
-    } else if (analysis === 'YTD') {
-        if (tglProb.getFullYear() !== now.getFullYear()) return false;
+        if (rowMonth !== selectedMonth) return false;
+    } 
+    // Logika YTD: Bulan Januari (0) sampai Bulan yang dipilih
+    else if (analysis === 'YTD') {
+        if (rowMonth > selectedMonth) return false;
     }
 
-    // 2. Filter Periode Bulan
-    if (month !== 'ALL') {
-        if (tglProb.getMonth() !== parseInt(month)) return false;
-    }
-
-    // 3. Filter Jenis Report (Score Akhir Bulan vs Monitoring)
+    // Filter Jenis Report (Score Akhir Bulan)
     if (reportType === 'score') {
-        // Logic: Hanya hitung yang target harinya MASIH di bulan yang sama dengan tgl problem
         const targetDays = parseNum(row['Target Hari']);
-        const tglTarget = new Date(tglProb);
+        const tglTarget = new Date(tglTerima);
         tglTarget.setDate(tglTarget.getDate() + targetDays);
         
-        // Jika target hari menyeberang ke bulan berikutnya, jangan dihitung (Exclude)
-        if (tglTarget.getMonth() !== tglProb.getMonth()) return false;
+        // Exclude jika target hari menyeberang ke bulan berikutnya dari tglTerima
+        if (tglTarget.getMonth() !== tglTerima.getMonth()) return false;
     }
 
     return true;
@@ -124,7 +122,6 @@ function applyFilters() {
 }
 
 function refreshDashboard() {
-  // Update Sidebar Ranking berdasarkan data terfilter
   const uniqueDepts = [...new Set(filteredData.map(d => String(d.Departemen).trim()))];
   rankedDepts = uniqueDepts.map(name => {
     return { name, ...calculateMetrics(filteredData.filter(d => String(d.Departemen).trim() === name)) };
@@ -143,7 +140,6 @@ function refreshDashboard() {
   `).join('');
 
   if (activeDeptName) {
-      // Refresh tampilan dept jika sedang buka dept tertentu
       const found = rankedDepts.find(d => d.name === activeDeptName);
       if (found) {
         const idx = rankedDepts.findIndex(d => d.name === activeDeptName) + 1;
@@ -156,7 +152,6 @@ function refreshDashboard() {
   }
 }
 
-// RENDER UTILS
 function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
@@ -208,7 +203,7 @@ function renderWarningTable(data, tableId) {
   const tbody = document.getElementById(tableId);
   const unclosed = data.filter(d => String(d['Status'] || '').toLowerCase() !== 'closed');
   const critical = unclosed.map(d => {
-    const tgl = parseCustomDate(d['Tgl Eskalasi']) || parseCustomDate(d['Tgl Problem']);
+    const tgl = parseCustomDate(d['Tgl Terima']);
     const target = parseNum(d['Target Hari']);
     const umur = tgl ? Math.floor((new Date() - tgl) / (1000 * 60 * 60 * 24)) : 0;
     let label = '', badge = '';
@@ -232,7 +227,6 @@ function renderWarningTable(data, tableId) {
   `).join('');
 }
 
-// NAVIGATION
 function showHome() {
   activeDeptName = null;
   document.getElementById('view-home').classList.remove('hidden');
@@ -279,7 +273,6 @@ function doSearch(input, tableId) {
   }
 }
 
-// INITIALIZATION
 async function init() {
   try {
     const res = await fetch(API_URL);
