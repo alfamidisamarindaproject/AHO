@@ -209,7 +209,7 @@ function renderWarningTable(baseData, tableId) {
     const diffMs = new Date() - tgl.getTime();
     const usiaHari = diffMs / (1000 * 60 * 60 * 24);
     
-    let label = 'ON TRACK', badge = 'bg-green-500';
+    let label = 'SAFE', badge = 'bg-green-500';
     // Warning jika usia mencapai 70% dari target hari
     if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
     else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
