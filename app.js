@@ -190,7 +190,7 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   `).join('');
 }
 
-// Logika Baru Warning Table (Menambahkan Kode Toko dan Nama Toko)
+// Logika Baru Warning Table (Menambahkan fallback Kode Toko dan Nama Toko yang akurat)
 function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -215,7 +215,7 @@ function renderWarningTable(baseData, tableId) {
     else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
     
     // Hanya render jika melebihi SLA atau Warning, abaikan yang ON TRACK
-    if(label === 'ON TRACK') return null;
+   
 
     return { 
       ...d, 
@@ -223,23 +223,26 @@ function renderWarningTable(baseData, tableId) {
       targetDays, 
       label, 
       badge,
-      // Mengambil data untuk kolom baru Kode Toko dan Nama Toko
-      kodeToko: getVal(d, 'Kode Toko') || getVal(d, 'Kode') || '-',
-      namaToko: getVal(d, 'Nama Toko') || getVal(d, 'Toko') || '-',
-      masalah: getVal(d, 'Nama Problem') || getVal(d, 'Masalah') || '-'
+      // Menggunakan banyak alternatif fallback agar pasti terbaca dari Google Sheets
+      kodeToko: getVal(d, 'Kode Toko') ||  '-',
+      namaToko: getVal(d, 'Nama Toko') || '-',
+      masalah: getVal(d, 'Masalah') || '-',
+      noTicket: getVal(d, 'No Problem') || '-',
+      pic: getVal(d, 'Nama Penangung') || '-'
     };
   }).filter(d => d !== null); // Hapus hasil null
   
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
   
+  // Render sesuai urutan: Dept, Kode toko, Nama toko, No ticket, Masalah, PIC, Usia/target, Status
   tbody.innerHTML = critical.map(d => `
     <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
       <td class="p-3 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
       <td class="p-3 font-bold text-slate-700">${d.kodeToko}</td>
       <td class="p-3 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
-      <td class="p-3 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || getVal(d, 'No Ticket') || '-'}</td>
+      <td class="p-3 font-mono font-bold text-indigo-600">${d.noTicket}</td>
       <td class="p-3 max-w-[150px] truncate" title="${d.masalah}">${d.masalah}</td>
-      <td class="p-3 truncate">${getVal(d, 'Nama Penangung') || getVal(d, 'PIC') || '-'}</td>
+      <td class="p-3 truncate" title="${d.pic}">${d.pic}</td>
       <td class="p-3 text-center font-medium">${d.usiaHari} / ${d.targetDays} Hari</td>
       <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
     </tr>
