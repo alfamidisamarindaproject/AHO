@@ -29,6 +29,18 @@ function parseCustomDate(dateStr) {
   } catch (e) { return null; }
 }
 
+// Fitur Pencarian / Filter Tabel
+function doSearch(inputEl, tableBodyId) {
+  const term = inputEl.value.toLowerCase();
+  const tbody = document.getElementById(tableBodyId);
+  if (!tbody) return;
+  const rows = tbody.getElementsByTagName("tr");
+  for (let i = 0; i < rows.length; i++) {
+    const textData = rows[i].textContent || rows[i].innerText;
+    rows[i].style.display = textData.toLowerCase().indexOf(term) > -1 ? "" : "none";
+  }
+}
+
 // LOGIKA SLA TERBARU & TELITI
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(getVal(row, 'Tgl Terima'));
@@ -56,7 +68,6 @@ function calculateNewSLAScore(row) {
 function getScale(value, type) {
   if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
   if (type === 'sla') {
-    // Normalisasi -200 (skala 1) ke 200 (skala 4)
     let scaled = 1 + ((value + 200) / 400) * 3;
     return Math.max(1, Math.min(4, scaled));
   }
@@ -87,13 +98,10 @@ function calculateMetrics(records) {
   };
 }
 
-// --- RENDER & DASHBOARD FUNCTIONS ---
-// (Fungsi UI, Filter, dan Rendering lainnya tetap sama)
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
   const selectedMonth = parseInt(document.getElementById('f-month').value);
   const reportType = document.getElementById('f-report').value;
-  const currentYear = new Date().getFullYear();
 
   filteredData = rawData.filter(row => {
     const tglTerima = parseCustomDate(getVal(row, 'Tgl Terima'));
@@ -168,9 +176,10 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   let resultArr = Object.keys(groups).map(k => ({ name: k, ...calculateMetrics(groups[k]) }));
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
+  
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
     <tr class="hover:bg-slate-50 transition-colors text-[10px]">
-      <td class="p-3 font-semibold text-slate-700 truncate">${i.name}</td>
+      <td class="p-3 font-semibold text-slate-700 truncate max-w-[120px] sm:max-w-[200px]" title="${i.name}">${i.name}</td>
       <td class="p-3 text-center">${i.total}</td>
       <td class="p-3 text-center text-emerald-600">${i.closed}</td>
       <td class="p-3 text-center">${i.pct}%</td>
@@ -181,32 +190,56 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   `).join('');
 }
 
-function renderWarningTable(data, tableId) {
+// Logika Baru Warning Table (Menggunakan Parameter Data Bebas Filter dan Ditambah 2 Kolom Baru)
+function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
-  const unclosed = data.filter(d => {
+  
+  // Ambil tiket yang statusnya BUKAN closed/selesai
+  const unclosed = baseData.filter(d => {
     const status = String(getVal(d, 'Status') || '').trim().toLowerCase();
     return status !== 'closed' && status !== 'selesai';
   });
+  
   const critical = unclosed.map(d => {
     const tgl = parseCustomDate(getVal(d, 'Tgl Terima'));
     const targetDays = parseNum(getVal(d, 'Target Hari'));
     if (!tgl || targetDays <= 0) return null;
+    
     const diffMs = new Date() - tgl.getTime();
     const usiaHari = diffMs / (1000 * 60 * 60 * 24);
+    
     let label = 'ON TRACK', badge = '';
+    // Warning jika usia mencapai 70% dari target hari
     if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
     else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
-    return { ...d, usiaHari: usiaHari.toFixed(1), targetDays, label, badge };
-  }).filter(d => d !== null && d.label !== 'ON TRACK');
+    
+    // Hanya render jika melebihi SLA atau Warning, abaikan yang ON TRACK
+    if(label === 'ON TRACK') return null;
+
+    return { 
+      ...d, 
+      usiaHari: usiaHari.toFixed(1), 
+      targetDays, 
+      label, 
+      badge,
+      // Mapping untuk penambahan Kolom Baru K & L
+      kodeUnit: getVal(d, 'Kode Unit') || getVal(d, 'Kode') || '-',
+      masalah: getVal(d, 'Nama Problem') || getVal(d, 'Masalah') || '-'
+    };
+  }).filter(d => d !== null); // Hapus hasil null
+  
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
-  tbody.innerHTML = critical.slice(0, 50).map(d => `
-    <tr class="text-[9px] hover:bg-slate-50">
-      <td class="p-4 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
-      <td class="p-4 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || '-'}</td>
-      <td class="p-4 truncate">${getVal(d, 'Nama Penangung') || '-'}</td>
-      <td class="p-4 text-center">${d.usiaHari} / ${d.targetDays} Hari</td>
-      <td class="p-4 text-center"><span class="${d.badge} text-white px-2.5 py-1 rounded-full font-black">${d.label}</span></td>
+  
+  tbody.innerHTML = critical.map(d => `
+    <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
+      <td class="p-3 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
+      <td class="p-3 font-bold text-slate-700">${d.kodeUnit}</td>
+      <td class="p-3 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || getVal(d, 'No Ticket') || '-'}</td>
+      <td class="p-3 max-w-[150px] truncate" title="${d.masalah}">${d.masalah}</td>
+      <td class="p-3 truncate">${getVal(d, 'Nama Penangung') || getVal(d, 'PIC') || '-'}</td>
+      <td class="p-3 text-center font-medium">${d.usiaHari} / ${d.targetDays} Hari</td>
+      <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
     </tr>
   `).join('');
 }
@@ -217,11 +250,14 @@ function showHome() {
   document.getElementById('view-dept')?.classList.add('hidden');
   document.getElementById('btn-home')?.classList.add('nav-item-active');
   document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
+  
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
   renderDetailTable(filteredData, 'Nama Problem', 'home-body-prob', false);
   renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
-  renderWarningTable(filteredData, 'home-body-warn');
+  
+  // NOTE: Disini kita passing `rawData` murni, sehingga tidak terpengaruh filter Bulan/Analisis
+  renderWarningTable(rawData, 'home-body-warn');
 }
 
 function selectDept(deptName, el, rank) {
@@ -233,15 +269,21 @@ function updateDeptView(deptName, rank) {
   document.getElementById('view-home')?.classList.add('hidden');
   document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
-  const deptData = filteredData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
-  const m = calculateMetrics(deptData);
+  
+  const deptDataFiltered = filteredData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
+  const m = calculateMetrics(deptDataFiltered);
+  
   document.getElementById('det-name').innerText = deptName;
   document.getElementById('det-rank').innerText = `RANK #${rank}`;
   document.getElementById('det-score').innerText = m.final;
+  
   renderMetrikBox('dept-metrics', m);
-  renderDetailTable(deptData, 'Nama Problem', 'dept-body-prob', false);
-  renderDetailTable(deptData, 'Nama Penangung', 'dept-body-pic', true); 
-  renderWarningTable(deptData, 'dept-body-warn');
+  renderDetailTable(deptDataFiltered, 'Nama Problem', 'dept-body-prob', false);
+  renderDetailTable(deptDataFiltered, 'Nama Penangung', 'dept-body-pic', true); 
+  
+  // NOTE: Disini kita ambil `rawData` tetapi kita filter berdasarkan nama Departemen yang sedang diklik saja
+  const deptDataRaw = rawData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
+  renderWarningTable(deptDataRaw, 'dept-body-warn');
 }
 
 async function init() {
@@ -249,6 +291,9 @@ async function init() {
     const res = await fetch(API_URL);
     const data = await res.json();
     rawData = data.filter(r => getVal(r, 'Departemen') && String(getVal(r, 'Departemen')).trim() !== '');
+    
+    // Terapkan default bulan sesuai bulan berjalan
+    document.getElementById('f-month').value = new Date().getMonth();
     applyFilters();
   } catch (e) {
     console.error("Gagal memuat data:", e);
