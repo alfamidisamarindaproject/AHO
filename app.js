@@ -258,7 +258,7 @@ function showHome() {
   
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
-  renderDetailTable(filteredData, 'Nama Problem', 'home-body-prob', false);
+  renderDetailTable(filteredData, 'Masalah', 'home-body-prob', false);
   renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
   
   renderWarningTable(rawData, 'home-body-warn');
@@ -282,7 +282,7 @@ function updateDeptView(deptName, rank) {
   document.getElementById('det-score').innerText = m.final;
   
   renderMetrikBox('dept-metrics', m);
-  renderDetailTable(deptDataFiltered, 'Nama Problem', 'dept-body-prob', false);
+  renderDetailTable(deptDataFiltered, 'Masalah', 'dept-body-prob', false);
   renderDetailTable(deptDataFiltered, 'Nama Penangung', 'dept-body-pic', true); 
   
   const deptDataRaw = rawData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
