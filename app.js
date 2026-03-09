@@ -190,7 +190,7 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   `).join('');
 }
 
-// Logika Baru Warning Table (Menggunakan Parameter Data Bebas Filter dan Ditambah 2 Kolom Baru)
+// Logika Baru Warning Table (Menambahkan Kode Toko dan Nama Toko)
 function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -223,8 +223,9 @@ function renderWarningTable(baseData, tableId) {
       targetDays, 
       label, 
       badge,
-      // Mapping untuk penambahan Kolom Baru K & L
-      kodeUnit: getVal(d, 'Kode Unit') || getVal(d, 'Kode') || '-',
+      // Mengambil data untuk kolom baru Kode Toko dan Nama Toko
+      kodeToko: getVal(d, 'Kode Toko') || getVal(d, 'Kode') || '-',
+      namaToko: getVal(d, 'Nama Toko') || getVal(d, 'Toko') || '-',
       masalah: getVal(d, 'Nama Problem') || getVal(d, 'Masalah') || '-'
     };
   }).filter(d => d !== null); // Hapus hasil null
@@ -234,7 +235,8 @@ function renderWarningTable(baseData, tableId) {
   tbody.innerHTML = critical.map(d => `
     <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
       <td class="p-3 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
-      <td class="p-3 font-bold text-slate-700">${d.kodeUnit}</td>
+      <td class="p-3 font-bold text-slate-700">${d.kodeToko}</td>
+      <td class="p-3 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
       <td class="p-3 font-mono font-bold text-indigo-600">${getVal(d, 'No Problem') || getVal(d, 'No Ticket') || '-'}</td>
       <td class="p-3 max-w-[150px] truncate" title="${d.masalah}">${d.masalah}</td>
       <td class="p-3 truncate">${getVal(d, 'Nama Penangung') || getVal(d, 'PIC') || '-'}</td>
@@ -256,7 +258,6 @@ function showHome() {
   renderDetailTable(filteredData, 'Nama Problem', 'home-body-prob', false);
   renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
   
-  // NOTE: Disini kita passing `rawData` murni, sehingga tidak terpengaruh filter Bulan/Analisis
   renderWarningTable(rawData, 'home-body-warn');
 }
 
@@ -281,23 +282,55 @@ function updateDeptView(deptName, rank) {
   renderDetailTable(deptDataFiltered, 'Nama Problem', 'dept-body-prob', false);
   renderDetailTable(deptDataFiltered, 'Nama Penangung', 'dept-body-pic', true); 
   
-  // NOTE: Disini kita ambil `rawData` tetapi kita filter berdasarkan nama Departemen yang sedang diklik saja
   const deptDataRaw = rawData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
+  
+  // Memanggil table warning untuk departemen terpilih
   renderWarningTable(deptDataRaw, 'dept-body-warn');
+
+  document.querySelectorAll('.dept-item').forEach(e => {
+    if (e.querySelector('h3').innerText === deptName) {
+      e.classList.add('active-dept');
+    } else {
+      e.classList.remove('active-dept');
+    }
+  });
 }
 
-async function init() {
+// FUNGSI UTAMA: AMBIL DATA DARI API
+async function initApp() {
+  const listEl = document.getElementById('dept-list');
+  const metricsEl = document.getElementById('home-metrics');
+  
   try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    rawData = data.filter(r => getVal(r, 'Departemen') && String(getVal(r, 'Departemen')).trim() !== '');
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error("Gagal mengambil data");
     
-    // Terapkan default bulan sesuai bulan berjalan
-    document.getElementById('f-month').value = new Date().getMonth();
-    applyFilters();
-  } catch (e) {
-    console.error("Gagal memuat data:", e);
+    const result = await response.json();
+    rawData = Array.isArray(result) ? result : result.data;
+
+    if (!rawData || rawData.length === 0) {
+      listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
+      return;
+    }
+
+    const now = new Date();
+    document.getElementById('f-month').value = now.getMonth();
+    
+    const statusEl = document.getElementById('global-last-update');
+    if (statusEl) {
+      statusEl.innerText = `Synced: ${now.toLocaleTimeString('id-ID')}`;
+    }
+
+    applyFilters(); 
+
+  } catch (error) {
+    console.error("Error:", error);
+    listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
+    metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
+      <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
+      <p class="text-slate-400 text-[10px] mt-2">Pastikan URL API Apps Script benar dan izin akses diatur ke 'Anyone'</p>
+    </div>`;
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', initApp);
