@@ -358,13 +358,77 @@
         if(o) o.classList.toggle('hidden');
     }
 
-    // Fungsi Logout yang membersihkan Storage
-    function handleLogout() {
-        localStorage.removeItem('aho_logged_in');
-        localStorage.removeItem('aho_user_name');
-        window.location.reload();
-    }
-  </script>
-  <script src="app.js"></script>
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbz8tX3xc_4wUkxICTg_9UGFZVSzFg0i6v1lKqclha-Ch43xnQ1ymQjQIlqJTMg1Lwd4/exec";
+
+    // LOGIN HANDLER
+  document.addEventListener("DOMContentLoaded", () => {
+
+  const loginForm = document.getElementById("form-login");
+  const loginScreen = document.getElementById("login-screen");
+  const loginError = document.getElementById("login-error");
+
+  const savedSession = localStorage.getItem("aho_logged_in");
+
+  if(savedSession){
+      loginScreen.style.display = "none";
+      const name = localStorage.getItem("aho_user_name");
+      document.getElementById("display-nama-user").innerText = name || "USER";
+      document.getElementById("user-info").classList.remove("hidden");
+      initApp();
+  }
+
+  loginForm.addEventListener("submit", async function(e){
+      e.preventDefault();
+
+      loginError.classList.add("hidden");
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      try{
+
+        const res = await fetch(API_URL,{
+            method:"POST",
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+
+        const result = await res.json();
+
+        if(result.status === "success"){
+
+            localStorage.setItem("aho_logged_in", result.token);
+            localStorage.setItem("aho_user_name", result.user.nama);
+
+            loginScreen.style.opacity = "0";
+
+            setTimeout(()=>{
+                loginScreen.style.display="none";
+
+                document.getElementById("display-nama-user").innerText = result.user.nama;
+                document.getElementById("user-info").classList.remove("hidden");
+
+                initApp();
+
+            },400);
+
+        }else{
+            loginError.classList.remove("hidden");
+        }
+
+      }catch(err){
+          console.error(err);
+          loginError.classList.remove("hidden");
+      }
+
+  });
+
+});
+</script>
+
+<script src="app.js"></script>
 </body>
 </html>
