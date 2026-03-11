@@ -348,61 +348,95 @@
     </div>
 
     <script>
-        // Fungsi dasar untuk buka/tutup menu di mobile
-        function toggleSidebar() {
-            const s = document.getElementById('main-sidebar');
-            const o = document.getElementById('sidebar-overlay');
-            if(s) s.classList.toggle('sidebar-closed');
-            if(o) o.classList.toggle('hidden');
+    // Fungsi dasar untuk buka/tutup menu di mobile
+    function toggleSidebar() {
+        const s = document.getElementById('main-sidebar');
+        const o = document.getElementById('sidebar-overlay');
+        if (s) s.classList.toggle('sidebar-closed');
+        if (o) o.classList.toggle('hidden');
+    }
+
+    // LOGOUT
+    function handleLogout() {
+        localStorage.removeItem("aho_logged_in");
+        localStorage.removeItem("aho_user_name");
+        location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const loginForm = document.getElementById("form-login");
+        const loginScreen = document.getElementById("login-screen");
+        const loginError = document.getElementById("login-error");
+
+        const savedSession = localStorage.getItem("aho_logged_in");
+
+        // Jika sudah login sebelumnya
+        if (savedSession) {
+            loginScreen.style.display = "none";
+
+            const name = localStorage.getItem("aho_user_name") || "USER";
+
+            document.getElementById("display-nama-user").innerText = name;
+            document.getElementById("user-info").classList.remove("hidden");
+
+            initApp();
         }
 
-        const res = await fetch(window.API_URL,{
+        // LOGIN
+        loginForm.addEventListener("submit", async function (e) {
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const loginForm = document.getElementById("form-login");
-            const loginScreen = document.getElementById("login-screen");
-            const loginError = document.getElementById("login-error");
-            const savedSession = localStorage.getItem("aho_logged_in");
+            e.preventDefault();
 
-            if (savedSession) {
-                loginScreen.style.display = "none";
-                const name = localStorage.getItem("aho_user_name") || "USER";
-                document.getElementById("display-nama-user").innerText = name;
-                document.getElementById("user-info").classList.remove("hidden");
-                initApp();
+            loginError.classList.add("hidden");
+
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            try {
+
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const result = await res.json();
+
+                if (result.status === "success") {
+
+                    localStorage.setItem("aho_logged_in", result.token);
+                    localStorage.setItem("aho_user_name", result.user.nama);
+
+                    loginScreen.style.display = "none";
+
+                    document.getElementById("display-nama-user").innerText = result.user.nama;
+                    document.getElementById("user-info").classList.remove("hidden");
+
+                    initApp();
+
+                } else {
+
+                    loginError.classList.remove("hidden");
+
+                }
+
+            } catch (err) {
+
+                console.error(err);
+                loginError.classList.remove("hidden");
+
             }
 
-            loginForm.addEventListener("submit", async function(e) {
-                e.preventDefault();
-                loginError.classList.add("hidden");
-                const username = document.getElementById("username").value.trim();
-                const password = document.getElementById("password").value.trim();
-
-                try {
-                    const res = await fetch(API_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username: username, password: password })
-                    });
-                    const result = await res.json();
-
-                    if (result.status === "success") {
-                        localStorage.setItem("aho_logged_in", result.token);
-                        localStorage.setItem("aho_user_name", result.user.nama);
-                        loginScreen.style.display = "none";
-                        document.getElementById("display-nama-user").innerText = result.user.nama;
-                        document.getElementById("user-info").classList.remove("hidden");
-                        initApp();
-                    } else {
-                        loginError.classList.remove("hidden");
-                    }
-                } catch (err) {
-                    console.error(err);
-                    loginError.classList.remove("hidden");
-                }
-            });
         });
-    </script>
+
+    });
+</script>
     <script src="app.js"></script>
 </body>
 </html>
