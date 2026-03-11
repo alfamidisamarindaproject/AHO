@@ -18,6 +18,7 @@
     .nav-item-active { background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%); color: white !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
     .active-dept { background-color: #f8fafc; border-left: 4px solid #4f46e5 !important; }
     
+    /* Style Tambahan untuk Login */
     #login-screen { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
     .loader { border-top-color: #4f46e5; animation: spinner 1.5s linear infinite; }
     @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -39,7 +40,7 @@
         </div>
         <div class="text-left">
           <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Division (Password)</label>
-          <input type="password" id="password" required placeholder="Masukkan Divisi..." class="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold">
+          <input type="password" id="password" required placeholder="Masukkan Divisi Anda" class="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold">
         </div>
         <button type="submit" id="btn-submit-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all transform active:scale-95 flex items-center justify-center gap-2">
           <span>MASUK KE DASHBOARD</span>
@@ -53,7 +54,6 @@
       <p class="mt-8 text-[9px] text-slate-400 font-medium uppercase tracking-tighter">Authorized Personnel Only - Property of Samarinda Branch</p>
     </div>
   </div>
-
   <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
 
   <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-none flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
@@ -292,6 +292,98 @@
     </footer>
   </main>
 
+  <script>
+    function toggleSidebar() {
+        const s = document.getElementById('main-sidebar');
+        const o = document.getElementById('sidebar-overlay');
+        s.classList.toggle('sidebar-closed');
+        o.classList.toggle('hidden');
+    }
+
+    // ================= FITUR LOGIKA LOGIN =================
+    const loginScreen = document.getElementById('login-screen');
+    const formLogin = document.getElementById('form-login');
+    const loginError = document.getElementById('login-error');
+    const btnSubmit = document.getElementById('btn-submit-login');
+
+    // Pastikan Ganti URL ini dengan URL Web App Apps Script Anda yang baru dideploy
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhyMC7s607R8u5iwQ08r5eDKU-FTFkTXwC0FiLNfcR-Gn-isgqFIM508PC2EYdC3AH/exec'; 
+
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Ambil input
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      // Efek Loading
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<span class="loader w-4 h-4 border-2 border-white rounded-full inline-block"></span> <span>MEMVERIFIKASI...</span>`;
+      loginError.classList.add('hidden');
+
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors', // Penting untuk Apps Script doPost
+          body: JSON.stringify({ username, password })
+        });
+
+        /* Catatan: 'no-cors' tidak memberikan return body. 
+           Untuk hasil yang akurat, sebaiknya panggil fungsi validasi di app.js 
+           yang membandingkan input dengan getSheetData('User').
+           Berikut adalah cara yang paling aman tanpa merubah skrip gs:
+        */
+        
+        // Panggil data user secara manual untuk verifikasi (Security di Client-Side)
+        // (Ini sinkron dengan fungsi getSheetData Anda)
+        fetch(`${APPS_SCRIPT_URL}?sheet=User`) 
+          .then(res => res.json())
+          .then(users => {
+             const userValid = users.find(u => 
+                String(u.NIK).trim() === username.trim() && 
+                String(u.DIVISION).trim() === password.trim()
+             );
+
+             if(userValid) {
+                // Login Berhasil
+                localStorage.setItem('aho_logged_in', 'true');
+                localStorage.setItem('aho_user_name', userValid.NAME || 'User');
+                document.getElementById('display-nama-user').innerText = userValid.NAME;
+                document.getElementById('user-info').classList.remove('hidden');
+                
+                // Animasi Tutup Login
+                loginScreen.classList.add('opacity-0');
+                setTimeout(() => {
+                  loginScreen.classList.add('hidden');
+                  if (typeof initDashboard === "function") initDashboard(); // Panggil fungsi muat data di app.js
+                }, 500);
+             } else {
+                showError();
+             }
+          })
+          .catch(() => showError());
+
+      } catch (err) {
+        showError();
+      }
+    });
+
+    function showError() {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = `<span>MASUK KE DASHBOARD</span>`;
+      loginError.classList.remove('hidden');
+    }
+
+    // Cek Sesi saat reload
+    window.addEventListener('load', () => {
+      if(localStorage.getItem('aho_logged_in') === 'true') {
+        loginScreen.classList.add('hidden');
+        document.getElementById('display-nama-user').innerText = localStorage.getItem('aho_user_name');
+        document.getElementById('user-info').classList.remove('hidden');
+      }
+    });
+    // ======================================================
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
