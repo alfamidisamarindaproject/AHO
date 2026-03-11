@@ -1,9 +1,102 @@
+/**
+ * AHO Monitoring - Global Logic & Dashboard
+ * Developer: Akbar Rasyid - SQR
+ */
+
+// ================= CONFIGURATION & STATE =================
 const API_URL = "https://script.google.com/macros/s/AKfycbxIm8cabgRvvSfAfdM_OfrZZFPK7YF4xgQy1P1pbBFOt_c3NPaSLFnCy0V3jde7qqCn/exec"; 
 
 let rawData = [];
 let filteredData = [];
 let rankedDepts = [];
 let activeDeptName = null;
+
+// UI ELEMENTS
+const loginScreen = document.getElementById('login-screen');
+const formLogin = document.getElementById('form-login');
+const loginError = document.getElementById('login-error');
+const btnSubmit = document.getElementById('btn-submit-login');
+const sidebar = document.getElementById('main-sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+// ================= SIDEBAR & NAVIGATION =================
+
+function toggleSidebar() {
+    if (sidebar) sidebar.classList.toggle('sidebar-closed');
+    if (sidebarOverlay) sidebarOverlay.classList.toggle('hidden');
+}
+
+function showHome() {
+    activeDeptName = null;
+    document.getElementById('view-home')?.classList.remove('hidden');
+    document.getElementById('view-dept')?.classList.add('hidden');
+    document.getElementById('btn-home')?.classList.add('nav-item-active');
+    
+    // Reset active department styles
+    document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
+    
+    // Render Home Data
+    const m = calculateMetrics(filteredData);
+    renderMetrikBox('home-metrics', m);
+    renderDetailTable(filteredData, 'Masalah', 'home-body-prob', false);
+    renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
+    renderWarningTable(rawData, 'home-body-warn');
+}
+
+// ================= AUTHENTICATION LOGIC =================
+
+if (formLogin) {
+    formLogin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        // Loading Effect
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<span class="loader w-4 h-4 border-2 border-white rounded-full inline-block"></span> <span>MEMVERIFIKASI...</span>`;
+        loginError.classList.add('hidden');
+
+        try {
+            // Verifikasi menggunakan sheet "User"
+            const response = await fetch(`${API_URL}?sheet=User`);
+            const users = await response.json();
+            
+            const userValid = users.find(u => 
+                String(u.NIK).trim() === username.trim() && 
+                String(u.DIVISION).trim() === password.trim()
+            );
+
+            if (userValid) {
+                // Success
+                localStorage.setItem('aho_logged_in', 'true');
+                localStorage.setItem('aho_user_name', userValid.NAME || 'User');
+                
+                document.getElementById('display-nama-user').innerText = userValid.NAME;
+                document.getElementById('user-info').classList.remove('hidden');
+                
+                loginScreen.classList.add('opacity-0');
+                setTimeout(() => {
+                    loginScreen.classList.add('hidden');
+                    initApp(); // Jalankan inisialisasi data dashboard
+                }, 500);
+            } else {
+                showLoginError();
+            }
+        } catch (err) {
+            console.error("Login Error:", err);
+            showLoginError();
+        }
+    });
+}
+
+function showLoginError() {
+    btnSubmit.disabled = false;
+    btnSubmit.innerHTML = `<span>MASUK KE DASHBOARD</span>`;
+    loginError.classList.remove('hidden');
+}
+
+// ================= UTILITY & PARSING =================
 
 const getVal = (obj, keyName) => {
   const keys = Object.keys(obj);
@@ -29,7 +122,6 @@ function parseCustomDate(dateStr) {
   } catch (e) { return null; }
 }
 
-// Fitur Pencarian / Filter Tabel
 function doSearch(inputEl, tableBodyId) {
   const term = inputEl.value.toLowerCase();
   const tbody = document.getElementById(tableBodyId);
@@ -41,7 +133,8 @@ function doSearch(inputEl, tableBodyId) {
   }
 }
 
-// LOGIKA SLA TERBARU & TELITI
+// ================= DASHBOARD CORE LOGIC =================
+
 function calculateNewSLAScore(row) {
   const tglStart = parseCustomDate(getVal(row, 'Tgl Terima'));
   const tglEnd = parseCustomDate(getVal(row, 'Tgl Closed')) || new Date(); 
@@ -97,6 +190,8 @@ function calculateMetrics(records) {
     final: ((convC * 0.3) + (convS * 0.5) + (convK * 0.2)).toFixed(2)
   };
 }
+
+// ================= FILTERING & RENDERING =================
 
 function applyFilters() {
   const analysis = document.getElementById('f-analysis').value;
@@ -190,12 +285,10 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   `).join('');
 }
 
-// Logika Baru Warning Table (Menambahkan fallback Kode Toko dan Nama Toko yang akurat)
 function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
   
-  // Ambil tiket yang statusnya BUKAN closed/selesai
   const unclosed = baseData.filter(d => {
     const status = String(getVal(d, 'Status') || '').trim().toLowerCase();
     return status !== 'closed' && status !== 'selesai';
@@ -210,31 +303,23 @@ function renderWarningTable(baseData, tableId) {
     const usiaHari = diffMs / (1000 * 60 * 60 * 24);
     
     let label = 'SECURED', badge = 'bg-green-500';
-    // Warning jika usia mencapai 70% dari target hari
     if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
     else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
     
-    // Hanya render jika melebihi SLA atau Warning, abaikan yang ON TRACK
-   
-
     return { 
       ...d, 
       usiaHari: usiaHari.toFixed(1), 
-      targetDays, 
-      label, 
-      badge,
-      // Menggunakan banyak alternatif fallback agar pasti terbaca dari Google Sheets
-      kodeToko: getVal(d, 'Kode Toko') ||  '-',
+      targetDays, label, badge,
+      kodeToko: getVal(d, 'Kode Toko') || '-',
       namaToko: getVal(d, 'Nama Toko') || '-',
       masalah: getVal(d, 'Masalah') || '-',
       noTicket: getVal(d, 'No Problem') || '-',
       pic: getVal(d, 'Nama Penangung') || '-'
     };
-  }).filter(d => d !== null); // Hapus hasil null
+  }).filter(d => d !== null);
   
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
   
-  // Render sesuai urutan: Dept, Kode toko, Nama toko, No ticket, Masalah, PIC, Usia/target, Status
   tbody.innerHTML = critical.map(d => `
     <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
       <td class="p-3 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
@@ -247,21 +332,6 @@ function renderWarningTable(baseData, tableId) {
       <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
     </tr>
   `).join('');
-}
-
-function showHome() {
-  activeDeptName = null;
-  document.getElementById('view-home')?.classList.remove('hidden');
-  document.getElementById('view-dept')?.classList.add('hidden');
-  document.getElementById('btn-home')?.classList.add('nav-item-active');
-  document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
-  
-  const m = calculateMetrics(filteredData);
-  renderMetrikBox('home-metrics', m);
-  renderDetailTable(filteredData, 'Masalah', 'home-body-prob', false);
-  renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
-  
-  renderWarningTable(rawData, 'home-body-warn');
 }
 
 function selectDept(deptName, el, rank) {
@@ -286,20 +356,16 @@ function updateDeptView(deptName, rank) {
   renderDetailTable(deptDataFiltered, 'Nama Penangung', 'dept-body-pic', true); 
   
   const deptDataRaw = rawData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
-  
-  // Memanggil table warning untuk departemen terpilih
   renderWarningTable(deptDataRaw, 'dept-body-warn');
 
   document.querySelectorAll('.dept-item').forEach(e => {
-    if (e.querySelector('h3').innerText === deptName) {
-      e.classList.add('active-dept');
-    } else {
-      e.classList.remove('active-dept');
-    }
+    if (e.querySelector('h3').innerText === deptName) e.classList.add('active-dept');
+    else e.classList.remove('active-dept');
   });
 }
 
-// FUNGSI UTAMA: AMBIL DATA DARI API
+// ================= INITIALIZATION =================
+
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
@@ -312,28 +378,36 @@ async function initApp() {
     rawData = Array.isArray(result) ? result : result.data;
 
     if (!rawData || rawData.length === 0) {
-      listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
+      if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
       return;
     }
 
     const now = new Date();
-    document.getElementById('f-month').value = now.getMonth();
+    const monthSelect = document.getElementById('f-month');
+    if (monthSelect) monthSelect.value = now.getMonth();
     
     const statusEl = document.getElementById('global-last-update');
-    if (statusEl) {
-      statusEl.innerText = `Synced: ${now.toLocaleTimeString('id-ID')}`;
-    }
+    if (statusEl) statusEl.innerText = `Synced: ${now.toLocaleTimeString('id-ID')}`;
 
     applyFilters(); 
 
   } catch (error) {
     console.error("Error:", error);
-    listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
-    metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
-      <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
-      <p class="text-slate-400 text-[10px] mt-2">Pastikan URL API Apps Script benar dan izin akses diatur ke 'Anyone'</p>
-    </div>`;
+    if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
   }
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+window.addEventListener('load', () => {
+    if (localStorage.getItem('aho_logged_in') === 'true') {
+        if (loginScreen) loginScreen.classList.add('hidden');
+        const userName = localStorage.getItem('aho_user_name');
+        
+        const displayUser = document.getElementById('display-nama-user');
+        if (displayUser) displayUser.innerText = userName;
+        
+        const userInfo = document.getElementById('user-info');
+        if (userInfo) userInfo.classList.remove('hidden');
+        
+        initApp();
+    }
+});
