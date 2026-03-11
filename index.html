@@ -1,423 +1,408 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="Logo_AHO.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <title>AHO Monitoring - SGZ1</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="Logo_AHO.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>AHO Monitoring - SGZ1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-    /* Custom Scrollbar yang Elegan */
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Custom Scrollbar yang Elegan */
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    /* Efek Kaca */
-    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        /* Efek Kaca */
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
 
-    /* Transisi Sidebar Mobile */
-    .slide-in { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    @media (max-width: 1024px) {
-      .sidebar-closed { transform: translateX(-100%); }
-    }
+        /* Transisi Sidebar Mobile */
+        .slide-in { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        @media (max-width: 1024px) {
+            .sidebar-closed { transform: translateX(-100%); }
+        }
 
-    /* Navigasi Aktif */
-    .nav-item-active {
-      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-      color: white !important;
-      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
-    }
-    .active-dept {
-      background-color: #f8fafc;
-      border-left: 4px solid #4f46e5 !important;
-    }
+        /* Navigasi Aktif */
+        .nav-item-active {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+        .active-dept {
+            background-color: #f8fafc;
+            border-left: 4px solid #4f46e5 !important;
+        }
 
-    /* Loader & Layar Login */
-    #login-screen { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
-    .loader { border-top-color: #4f46e5; animation: spinner 1s linear infinite; }
-    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
+        /* Loader & Layar Login */
+        #login-screen { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+        .loader { border-top-color: #4f46e5; animation: spinner 1s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body class="bg-[#f1f5f9] text-slate-800 text-[11px] sm:text-xs overflow-hidden antialiased">
 
-  <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-500">
-    <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl border border-white/50 p-8 text-center backdrop-blur-xl">
-      <div class="mb-8">
-        <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600 shadow-inner">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-        </div>
-        <h1 class="text-3xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
-        <p class="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Portal Keamanan</p>
-      </div>
+    <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-500">
+        <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl border border-white/50 p-8 text-center backdrop-blur-xl">
+            <div class="mb-8">
+                <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600 shadow-inner">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                </div>
+                <h1 class="text-3xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
+                <p class="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Portal Keamanan</p>
+            </div>
 
-      <form id="form-login" class="space-y-5">
-        <div class="text-left">
-          <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-wider">NIK Karyawan</label>
-          <input type="text" id="username" required placeholder="Contoh: 211010..." class="w-full mt-1.5 px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold text-sm">
-        </div>
-        <div class="text-left">
-          <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-wider">Division (Password)</label>
-          <input type="password" id="password" required placeholder="Masukkan Divisi" class="w-full mt-1.5 px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold text-sm">
-        </div>
-        <button type="submit" id="btn-submit-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_4px_10px_rgba(79,70,229,0.2)] transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
-          <span class="tracking-widest uppercase text-xs">Masuk ke Dashboard</span>
-        </button>
-      </form>
+            <form id="form-login" class="space-y-5">
+                <div class="text-left">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-wider">NIK Karyawan</label>
+                    <input type="text" id="username" required placeholder="Contoh: 211010..." class="w-full mt-1.5 px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold text-sm">
+                </div>
+                <div class="text-left">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-wider">Division (Password)</label>
+                    <input type="password" id="password" required placeholder="Masukkan Divisi" class="w-full mt-1.5 px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold text-sm">
+                </div>
+                <button type="submit" id="btn-submit-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_4px_10px_rgba(79,70,229,0.2)] transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
+                    <span class="tracking-widest uppercase text-xs">Masuk ke Dashboard</span>
+                </button>
+            </form>
 
-      <div id="login-error" class="hidden animate-bounce mt-5 p-3 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold border border-red-100 uppercase tracking-wide">
-        ❌ NIK atau Division Salah!
-      </div>
+            <div id="login-error" class="hidden animate-bounce mt-5 p-3 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold border border-red-100 uppercase tracking-wide">
+                ❌ NIK atau Division Salah!
+            </div>
 
-      <p class="mt-8 text-[9px] text-slate-400 font-medium uppercase tracking-tighter">Internal Use Only • Branch Samarinda</p>
+            <p class="mt-8 text-[9px] text-slate-400 font-medium uppercase tracking-tighter">Internal Use Only • Branch Samarinda</p>
+        </div>
     </div>
-  </div>
 
-  <div class="flex h-screen w-full">
+    <div class="flex h-screen w-full">
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
 
-    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
+        <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-sm flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
+            <div class="p-6 flex flex-col gap-4 bg-white border-b border-slate-100 shrink-0">
+                <div>
+                    <h1 class="text-3xl font-black italic tracking-tighter text-indigo-700 leading-none">AHO <span class="text-slate-300">- SGZ1</span></h1>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                        <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Monitoring System</p>
+                    </div>
+                </div>
 
-    <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-sm flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
-
-      <div class="p-6 flex flex-col gap-4 bg-white border-b border-slate-100 shrink-0">
-        <div>
-          <h1 class="text-3xl font-black italic tracking-tighter text-indigo-700 leading-none">AHO <span class="text-slate-300">- SGZ1</span></h1>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-            <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Monitoring System</p>
-          </div>
-        </div>
-
-        <div id="user-info" class="hidden bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-          </div>
-          <div class="flex flex-col">
-            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Akses Saat Ini</span>
-            <span id="display-nama-user" class="text-xs font-black text-slate-700 uppercase truncate max-w-[150px]">GUEST</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-5 shrink-0">
-        <button id="btn-home" onclick="showHome()" class="nav-item-active w-full py-3.5 px-4 rounded-xl font-bold flex items-center gap-3 transition-all duration-300">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-          DASHBOARD UTAMA
-        </button>
-        <a href="https://docs.google.com/spreadsheets/d/1rLGRDHhZgd34UKMLfjoJgb7Fqnh60pzolwYvlLbfajw/edit?usp=sharing" target="_blank" class="w-full mt-3 py-3 px-4 rounded-xl font-bold flex items-center gap-3 transition-all duration-300 bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-          LIHAT DATABASE
-        </a>
-      </div>
-
-      <div class="px-6 py-2 flex items-center justify-between border-t border-slate-100 shrink-0">
-        <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Peringkat Dept</span>
-        <span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded text-[8px] font-bold tracking-widest">LIVE</span>
-      </div>
-
-      <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-3 pb-6 space-y-1">
-        <div class="p-4 space-y-3">
-          <div class="h-12 bg-slate-100 rounded-xl animate-pulse"></div>
-          <div class="h-12 bg-slate-100 rounded-xl animate-pulse"></div>
-          <div class="h-12 bg-slate-100 rounded-xl animate-pulse"></div>
-        </div>
-      </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col relative min-w-0 bg-[#f8fafc]">
-
-      <header class="h-[72px] bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-20 shrink-0 sticky top-0">
-        <div class="flex items-center gap-4">
-          <button onclick="toggleSidebar()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl lg:hidden transition-colors text-slate-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-          </button>
-          <div>
-            <h2 class="text-sm sm:text-lg font-black text-slate-800 tracking-tight uppercase">BRANCH SAMARINDA</h2>
-            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest hidden sm:block">Realtime Helpdesk Dashboard</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="hidden md:flex flex-col text-right">
-            <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Sync Status</span>
-            <span id="global-last-update" class="text-[10px] font-black text-indigo-600 uppercase">Menghubungkan...</span>
-          </div>
-          <div class="h-8 w-px bg-slate-200 hidden md:block"></div>
-          <button onclick="window.location.reload()" class="p-2 hover:bg-indigo-50 text-indigo-600 rounded-xl transition-colors" title="Refresh Data">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-          </button>
-        </div>
-      </header>
-
-      <div class="bg-white border-b border-slate-200 px-4 lg:px-8 py-3.5 flex flex-wrap gap-4 z-10 shadow-sm shrink-0">
-        <div class="flex flex-col">
-          <label class="text-[9px] font-black text-slate-400 uppercase mb-1.5 tracking-wider ml-1">Analisis</label>
-          <select id="f-analysis" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-all min-w-[120px]">
-            <option value="MTD">MTD (Bulan Ini)</option>
-            <option value="YTD">YTD (Tahun Ini)</option>
-          </select>
-        </div>
-        <div class="flex flex-col">
-          <label class="text-[9px] font-black text-slate-400 uppercase mb-1.5 tracking-wider ml-1">Periode Bulan</label>
-          <select id="f-month" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-all min-w-[140px]">
-            <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
-            <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
-            <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
-            <option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
-          </select>
-        </div>
-        <div class="flex flex-col">
-          <label class="text-[9px] font-black text-slate-400 uppercase mb-1.5 tracking-wider ml-1">Jenis Report</label>
-          <select id="f-report" onchange="applyFilters()" class="text-xs font-bold border-2 border-indigo-100 rounded-xl px-3 py-2 bg-indigo-50/50 outline-none focus:border-indigo-500 text-indigo-700 cursor-pointer transition-all min-w-[160px]">
-            <option value="monitoring">Monitoring (Realtime)</option>
-            <option value="score">Score Akhir Bulan</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 relative">
-
-        <div id="view-home" class="space-y-6">
-          <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
-
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
-              <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
-                <span class="font-black uppercase text-slate-700 tracking-tight flex items-center gap-2">
-                  <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                  Top Problem Cabang
-                </span>
-                <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 w-full sm:w-48 bg-white transition-all">
-              </div>
-              <div class="overflow-auto flex-1 custom-scroll">
-                <table class="w-full text-left border-collapse">
-                  <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] sticky top-0 z-10 tracking-wider">
-                    <tr>
-                      <th class="p-4 border-b border-slate-200">Masalah</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Total</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Closed</th>
-                      <th class="p-4 border-b border-slate-200 text-center">% Clsd</th>
-                      <th class="p-4 border-b border-slate-200 text-center">SLA</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Puas</th>
-                      <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody id="home-body-prob" class="divide-y divide-slate-100 bg-white"></tbody>
-                </table>
-              </div>
+                <div id="user-info" class="hidden bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Akses Saat Ini</span>
+                        <span id="display-nama-user" class="text-xs font-black text-slate-700 uppercase truncate max-w-[150px]">GUEST</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
-              <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
-                <span class="font-black uppercase text-slate-700 tracking-tight flex items-center gap-2">
-                  <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                  Kinerja PIC Cabang
-                </span>
-                <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 w-full sm:w-48 bg-white transition-all">
-              </div>
-              <div class="overflow-auto flex-1 custom-scroll">
-                <table class="w-full text-left border-collapse">
-                  <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] sticky top-0 z-10 tracking-wider">
-                    <tr>
-                      <th class="p-4 border-b border-slate-200">Nama PIC</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Total</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Closed</th>
-                      <th class="p-4 border-b border-slate-200 text-center">% Clsd</th>
-                      <th class="p-4 border-b border-slate-200 text-center">SLA</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Puas</th>
-                      <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody id="home-body-pic" class="divide-y divide-slate-100 bg-white"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-3xl shadow-sm border border-red-200 flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/50">
-              <div class="flex flex-col">
-                <span class="font-black text-red-600 uppercase flex items-center gap-2 text-sm">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                  Ticket Melebihi / Mendekati Target SLA
-                </span>
-                <span class="text-[10px] text-slate-500 font-bold ml-7 mt-1">*Menampilkan data tiket yang belum terselesaikan (Realtime)</span>
-              </div>
-              <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari toko/tiket/masalah..." class="text-xs border border-red-200 px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 w-full sm:w-64 bg-white transition-all">
-            </div>
-            <div class="max-h-96 overflow-auto custom-scroll">
-              <table class="w-full text-left border-collapse bg-white">
-                <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 font-bold tracking-wider">
-                  <tr>
-                    <th class="p-4 border-b border-slate-200">Dept</th>
-                    <th class="p-4 border-b border-slate-200">Kd Toko</th>
-                    <th class="p-4 border-b border-slate-200">Nama Toko</th>
-                    <th class="p-4 border-b border-slate-200">No Ticket</th>
-                    <th class="p-4 border-b border-slate-200">Masalah</th>
-                    <th class="p-4 border-b border-slate-200">PIC</th>
-                    <th class="p-4 border-b border-slate-200 text-center">Usia Tiket</th>
-                    <th class="p-4 border-b border-slate-200 text-center">Status SLA</th>
-                  </tr>
-                </thead>
-                <tbody id="home-body-warn" class="divide-y divide-slate-100"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div id="view-dept" class="hidden space-y-6">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200 gap-4 relative overflow-hidden">
-            <div class="absolute right-0 top-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3"></div>
-            <div class="relative z-10">
-              <button onclick="showHome()" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 mb-4 flex items-center gap-1.5 transition-colors bg-slate-100 hover:bg-indigo-50 px-4 py-2 rounded-xl w-max">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                KEMBALI KE HOME
-              </button>
-              <div class="flex flex-wrap items-center gap-3">
-                <span id="det-rank" class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-xs px-4 py-1.5 rounded-lg font-black italic shadow-lg shadow-indigo-200">RANK #</span>
-                <h2 id="det-name" class="text-2xl md:text-3xl font-black text-slate-800 uppercase italic tracking-tight">NAMA DEPT</h2>
-              </div>
-            </div>
-            <div class="text-left sm:text-right bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 w-full sm:w-auto relative z-10">
-              <p class="text-[10px] font-black text-indigo-400 uppercase mb-1 tracking-widest">Total Score Layanan</p>
-              <div id="det-score" class="text-5xl font-black text-indigo-600 italic leading-none drop-shadow-sm">0.00</div>
-            </div>
-          </div>
-
-          <div id="dept-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
-
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
-              <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <span class="font-black uppercase text-slate-700 tracking-tight text-xs">Detail Masalah Dept</span>
-                <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari masalah..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl w-40 outline-none focus:border-indigo-400 transition-all">
-              </div>
-              <div class="overflow-auto flex-1 custom-scroll">
-                <table class="w-full text-left border-collapse text-[10px]">
-                  <thead class="bg-slate-100 text-slate-500 font-bold uppercase sticky top-0 z-10 tracking-wider">
-                    <tr>
-                      <th class="p-4 border-b border-slate-200">Masalah</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Total</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Closed</th>
-                      <th class="p-4 border-b border-slate-200 text-center">%</th>
-                      <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody id="dept-body-prob" class="divide-y divide-slate-100 bg-white"></tbody>
-                </table>
-              </div>
+            <div class="p-5 shrink-0">
+                <button id="btn-home" onclick="showHome()" class="nav-item-active w-full py-3.5 px-4 rounded-xl font-bold flex items-center gap-3 transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    DASHBOARD UTAMA
+                </button>
+                <a href="https://docs.google.com/spreadsheets/d/1rLGRDHhZgd34UKMLfjoJgb7Fqnh60pzolwYvlLbfajw/edit?usp=sharing" target="_blank" class="w-full mt-3 py-3 px-4 rounded-xl font-bold flex items-center gap-3 transition-all duration-300 bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    LIHAT DATABASE
+                </a>
             </div>
 
-            <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
-              <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <span class="font-black uppercase text-slate-700 tracking-tight text-xs">Kinerja PIC Dept</span>
-                <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl w-40 outline-none focus:border-indigo-400 transition-all">
-              </div>
-              <div class="overflow-auto flex-1 custom-scroll">
-                <table class="w-full text-left border-collapse text-[10px]">
-                  <thead class="bg-slate-100 text-slate-500 font-bold uppercase sticky top-0 z-10 tracking-wider">
-                    <tr>
-                      <th class="p-4 border-b border-slate-200">Nama PIC</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Total</th>
-                      <th class="p-4 border-b border-slate-200 text-center">Closed</th>
-                      <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody id="dept-body-pic" class="divide-y divide-slate-100 bg-white"></tbody>
-                </table>
-              </div>
+            <div class="px-6 py-2 flex items-center justify-between border-t border-slate-100 shrink-0">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Peringkat Dept</span>
+                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded text-[8px] font-bold tracking-widest">LIVE</span>
             </div>
-          </div>
-        </div>
 
-      </div>
+            <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-3 pb-6 space-y-1">
+                <div class="p-4 space-y-3">
+                    <div class="h-12 bg-slate-100 rounded-xl animate-pulse"></div>
+                    <div class="h-12 bg-slate-100 rounded-xl animate-pulse"></div>
+                    <div class="h-12 bg-slate-100 rounded-xl animate-pulse"></div>
+                </div>
+            </div>
+        </aside>
 
-      <footer class="h-[52px] bg-white border-t border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.8)]"></span>
-          <span class="text-[9px] font-black text-red-500 tracking-[0.15em] uppercase">Internal Area Only</span>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="text-[9px] font-bold text-slate-400 tracking-wider uppercase hidden sm:block">
-            Made by : <span class="text-indigo-600">Akbar Rasyid - SQR</span>
-          </div>
-          <button onclick="handleLogout()" class="text-[9px] font-black bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 px-4 py-2 rounded-lg transition-all border border-slate-200 hover:border-red-200 uppercase tracking-tighter flex items-center gap-1.5">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-            Keluar
-          </button>
-        </div>
-      </footer>
-    </main>
+        <main class="flex-1 flex flex-col relative min-w-0 bg-[#f8fafc]">
+            <header class="h-[72px] bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-20 shrink-0 sticky top-0">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl lg:hidden transition-colors text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <div>
+                        <h2 class="text-sm sm:text-lg font-black text-slate-800 tracking-tight uppercase">BRANCH SAMARINDA</h2>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest hidden sm:block">Realtime Helpdesk Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex flex-col text-right">
+                        <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Sync Status</span>
+                        <span id="global-last-update" class="text-[10px] font-black text-indigo-600 uppercase">Menghubungkan...</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200 hidden md:block"></div>
+                    <button onclick="window.location.reload()" class="p-2 hover:bg-indigo-50 text-indigo-600 rounded-xl transition-colors" title="Refresh Data">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
+                </div>
+            </header>
 
-  </div>
+            <div class="bg-white border-b border-slate-200 px-4 lg:px-8 py-3.5 flex flex-wrap gap-4 z-10 shadow-sm shrink-0">
+                <div class="flex flex-col">
+                    <label class="text-[9px] font-black text-slate-400 uppercase mb-1.5 tracking-wider ml-1">Analisis</label>
+                    <select id="f-analysis" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-all min-w-[120px]">
+                        <option value="MTD">MTD (Bulan Ini)</option>
+                        <option value="YTD">YTD (Tahun Ini)</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[9px] font-black text-slate-400 uppercase mb-1.5 tracking-wider ml-1">Periode Bulan</label>
+                    <select id="f-month" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-all min-w-[140px]">
+                        <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
+                        <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
+                        <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
+                        <option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[9px] font-black text-slate-400 uppercase mb-1.5 tracking-wider ml-1">Jenis Report</label>
+                    <select id="f-report" onchange="applyFilters()" class="text-xs font-bold border-2 border-indigo-100 rounded-xl px-3 py-2 bg-indigo-50/50 outline-none focus:border-indigo-500 text-indigo-700 cursor-pointer transition-all min-w-[160px]">
+                        <option value="monitoring">Monitoring (Realtime)</option>
+                        <option value="score">Score Akhir Bulan</option>
+                    </select>
+                </div>
+            </div>
 
-  <script>
-    // Fungsi dasar untuk buka/tutup menu di mobile
-    function toggleSidebar() {
-      const s = document.getElementById('main-sidebar');
-      const o = document.getElementById('sidebar-overlay');
-      if(s) s.classList.toggle('sidebar-closed');
-      if(o) o.classList.toggle('hidden');
-    }
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 relative">
+                <div id="view-home" class="space-y-6">
+                    <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbz8tX3xc_4wUkxICTg_9UGFZVSzFg0i6v1lKqclha-Ch43xnQ1ymQjQIlqJTMg1Lwd4/exec";
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+                                <span class="font-black uppercase text-slate-700 tracking-tight flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    Top Problem Cabang
+                                </span>
+                                <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 w-full sm:w-48 bg-white transition-all">
+                            </div>
+                            <div class="overflow-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] sticky top-0 z-10 tracking-wider">
+                                        <tr>
+                                            <th class="p-4 border-b border-slate-200">Masalah</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Total</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Closed</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">% Clsd</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">SLA</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Puas</th>
+                                            <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="home-body-prob" class="divide-y divide-slate-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
 
-    // LOGIN HANDLER
-    document.addEventListener("DOMContentLoaded", () => {
-      const loginForm = document.getElementById("form-login");
-      const loginScreen = document.getElementById("login-screen");
-      const loginError = document.getElementById("login-error");
+                        <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+                                <span class="font-black uppercase text-slate-700 tracking-tight flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                    Kinerja PIC Cabang
+                                </span>
+                                <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 w-full sm:w-48 bg-white transition-all">
+                            </div>
+                            <div class="overflow-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] sticky top-0 z-10 tracking-wider">
+                                        <tr>
+                                            <th class="p-4 border-b border-slate-200">Nama PIC</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Total</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Closed</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">% Clsd</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">SLA</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Puas</th>
+                                            <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="home-body-pic" class="divide-y divide-slate-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
-      const savedSession = localStorage.getItem("aho_logged_in");
+                    <div class="bg-white rounded-3xl shadow-sm border border-red-200 flex flex-col overflow-hidden">
+                        <div class="p-5 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/50">
+                            <div class="flex flex-col">
+                                <span class="font-black text-red-600 uppercase flex items-center gap-2 text-sm">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    Ticket Melebihi / Mendekati Target SLA
+                                </span>
+                                <span class="text-[10px] text-slate-500 font-bold ml-7 mt-1">*Menampilkan data tiket yang belum terselesaikan (Realtime)</span>
+                            </div>
+                            <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari toko/tiket/masalah..." class="text-xs border border-red-200 px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 w-full sm:w-64 bg-white transition-all">
+                        </div>
+                        <div class="max-h-96 overflow-auto custom-scroll">
+                            <table class="w-full text-left border-collapse bg-white">
+                                <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 font-bold tracking-wider">
+                                    <tr>
+                                        <th class="p-4 border-b border-slate-200">Dept</th>
+                                        <th class="p-4 border-b border-slate-200">Kd Toko</th>
+                                        <th class="p-4 border-b border-slate-200">Nama Toko</th>
+                                        <th class="p-4 border-b border-slate-200">No Ticket</th>
+                                        <th class="p-4 border-b border-slate-200">Masalah</th>
+                                        <th class="p-4 border-b border-slate-200">PIC</th>
+                                        <th class="p-4 border-b border-slate-200 text-center">Usia Tiket</th>
+                                        <th class="p-4 border-b border-slate-200 text-center">Status SLA</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="home-body-warn" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-      if(savedSession){
-        loginScreen.style.display = "none";
-        const name = localStorage.getItem("aho_user_name");
-        document.getElementById("display-nama-user").innerText = name || "USER";
-        document.getElementById("user-info").classList.remove("hidden");
-        initApp();
-      }
+                <div id="view-dept" class="hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200 gap-4 relative overflow-hidden">
+                        <div class="absolute right-0 top-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3"></div>
+                        <div class="relative z-10">
+                            <button onclick="showHome()" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 mb-4 flex items-center gap-1.5 transition-colors bg-slate-100 hover:bg-indigo-50 px-4 py-2 rounded-xl w-max">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                                KEMBALI KE HOME
+                            </button>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <span id="det-rank" class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-xs px-4 py-1.5 rounded-lg font-black italic shadow-lg shadow-indigo-200">RANK #</span>
+                                <h2 id="det-name" class="text-2xl md:text-3xl font-black text-slate-800 uppercase italic tracking-tight">NAMA DEPT</h2>
+                            </div>
+                        </div>
+                        <div class="text-left sm:text-right bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 w-full sm:w-auto relative z-10">
+                            <p class="text-[10px] font-black text-indigo-400 uppercase mb-1 tracking-widest">Total Score Layanan</p>
+                            <div id="det-score" class="text-5xl font-black text-indigo-600 italic leading-none drop-shadow-sm">0.00</div>
+                        </div>
+                    </div>
 
-      loginForm.addEventListener("submit", async function(e){
-        e.preventDefault();
-        loginError.classList.add("hidden");
+                    <div id="dept-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
 
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <span class="font-black uppercase text-slate-700 tracking-tight text-xs">Detail Masalah Dept</span>
+                                <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari masalah..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl w-40 outline-none focus:border-indigo-400 transition-all">
+                            </div>
+                            <div class="overflow-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-[10px]">
+                                    <thead class="bg-slate-100 text-slate-500 font-bold uppercase sticky top-0 z-10 tracking-wider">
+                                        <tr>
+                                            <th class="p-4 border-b border-slate-200">Masalah</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Total</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Closed</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">%</th>
+                                            <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dept-body-prob" class="divide-y divide-slate-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
 
-        try {
-          const res = await fetch(API_URL,{
-            method: "POST",
-            body: JSON.stringify({
-              username: username,
-              password: password
-            })
-          });
+                        <div class="glass-card bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[450px] overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <span class="font-black uppercase text-slate-700 tracking-tight text-xs">Kinerja PIC Dept</span>
+                                <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-xs border border-slate-200 px-3 py-2 rounded-xl w-40 outline-none focus:border-indigo-400 transition-all">
+                            </div>
+                            <div class="overflow-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-[10px]">
+                                    <thead class="bg-slate-100 text-slate-500 font-bold uppercase sticky top-0 z-10 tracking-wider">
+                                        <tr>
+                                            <th class="p-4 border-b border-slate-200">Nama PIC</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Total</th>
+                                            <th class="p-4 border-b border-slate-200 text-center">Closed</th>
+                                            <th class="p-4 border-b border-slate-200 text-center text-indigo-600">Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dept-body-pic" class="divide-y divide-slate-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-          const result = await res.json();
+            <footer class="h-[52px] bg-white border-t border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.8)]"></span>
+                    <span class="text-[9px] font-black text-red-500 tracking-[0.15em] uppercase">Internal Area Only</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-[9px] font-bold text-slate-400 tracking-wider uppercase hidden sm:block">
+                        Made by : <span class="text-indigo-600">Akbar Rasyid - SQR</span>
+                    </div>
+                    <button onclick="handleLogout()" class="text-[9px] font-black bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 px-4 py-2 rounded-lg transition-all border border-slate-200 hover:border-red-200 uppercase tracking-tighter flex items-center gap-1.5">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Keluar
+                    </button>
+                </div>
+            </footer>
+        </main>
+    </div>
 
-          if(result.status === "success"){
-            localStorage.setItem("aho_logged_in", result.token);
-            localStorage.setItem("aho_user_name", result.user.nama);
-            loginScreen.style.opacity = "0";
-            setTimeout(()=>{
-              loginScreen.style.display = "none";
-              document.getElementById("display-nama-user").innerText = result.user.nama;
-              document.getElementById("user-info").classList.remove("hidden");
-              initApp();
-            }, 400);
-          } else {
-            loginError.classList.remove("hidden");
-          }
-        } catch(err) {
-          console.error(err);
-          loginError.classList.remove("hidden");
+    <script>
+        // Fungsi dasar untuk buka/tutup menu di mobile
+        function toggleSidebar() {
+            const s = document.getElementById('main-sidebar');
+            const o = document.getElementById('sidebar-overlay');
+            if(s) s.classList.toggle('sidebar-closed');
+            if(o) o.classList.toggle('hidden');
         }
-      });
-    });
-  </script>
-  <script src="app.js"></script>
+
+        const API_URL = "https://script.google.com/macros/s/AKfycbw0BwOrkaqizgm0zfFQ46S2q5BfbyLOrvZ21bXlEEW8l2rpL1DlBOgdPZWxK3Xz4Scw/exec";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const loginForm = document.getElementById("form-login");
+            const loginScreen = document.getElementById("login-screen");
+            const loginError = document.getElementById("login-error");
+            const savedSession = localStorage.getItem("aho_logged_in");
+
+            if (savedSession) {
+                loginScreen.style.display = "none";
+                const name = localStorage.getItem("aho_user_name") || "USER";
+                document.getElementById("display-nama-user").innerText = name;
+                document.getElementById("user-info").classList.remove("hidden");
+                initApp();
+            }
+
+            loginForm.addEventListener("submit", async function(e) {
+                e.preventDefault();
+                loginError.classList.add("hidden");
+                const username = document.getElementById("username").value.trim();
+                const password = document.getElementById("password").value.trim();
+
+                try {
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: username, password: password })
+                    });
+                    const result = await res.json();
+
+                    if (result.status === "success") {
+                        localStorage.setItem("aho_logged_in", result.token);
+                        localStorage.setItem("aho_user_name", result.user.nama);
+                        loginScreen.style.display = "none";
+                        document.getElementById("display-nama-user").innerText = result.user.nama;
+                        document.getElementById("user-info").classList.remove("hidden");
+                        initApp();
+                    } else {
+                        loginError.classList.remove("hidden");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    loginError.classList.remove("hidden");
+                }
+            });
+        });
+    </script>
+    <script src="app.js"></script>
 </body>
 </html>
