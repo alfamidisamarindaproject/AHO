@@ -35,53 +35,11 @@
         background-color: #f8fafc; 
         border-left: 4px solid #4f46e5 !important; 
     }
-    
-    /* Loader & Layar Login */
-    #login-screen { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
-    .loader { border-top-color: #4f46e5; animation: spinner 1s linear infinite; }
-    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
-<body class="bg-[#f1f5f9] text-slate-800 text-[11px] sm:text-xs overflow-hidden antialiased">
-
-  <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-500">
-    <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl border border-white/50 p-8 text-center backdrop-blur-xl">
-      <div class="mb-8">
-        <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600 shadow-inner">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-        </div>
-        <h1 class="text-3xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
-        <p class="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Portal Keamanan</p>
-      </div>
-      
-      <form id="form-login" class="space-y-5">
-        <div class="text-left">
-          <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-wider">NIK Karyawan</label>
-          <input type="text" id="username" required placeholder="Contoh: 211010..." class="w-full mt-1.5 px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold text-sm">
-        </div>
-        <div class="text-left">
-          <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-wider">Division (Password)</label>
-          <input type="password" id="password" required placeholder="Masukkan Divisi" class="w-full mt-1.5 px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold text-sm">
-        </div>
-        <button type="submit" id="btn-submit-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_4px_10px_rgba(79,70,229,0.2)] transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
-          <span class="tracking-widest uppercase text-xs">Masuk ke Dashboard</span>
-        </button>
-      </form>
-      
-      <div id="login-error" class="hidden animate-bounce mt-5 p-3 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold border border-red-100 uppercase tracking-wide">
-        ❌ NIK atau Division Salah!
-      </div>
-      
-      <p class="mt-8 text-[9px] text-slate-400 font-medium uppercase tracking-tighter">Internal Use Only • Branch Samarinda</p>
-    </div>
-  </div>
-
   <div class="flex h-screen w-full">
-
     <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
-
     <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-sm flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
-      
       <div class="p-6 flex flex-col gap-4 bg-white border-b border-slate-100 shrink-0">
         <div>
           <h1 class="text-3xl font-black italic tracking-tighter text-indigo-700 leading-none">AHO <span class="text-slate-300">- SGZ1</span></h1>
