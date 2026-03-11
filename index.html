@@ -17,47 +17,8 @@
     @media (max-width: 1024px) { .sidebar-closed { transform: translateX(-100%); } }
     .nav-item-active { background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%); color: white !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
     .active-dept { background-color: #f8fafc; border-left: 4px solid #4f46e5 !important; }
-    
-    /* Style Tambahan untuk Login */
-    #login-screen { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
-    .loader { border-top-color: #4f46e5; animation: spinner 1.5s linear infinite; }
-    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
-<body class="bg-[#f1f5f9] flex h-screen overflow-hidden text-slate-800 text-[11px] sm:text-xs">
-
-  <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 p-8 text-center">
-      <div class="mb-6">
-        <h1 class="text-3xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
-        <p class="text-slate-500 font-bold mt-2 uppercase tracking-widest text-[10px]">Security Authentication</p>
-      </div>
-      
-      <form id="form-login" class="space-y-4">
-        <div class="text-left">
-          <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">NIK Karyawan</label>
-          <input type="text" id="username" required placeholder="Contoh: 211010..." class="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold">
-        </div>
-        <div class="text-left">
-          <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Division (Password)</label>
-          <input type="password" id="password" required placeholder="Masukkan Divisi Anda" class="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold">
-        </div>
-        <button type="submit" id="btn-submit-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all transform active:scale-95 flex items-center justify-center gap-2">
-          <span>MASUK KE DASHBOARD</span>
-        </button>
-      </form>
-      
-      <div id="login-error" class="hidden mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold border border-red-100 italic uppercase">
-        NIK atau Division Salah!
-      </div>
-      
-      <p class="mt-8 text-[9px] text-slate-400 font-medium uppercase tracking-tighter">Internal Use Only - Property of Samarinda Branch</p>
-    </div>
-  </div>
-  <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
-
-  <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-none flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
-    <div class="p-6 flex items-center justify-between bg-white border-b border-slate-100">
       <div>
         <h1 class="text-2xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
         <div class="flex items-center gap-1.5 mt-2">
