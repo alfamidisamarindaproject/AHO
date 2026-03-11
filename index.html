@@ -356,7 +356,7 @@
             if(o) o.classList.toggle('hidden');
         }
 
-        const API_URL = "https://script.google.com/macros/s/AKfycbyb7SNUUQbw7sXrSBGCDY31NrBpKiSp1X3P_plrkQA4a4ppf50xMfSWsdFg2GWG3_4U/exec";
+        const res = await fetch(window.API_URL,{
 
         document.addEventListener("DOMContentLoaded", () => {
             const loginForm = document.getElementById("form-login");
