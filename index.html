@@ -17,10 +17,43 @@
     @media (max-width: 1024px) { .sidebar-closed { transform: translateX(-100%); } }
     .nav-item-active { background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%); color: white !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
     .active-dept { background-color: #f8fafc; border-left: 4px solid #4f46e5 !important; }
+    
+    /* Style Tambahan untuk Login */
+    #login-screen { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
+    .loader { border-top-color: #4f46e5; animation: spinner 1.5s linear infinite; }
+    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="bg-[#f1f5f9] flex h-screen overflow-hidden text-slate-800 text-[11px] sm:text-xs">
 
+  <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 p-8 text-center">
+      <div class="mb-6">
+        <h1 class="text-3xl font-extrabold italic tracking-tighter text-indigo-700">AHO <span class="text-slate-400">- SGZ1</span></h1>
+        <p class="text-slate-500 font-bold mt-2 uppercase tracking-widest text-[10px]">Security Authentication</p>
+      </div>
+      
+      <form id="form-login" class="space-y-4">
+        <div class="text-left">
+          <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">NIK Karyawan</label>
+          <input type="text" id="username" required placeholder="Contoh: 211010..." class="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold">
+        </div>
+        <div class="text-left">
+          <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Division (Password)</label>
+          <input type="password" id="password" required placeholder="Masukkan Divisi Anda" class="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold">
+        </div>
+        <button type="submit" id="btn-submit-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+          <span>MASUK KE DASHBOARD</span>
+        </button>
+      </form>
+      
+      <div id="login-error" class="hidden mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold border border-red-100 italic uppercase">
+        NIK atau Division Salah!
+      </div>
+      
+      <p class="mt-8 text-[9px] text-slate-400 font-medium uppercase tracking-tighter">Authorized Personnel Only - Property of Samarinda Branch</p>
+    </div>
+  </div>
   <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-30 hidden backdrop-blur-sm lg:hidden transition-opacity"></div>
 
   <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white shadow-2xl lg:shadow-none flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
@@ -70,6 +103,10 @@
             </h2>
         </div>
         <div class="flex items-center gap-3">
+            <div id="user-info" class="hidden md:flex flex-col text-right mr-4">
+                <span class="text-[10px] font-bold text-slate-400">WELCOME,</span>
+                <span id="display-nama-user" class="text-[10px] font-bold text-indigo-600 uppercase">GUEST</span>
+            </div>
             <div class="hidden md:flex flex-col text-right">
                 <span class="text-[10px] font-bold text-slate-400">SYNC STATUS</span>
                 <span id="global-last-update" class="text-[10px] font-bold text-emerald-500 uppercase">Connecting...</span>
@@ -107,9 +144,7 @@
     </div>
 
     <div id="view-home" class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6">
-      
       <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
-
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
           <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -136,7 +171,7 @@
 
         <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
           <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <span class="font-bold uppercase text-slate-800 tracking-tight">Kinerja PIC Cabang <span class="text-[9px] font-medium text-slate-400 normal-case ml-1">(Berdasarkan Score)</span></span>
+            <span class="font-bold uppercase text-slate-800 tracking-tight">Kinerja PIC Cabang</span>
             <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-300 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-48 bg-white">
           </div>
           <div class="overflow-auto flex-1 custom-scroll">
@@ -161,22 +196,21 @@
       <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
         <div class="p-4 bg-red-50 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div class="flex flex-col">
-            <span class="font-bold text-red-600 uppercase">Problem Mendekati / Melebihi Target Hari (Semua Dept)</span>
-            <span class="text-[9px] text-slate-500 font-medium">*Menampilkan data realtime tanpa filter bulan</span>
+            <span class="font-bold text-red-600 uppercase">Problem Mendekati / Melebihi Target Hari</span>
+            <span class="text-[9px] text-slate-500 font-medium">*Menampilkan data realtime</span>
           </div>
-          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari toko/tiket/masalah/PIC/status..." class="text-[10px] border border-red-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500/20 w-full sm:w-56 bg-white">
+          <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari..." class="text-[10px] border border-red-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500/20 w-full sm:w-56 bg-white">
         </div>
         <div class="max-h-80 overflow-auto custom-scroll">
           <table class="w-full text-left border-collapse bg-white">
             <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 font-bold">
               <tr>
                 <th class="p-3">Dept</th>
-                <th class="p-3">Kode Toko</th>
-                <th class="p-3">Nama Toko</th>
+                <th class="p-3">Toko</th>
                 <th class="p-3">No Ticket</th>
                 <th class="p-3">Masalah</th>
                 <th class="p-3">PIC</th>
-                <th class="p-3 text-center">Usia / Target</th>
+                <th class="p-3 text-center">Usia</th>
                 <th class="p-3 text-center">Status</th>
               </tr>
             </thead>
@@ -187,7 +221,6 @@
     </div>
 
     <div id="view-dept" class="hidden flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6">
-        
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
             <div>
               <button onclick="showHome()" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 mb-3 flex items-center gap-1.5 transition-colors bg-slate-50 px-3 py-1.5 rounded-lg w-max">
@@ -204,14 +237,12 @@
               <div id="det-score" class="text-4xl font-black text-indigo-700 italic leading-none">0.00</div>
             </div>
         </div>
-
         <div id="dept-metrics" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
-
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
-                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl text-[10px]">
                     <span class="font-bold uppercase text-slate-800">Detail Masalah Dept</span>
-                    <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari..." class="text-[10px] border border-slate-300 px-3 py-1.5 rounded-xl w-36 outline-none focus:ring-2 focus:ring-indigo-500/20">
+                    <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari..." class="border border-slate-300 px-3 py-1.5 rounded-xl w-36 outline-none">
                 </div>
                 <div class="overflow-auto flex-1 custom-scroll">
                     <table class="w-full text-left border-collapse text-[10px]">
@@ -221,8 +252,6 @@
                                 <th class="p-3 text-center">Total</th>
                                 <th class="p-3 text-center">Closed</th>
                                 <th class="p-3 text-center">%</th>
-                                <th class="p-3 text-center">SLA</th>
-                                <th class="p-3 text-center">Puas</th>
                                 <th class="p-3 text-center text-indigo-700">Score</th>
                             </tr>
                         </thead>
@@ -230,11 +259,10 @@
                     </table>
                 </div>
             </div>
-
             <div class="glass-card rounded-2xl shadow-sm flex flex-col h-[450px]">
-                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl">
-                    <span class="font-bold uppercase text-slate-800">Kinerja PIC Dept <span class="text-[9px] font-medium text-slate-400 normal-case ml-1">(Urut by Score)</span></span>
-                    <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-[10px] border border-slate-300 px-3 py-1.5 rounded-xl w-36 outline-none focus:ring-2 focus:ring-indigo-500/20">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl text-[10px]">
+                    <span class="font-bold uppercase text-slate-800">Kinerja PIC Dept</span>
+                    <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari..." class="border border-slate-300 px-3 py-1.5 rounded-xl w-36 outline-none">
                 </div>
                 <div class="overflow-auto flex-1 custom-scroll">
                     <table class="w-full text-left border-collapse text-[10px]">
@@ -243,9 +271,6 @@
                                 <th class="p-3">Nama PIC</th>
                                 <th class="p-3 text-center">Total</th>
                                 <th class="p-3 text-center">Closed</th>
-                                <th class="p-3 text-center">%</th>
-                                <th class="p-3 text-center">SLA</th>
-                                <th class="p-3 text-center">Puas</th>
                                 <th class="p-3 text-center text-indigo-700">Score</th>
                             </tr>
                         </thead>
@@ -254,37 +279,9 @@
                 </div>
             </div>
         </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
-            <div class="p-4 bg-red-50 border-b border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div class="flex flex-col">
-                <span class="font-bold text-red-600 uppercase">Problem Mendekati / Melebihi Target Hari (Dept Internal)</span>
-                <span class="text-[9px] text-slate-500 font-medium">*Menampilkan data realtime tanpa filter bulan</span>
-              </div>
-              <input type="text" onkeyup="doSearch(this, 'dept-body-warn')" placeholder="Cari toko/tiket/masalah/PIC/status..." class="text-[10px] border border-red-200 px-3 py-1.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500/20 w-full sm:w-56 bg-white">
-            </div>
-            <div class="max-h-80 overflow-auto custom-scroll">
-              <table class="w-full text-left border-collapse bg-white">
-                <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase text-[9px] sticky top-0 z-10 font-bold">
-                  <tr>
-                    <th class="p-3">Dept</th>
-                    <th class="p-3">Kode Toko</th>
-                    <th class="p-3">Nama Toko</th>
-                    <th class="p-3">No Ticket</th>
-                    <th class="p-3">Masalah</th>
-                    <th class="p-3">PIC</th>
-                    <th class="p-3 text-center">Usia / Target</th>
-                    <th class="p-3 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody id="dept-body-warn" class="divide-y divide-slate-100"></tbody>
-              </table>
-            </div>
-        </div>
-
     </div>
 
-    <footer class="h-10 bg-white border-t border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+    <footer class="h-10 bg-white border-t border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20">
       <div class="flex items-center gap-2">
         <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
         <span class="text-[9px] font-black text-red-500 tracking-[0.15em] uppercase">Internal Use Only</span>
@@ -302,6 +299,90 @@
         s.classList.toggle('sidebar-closed');
         o.classList.toggle('hidden');
     }
+
+    // ================= FITUR LOGIKA LOGIN =================
+    const loginScreen = document.getElementById('login-screen');
+    const formLogin = document.getElementById('form-login');
+    const loginError = document.getElementById('login-error');
+    const btnSubmit = document.getElementById('btn-submit-login');
+
+    // Pastikan Ganti URL ini dengan URL Web App Apps Script Anda yang baru dideploy
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIm8cabgRvvSfAfdM_OfrZZFPK7YF4xgQy1P1pbBFOt_c3NPaSLFnCy0V3jde7qqCn/exec'; 
+
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Ambil input
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      // Efek Loading
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<span class="loader w-4 h-4 border-2 border-white rounded-full inline-block"></span> <span>MEMVERIFIKASI...</span>`;
+      loginError.classList.add('hidden');
+
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors', // Penting untuk Apps Script doPost
+          body: JSON.stringify({ username, password })
+        });
+
+        /* Catatan: 'no-cors' tidak memberikan return body. 
+           Untuk hasil yang akurat, sebaiknya panggil fungsi validasi di app.js 
+           yang membandingkan input dengan getSheetData('User').
+           Berikut adalah cara yang paling aman tanpa merubah skrip gs:
+        */
+        
+        // Panggil data user secara manual untuk verifikasi (Security di Client-Side)
+        // (Ini sinkron dengan fungsi getSheetData Anda)
+        fetch(`${APPS_SCRIPT_URL}?sheet=User`) 
+          .then(res => res.json())
+          .then(users => {
+             const userValid = users.find(u => 
+                String(u.NIK).trim() === username.trim() && 
+                String(u.DIVISION).trim() === password.trim()
+             );
+
+             if(userValid) {
+                // Login Berhasil
+                localStorage.setItem('aho_logged_in', 'true');
+                localStorage.setItem('aho_user_name', userValid.NAME || 'User');
+                document.getElementById('display-nama-user').innerText = userValid.NAME;
+                document.getElementById('user-info').classList.remove('hidden');
+                
+                // Animasi Tutup Login
+                loginScreen.classList.add('opacity-0');
+                setTimeout(() => {
+                  loginScreen.classList.add('hidden');
+                  if (typeof initDashboard === "function") initDashboard(); // Panggil fungsi muat data di app.js
+                }, 500);
+             } else {
+                showError();
+             }
+          })
+          .catch(() => showError());
+
+      } catch (err) {
+        showError();
+      }
+    });
+
+    function showError() {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = `<span>MASUK KE DASHBOARD</span>`;
+      loginError.classList.remove('hidden');
+    }
+
+    // Cek Sesi saat reload
+    window.addEventListener('load', () => {
+      if(localStorage.getItem('aho_logged_in') === 'true') {
+        loginScreen.classList.add('hidden');
+        document.getElementById('display-nama-user').innerText = localStorage.getItem('aho_user_name');
+        document.getElementById('user-info').classList.remove('hidden');
+      }
+    });
+    // ======================================================
   </script>
   <script src="app.js"></script>
 </body>
