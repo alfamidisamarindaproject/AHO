@@ -335,5 +335,3 @@ async function initApp() {
     </div>`;
   }
 }
-
-document.addEventListener('DOMContentLoaded', initApp);
