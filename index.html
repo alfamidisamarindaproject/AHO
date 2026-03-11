@@ -363,79 +363,77 @@
         location.reload();
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-        const loginForm = document.getElementById("form-login");
-        const loginScreen = document.getElementById("login-screen");
-        const loginError = document.getElementById("login-error");
+    const loginForm = document.getElementById("form-login");
+    const loginScreen = document.getElementById("login-screen");
+    const loginError = document.getElementById("login-error");
 
-        const savedSession = localStorage.getItem("aho_logged_in");
+    const savedSession = localStorage.getItem("aho_logged_in");
 
-        // Jika sudah login sebelumnya
-        if (savedSession) {
-            loginScreen.style.display = "none";
+    if (savedSession) {
 
-            const name = localStorage.getItem("aho_user_name") || "USER";
+        loginScreen.style.display = "none";
 
-            document.getElementById("display-nama-user").innerText = name;
-            document.getElementById("user-info").classList.remove("hidden");
+        const name = localStorage.getItem("aho_user_name") || "USER";
 
-            initApp();
-        }
+        document.getElementById("display-nama-user").innerText = name;
+        document.getElementById("user-info").classList.remove("hidden");
 
-        // LOGIN
-        loginForm.addEventListener("submit", async function (e) {
+        initApp();
+    }
 
-            e.preventDefault();
+    loginForm.addEventListener("submit", async function (e) {
 
-            loginError.classList.add("hidden");
+        e.preventDefault();
 
-            const username = document.getElementById("username").value.trim();
-            const password = document.getElementById("password").value.trim();
+        loginError.classList.add("hidden");
 
-            try {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
 
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
+        try {
 
-                const result = await res.json();
+            const formData = new FormData();
 
-                if (result.status === "success") {
+            formData.append("username", username);
+            formData.append("password", password);
 
-                    localStorage.setItem("aho_logged_in", result.token);
-                    localStorage.setItem("aho_user_name", result.user.nama);
+            const res = await fetch(API_URL, {
+                method: "POST",
+                body: formData
+            });
 
-                    loginScreen.style.display = "none";
+            const result = await res.json();
 
-                    document.getElementById("display-nama-user").innerText = result.user.nama;
-                    document.getElementById("user-info").classList.remove("hidden");
+            if (result.status === "success") {
 
-                    initApp();
+                localStorage.setItem("aho_logged_in", result.token);
+                localStorage.setItem("aho_user_name", result.user.nama);
 
-                } else {
+                loginScreen.style.display = "none";
 
-                    loginError.classList.remove("hidden");
+                document.getElementById("display-nama-user").innerText = result.user.nama;
+                document.getElementById("user-info").classList.remove("hidden");
 
-                }
+                initApp();
 
-            } catch (err) {
+            } else {
 
-                console.error(err);
                 loginError.classList.remove("hidden");
 
             }
 
-        });
+        } catch (err) {
+
+            console.error(err);
+            loginError.classList.remove("hidden");
+
+        }
 
     });
+
+});
 </script>
     <script src="app.js"></script>
 </body>
