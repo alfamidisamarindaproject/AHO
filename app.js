@@ -129,7 +129,7 @@ function calculateMetrics(records) {
   if (total === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
 
   const closedRecords = records.filter(r => {
-      const status = String(getVal(r, ['Status', 'Status Problem', 'Status Request']) || '').trim().toLowerCase();
+      const status = String(getVal(r, ['Status', 'Status Problem',]) || '').trim().toLowerCase();
       return ['closed', 'selesai', 'done'].includes(status);
   });
   
@@ -137,10 +137,10 @@ function calculateMetrics(records) {
   const pctClosed = (closed / total) * 100;
   
   // Dihitung dari keseluruhan total records (Termasuk New, Progress, Solve, Closed)
-  const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['SLA', 'BK', 'Nilai SLA', 'Score SLA'])), 0);
+  const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['SLA'])), 0);
   const avgSla = totalSla / total;
   
-  const totalPuas = records.reduce((sum, r) => sum + parseNum(getVal(r, ['Tingkat Kepuasan', 'BS', 'Nilai Kepuasan', 'Rating'])), 0);
+  const totalPuas = records.reduce((sum, r) => sum + parseNum(getVal(r, ['TINGKAT KEPUASAN OLAHAN'])), 0);
   const avgPuas = totalPuas / total;
   
   const convC = getScale(pctClosed, 'closed');
@@ -171,14 +171,14 @@ function applyFilters() {
   filteredData = rawData.filter(row => {
     let tglMulai = getVal(row, ['Tgl Eskalasi', 'Tanggal Eskalasi', 'Y']);
     if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
-        tglMulai = getVal(row, ['Tgl Problem', 'Tanggal Problem', 'Waktu Problem', 'D']);
+        tglMulai = getVal(row, ['Tgl Problem']);
     }
     
     const tglTerima = parseCustomDate(tglMulai);
     if (!tglTerima) return false;
     
     const rowMonth = tglTerima.getMonth();
-    const targetDays = parseNum(getVal(row, ['Target Hari', 'Target', 'SLA Hari', 'AF']));
+    const targetDays = parseNum(getVal(row, ['Target Hari']));
     
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
@@ -205,9 +205,9 @@ function applyFilters() {
 }
 
 function refreshDashboard() {
-  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim()))];
+  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departement']) || 'N/A').trim()))];
   rankedDepts = uniqueDepts.map(name => {
-    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim() === name);
+    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departement]) || 'N/A').trim() === name);
     return { name, ...calculateMetrics(deptRecords) };
   }).sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
 
@@ -282,19 +282,19 @@ function renderWarningTable(baseData, tableId) {
   if (!tbody) return;
   
   const unclosed = baseData.filter(d => {
-    const status = String(getVal(d, ['Status', 'Status Problem', 'Status Request']) || '').trim().toLowerCase();
+    const status = String(getVal(d, ['Status', 'Status Problem']) || '').trim().toLowerCase();
     return !['closed', 'selesai', 'done'].includes(status);
   });
   
   const critical = unclosed.map(d => {
-    let tglRawStr = getVal(d, ['Tgl Eskalasi', 'Tanggal Eskalasi', 'Y']);
+    let tglRawStr = getVal(d, ['Tgl Eskalasi']);
     
     if (!tglRawStr || String(tglRawStr).trim() === '' || String(tglRawStr).trim() === '-') {
-        tglRawStr = getVal(d, ['Tgl Problem', 'Tanggal Problem', 'Waktu Problem', 'D']);
+        tglRawStr = getVal(d, ['Tgl Problem']);
     }
     
     const tgl = parseCustomDate(tglRawStr);
-    const targetDays = parseNum(getVal(d, ['Target Hari', 'Target', 'SLA Hari', 'AF']));
+    const targetDays = parseNum(getVal(d, ['Target Hari']));
     
     if (!tgl || targetDays <= 0) return null;
     
@@ -316,9 +316,9 @@ function renderWarningTable(baseData, tableId) {
       dept: getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || '-',
       kodeToko: getVal(d, ['Kode Toko']) ||  '-',
       namaToko: getVal(d, ['Nama Toko']) || '-',
-      masalah: getVal(d, ['Masalah', 'Problem', 'Kategori']) || '-',
-      noTicket: getVal(d, ['No Problem', 'No Ticket']) || '-',
-      pic: getVal(d, ['Nama Penangung', 'Nama Penanggung', 'PIC']) || '-'
+      masalah: getVal(d, ['Masalah']) || '-',
+      noTicket: getVal(d, ['No Problem']) || '-',
+      pic: getVal(d, ['Nama Penangung']) || '-'
     };
   }).filter(d => d !== null); 
   
@@ -348,8 +348,8 @@ function showHome() {
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
   
-  renderDetailTable(filteredData, ['Masalah', 'Problem', 'Kategori'], 'home-body-prob', false);
-  renderDetailTable(filteredData, ['Nama Penangung', 'Nama Penanggung', 'PIC', 'Penanggung Jawab'], 'home-body-pic', true); 
+  renderDetailTable(filteredData, ['Masalah'], 'home-body-prob', false);
+  renderDetailTable(filteredData, ['Nama Penangung'], 'home-body-pic', true); 
   
   renderWarningTable(rawData, 'home-body-warn');
 }
@@ -364,7 +364,7 @@ function updateDeptView(deptName, rank) {
   document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
   
-  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim() === deptName);
+  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === deptName);
   const m = calculateMetrics(deptDataFiltered);
   
   document.getElementById('det-name').innerText = deptName;
@@ -372,10 +372,10 @@ function updateDeptView(deptName, rank) {
   document.getElementById('det-score').innerText = m.final;
   
   renderMetrikBox('dept-metrics', m);
-  renderDetailTable(deptDataFiltered, ['Masalah', 'Problem', 'Kategori'], 'dept-body-prob', false);
-  renderDetailTable(deptDataFiltered, ['Nama Penangung', 'Nama Penanggung', 'PIC', 'Penanggung Jawab'], 'dept-body-pic', true); 
+  renderDetailTable(deptDataFiltered, ['Masalah'], 'dept-body-prob', false);
+  renderDetailTable(deptDataFiltered, ['Nama Penangung'], 'dept-body-pic', true); 
   
-  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim() === deptName);
+  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === deptName);
   renderWarningTable(deptDataRaw, 'dept-body-warn');
 
   document.querySelectorAll('.dept-item').forEach(e => {
