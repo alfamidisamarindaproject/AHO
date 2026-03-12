@@ -21,12 +21,9 @@
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         #login-screen { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
-
-        /* Perbaikan Visual Angka */
-        .metric-value { font-size: 3.5rem; line-height: 1; font-weight: 800; letter-spacing: -0.02em; }
-        .dept-item.active-dept{
-            background:#eef2ff;
-            border-left:4px solid #6366f1;
+        .dept-item.active-dept {
+            background: #eef2ff;
+            border-left: 4px solid #6366f1;
         }
     </style>
 </head>
@@ -84,8 +81,7 @@
                 <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold italic">LIVE</span>
             </div>
 
-            <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-4 pb-6 space-y-3 pt-2">
-                </div>
+            <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-4 pb-6 space-y-2 pt-2"></div>
         </aside>
 
         <main class="flex-1 flex flex-col relative min-w-0 bg-slate-50">
@@ -136,6 +132,9 @@
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Periode Bulan</label>
                         <select id="f-month" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 min-w-[140px]">
                             <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
+                            <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
+                            <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
+                            <option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
                         </select>
                     </div>
                     <div class="flex flex-col">
@@ -154,9 +153,9 @@
             </div>
 
             <div class="flex-1 overflow-y-auto custom-scroll p-6 lg:p-8">
+                
                 <div id="view-home" class="space-y-8">
-                    <div id="home-metrics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-                        </div>
+                    <div id="home-metrics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6"></div>
 
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <div class="glass-card rounded-3xl flex flex-col min-h-[400px] max-h-[500px] overflow-hidden shadow-sm">
@@ -232,7 +231,9 @@
                                         <th class="p-4 border-b border-slate-100">Kode Toko</th>
                                         <th class="p-4 border-b border-slate-100">No Ticket</th>
                                         <th class="p-4 border-b border-slate-100">Masalah</th>
+                                        <th class="p-4 border-b border-slate-100 text-center">PIC</th>
                                         <th class="p-4 border-b border-slate-100 text-center">Usia Tiket</th>
+                                        <th class="p-4 border-b border-slate-100 text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="home-body-warn" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -240,6 +241,106 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="view-dept" class="hidden space-y-8">
+                    <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-[2rem] p-6 lg:p-8 text-white shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                        <div>
+                            <span id="det-rank" class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 inline-block"></span>
+                            <h2 id="det-name" class="text-3xl lg:text-4xl font-black italic tracking-tight uppercase"></h2>
+                        </div>
+                        <div class="text-left sm:text-right bg-black/10 p-4 rounded-2xl w-full sm:w-auto">
+                            <p class="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">Total Score Kinerja</p>
+                            <p id="det-score" class="text-5xl font-black tracking-tighter text-yellow-300"></p>
+                        </div>
+                    </div>
+
+                    <div id="dept-metrics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6"></div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div class="glass-card rounded-3xl flex flex-col min-h-[400px] max-h-[500px] overflow-hidden shadow-sm">
+                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
+                                <h3 class="font-black text-slate-800 flex items-center gap-2 uppercase tracking-tight">
+                                    <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    </span>
+                                    Top Problem Dept
+                                </h3>
+                                <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari masalah..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-64">
+                            </div>
+                            <div class="overflow-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead class="bg-slate-50/50 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
+                                        <tr>
+                                            <th class="p-4 border-b border-slate-100">Masalah</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">Total</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">Closed</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">%Clsd</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">SLA</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">Puas</th>
+                                            <th class="p-4 border-b border-slate-100 text-center text-indigo-600 italic">Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dept-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-3xl flex flex-col min-h-[400px] max-h-[500px] overflow-hidden shadow-sm">
+                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
+                                <h3 class="font-black text-slate-800 flex items-center gap-2 uppercase tracking-tight">
+                                    <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                    </span>
+                                    Kinerja PIC Dept
+                                </h3>
+                                <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-64">
+                            </div>
+                            <div class="overflow-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead class="bg-slate-50/50 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
+                                        <tr>
+                                            <th class="p-4 border-b border-slate-100">Nama PIC</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">Total</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">Closed</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">%Clsd</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">SLA</th>
+                                            <th class="p-4 border-b border-slate-100 text-center">Puas</th>
+                                            <th class="p-4 border-b border-slate-100 text-center text-indigo-600 italic">Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dept-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-red-100 flex flex-col overflow-hidden max-h-[450px]">
+                        <div class="p-5 border-b border-red-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30">
+                            <h3 class="font-black text-red-600 flex items-center gap-2 uppercase tracking-tight">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Ticket Dept Melebihi / Mendekati Target Hari
+                            </h3>
+                            <input type="text" onkeyup="doSearch(this, 'dept-body-warn')" placeholder="Cari toko/tiket/masalah..." class="text-xs font-bold border border-red-100 px-4 py-2 rounded-xl outline-none focus:border-red-300 w-full sm:w-64 bg-white">
+                        </div>
+                        <div class="overflow-auto flex-1 custom-scroll">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
+                                    <tr>
+                                        <th class="p-4 border-b border-slate-100">Dept</th>
+                                        <th class="p-4 border-b border-slate-100">Kode Toko</th>
+                                        <th class="p-4 border-b border-slate-100">No Ticket</th>
+                                        <th class="p-4 border-b border-slate-100">Masalah</th>
+                                        <th class="p-4 border-b border-slate-100 text-center">PIC</th>
+                                        <th class="p-4 border-b border-slate-100 text-center">Usia Tiket</th>
+                                        <th class="p-4 border-b border-slate-100 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dept-body-warn" class="divide-y divide-slate-50 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <footer class="h-14 bg-white border-t border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
@@ -261,7 +362,6 @@
     </div>
 
     <script>
-    // Fungsi dasar untuk buka/tutup menu di mobile
     function toggleSidebar() {
         const s = document.getElementById('main-sidebar');
         const o = document.getElementById('sidebar-overlay');
@@ -269,85 +369,60 @@
         if (o) o.classList.toggle('hidden');
     }
 
-    // LOGOUT
     function handleLogout() {
         localStorage.removeItem("aho_logged_in");
         localStorage.removeItem("aho_user_name");
         location.reload();
     }
 
-document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
+        const loginForm = document.getElementById("form-login");
+        const loginScreen = document.getElementById("login-screen");
+        const loginError = document.getElementById("login-error");
+        const savedSession = localStorage.getItem("aho_logged_in");
 
-    const loginForm = document.getElementById("form-login");
-    const loginScreen = document.getElementById("login-screen");
-    const loginError = document.getElementById("login-error");
-
-    const savedSession = localStorage.getItem("aho_logged_in");
-
-    if (savedSession) {
-
-        loginScreen.style.display = "none";
-
-        const name = localStorage.getItem("aho_user_name") || "USER";
-
-        document.getElementById("display-nama-user").innerText = name;
-        document.getElementById("user-info").classList.remove("hidden");
-
-        initApp();
-    }
-
-    loginForm.addEventListener("submit", async function (e) {
-
-        e.preventDefault();
-
-        loginError.classList.add("hidden");
-
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
-
-        try {
-
-            const formData = new FormData();
-
-            formData.append("username", username);
-            formData.append("password", password);
-
-            const res = await fetch(API_URL, {
-                method: "POST",
-                body: formData
-            });
-
-            const result = await res.json();
-
-            if (result.status === "success") {
-
-                localStorage.setItem("aho_logged_in", result.token);
-                localStorage.setItem("aho_user_name", result.user.nama);
-
-                loginScreen.style.display = "none";
-
-                document.getElementById("display-nama-user").innerText = result.user.nama;
-                document.getElementById("user-info").classList.remove("hidden");
-
-                initApp();
-
-            } else {
-
-                loginError.classList.remove("hidden");
-
-            }
-
-        } catch (err) {
-
-            console.error(err);
-            loginError.classList.remove("hidden");
-
+        if (savedSession) {
+            loginScreen.style.display = "none";
+            const name = localStorage.getItem("aho_user_name") || "USER";
+            document.getElementById("display-nama-user").innerText = name;
+            document.getElementById("user-info").classList.remove("hidden");
+            initApp();
         }
 
-    });
+        loginForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            loginError.classList.add("hidden");
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
 
-});
-</script>
+            try {
+                const formData = new FormData();
+                formData.append("username", username);
+                formData.append("password", password);
+
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await res.json();
+                if (result.status === "success") {
+                    localStorage.setItem("aho_logged_in", result.token);
+                    localStorage.setItem("aho_user_name", result.user.nama);
+                    loginScreen.style.display = "none";
+                    document.getElementById("display-nama-user").innerText = result.user.nama;
+                    document.getElementById("user-info").classList.remove("hidden");
+                    initApp();
+                } else {
+                    loginError.classList.remove("hidden");
+                }
+            } catch (err) {
+                console.error(err);
+                loginError.classList.remove("hidden");
+            }
+        });
+    });
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
