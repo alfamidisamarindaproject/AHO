@@ -189,7 +189,7 @@ function renderMetrikBox(containerId, m) {
     ["Closed", m.closed, "text-emerald-600"],
     ["% Closed", m.pct + "%", "text-emerald-600"],
     ["Konv (C)", m.convC, "text-emerald-500"],
-    ["Avg SLA %", m.sla, "text-blue-600"],
+    ["Avg SLA", m.sla, "text-blue-600"],
     ["Konv (S)", m.convS, "text-blue-500"],
     ["Avg Puas", m.puas, "text-amber-600"],
     ["Konv (K)", m.convK, "text-amber-500"],
@@ -217,14 +217,14 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
   
+  // Menggunakan styling "truncate" (pangkas teks panjang menjadi ...) pada sel nama
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
     <tr class="hover:bg-slate-50 transition-colors text-[10px]">
-      <td class="p-3 font-semibold text-slate-700 truncate max-w-[120px] sm:max-w-[200px]" title="${i.name}">${i.name}</td>
+      <td class="p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
       <td class="p-3 text-center">${i.total}</td>
       <td class="p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
       <td class="p-3 text-center">${i.pct}%</td>
       <td class="p-3 text-center text-blue-600">${i.sla}</td>
-      <td class="p-3 text-center text-amber-600">${i.puas}</td>
       <td class="p-3 text-center font-black text-indigo-700">${i.final}</td>
     </tr>
   `).join('');
@@ -268,8 +268,7 @@ function renderWarningTable(baseData, tableId) {
       badge,
       dept: getVal(d, ['B', 'Departemen']) || '-',
       kodeToko: getVal(d, ['Kode Toko']) ||  '-',
-      namaToko: getVal(d, ['Nama Toko']) || '-',
-      masalah: getVal(d, ['Masalah']) || '-',
+      masalah: getVal(d, ['Masalah', 'Problem', 'Kategori']) || '-',
       noTicket: getVal(d, ['No Problem']) || '-',
       pic: getVal(d, ['Nama Penangung']) || '-'
     };
@@ -279,12 +278,11 @@ function renderWarningTable(baseData, tableId) {
   
   tbody.innerHTML = critical.map(d => `
     <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
-      <td class="p-3 font-bold text-slate-500">${d.dept}</td>
+      <td class="p-3 font-bold text-slate-500 truncate max-w-[80px]" title="${d.dept}">${d.dept}</td>
       <td class="p-3 font-bold text-slate-700">${d.kodeToko}</td>
-      <td class="p-3 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
       <td class="p-3 font-mono font-bold text-indigo-600">${d.noTicket}</td>
-      <td class="p-3 max-w-[150px] truncate" title="${d.masalah}">${d.masalah}</td>
-      <td class="p-3 truncate font-semibold" title="${d.pic}">${d.pic}</td>
+      <td class="p-3 truncate max-w-[120px]" title="${d.masalah}">${d.masalah}</td>
+      <td class="p-3 truncate font-semibold max-w-[80px]" title="${d.pic}">${d.pic}</td>
       <td class="p-3 text-center font-bold text-slate-600">${d.usiaHari} / ${d.targetDays} Hari</td>
       <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
     </tr>
@@ -340,17 +338,10 @@ function updateDeptView(deptName, rank) {
   });
 }
 
+// Inisiasi aplikasi yang lebih cepat tanpa overlay
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
-  const globalLoader = document.getElementById('global-loader');
-  
-  // Tampilkan animasi Loading dan ubah teksnya jika diperlukan
-  if(globalLoader) {
-      const loaderText = document.getElementById('loading-text');
-      if(loaderText) loaderText.innerText = "Mengambil Data...";
-      globalLoader.classList.remove('hidden');
-  }
   
   try {
     const response = await fetch(API_URL);
@@ -360,7 +351,6 @@ async function initApp() {
     rawData = Array.isArray(result) ? result : result.data;
 
     if (!rawData || rawData.length === 0) {
-      if(globalLoader) globalLoader.classList.add('hidden');
       listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
       return;
     }
@@ -380,10 +370,7 @@ async function initApp() {
     listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
     metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
       <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
-      <p class="text-slate-400 text-[10px] mt-2">Pastikan URL API Apps Script benar dan izin akses diatur ke 'Anyone'</p>
+      <p class="text-slate-400 text-[10px] mt-2">Pastikan API Google Apps Script merespons dengan benar.</p>
     </div>`;
-  } finally {
-    // PASTI akan dieksekusi: Sembunyikan Animasi Loading
-    if(globalLoader) globalLoader.classList.add('hidden');
   }
 }
