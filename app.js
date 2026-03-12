@@ -259,12 +259,12 @@ function renderWarningTable(baseData, tableId) {
       targetDays, 
       label, 
       badge,
-      dept: getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || '-',
-      kodeToko: getVal(d, ['Kode Toko', 'Toko', 'Code']) ||  '-',
-      namaToko: getVal(d, ['Nama Toko', 'Name']) || '-',
-      masalah: getVal(d, ['Masalah', 'Problem', 'Kategori', 'Sub Kategori']) || '-',
-      noTicket: getVal(d, ['No Problem', 'No Ticket', 'Ticket ID', 'No Request']) || '-',
-      pic: getVal(d, ['Nama Penangung', 'PIC', 'Penanggung Jawab', 'Assigned To']) || '-'
+      dept: getVal(d, ['Departement']) || '-',
+      kodeToko: getVal(d, ['Kode Toko']) ||  '-',
+      namaToko: getVal(d, ['Nama Toko']) || '-',
+      masalah: getVal(d, ['Masalah']) || '-',
+      noTicket: getVal(d, ['No Problem']) || '-',
+      pic: getVal(d, ['Nama Penangung']) || '-'
     };
   }).filter(d => d !== null); 
   
