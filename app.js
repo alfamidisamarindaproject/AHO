@@ -128,15 +128,15 @@ function refreshDashboard() {
 
   const listEl = document.getElementById('dept-list');
   if (listEl) {
-    // UI Sidebar yang Diperbaiki (Lebih Besar, Rapi, & Spacing Lega)
+    // UI Sidebar yang Diperbaiki (Lebih Rapi dan Kompak)
     listEl.innerHTML = rankedDepts.map((d, i) => `
       <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${i + 1})" 
-           class="dept-item cursor-pointer p-4 rounded-2xl hover:bg-slate-100 border-l-4 border-transparent transition-all group ${activeDeptName === d.name ? 'active-dept shadow-sm' : ''}">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-black uppercase tracking-wider">Rank #${i + 1}</span>
-          <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">${d.final}</span>
+           class="dept-item cursor-pointer p-3 mb-2 rounded-xl hover:bg-slate-100 border-l-4 border-transparent transition-all group ${activeDeptName === d.name ? 'active-dept shadow-sm bg-white' : ''}">
+        <div class="flex justify-between items-center mb-1.5">
+          <span class="text-[9px] font-black uppercase text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md">Rank #${i + 1}</span>
+          <span class="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">${d.final}</span>
         </div>
-        <h3 class="text-[11px] sm:text-xs font-black text-slate-700 uppercase leading-snug truncate" title="${d.name}">${d.name}</h3>
+        <h3 class="text-xs font-bold text-slate-700 uppercase truncate" title="${d.name}">${d.name}</h3>
       </div>
     `).join('');
   }
@@ -147,7 +147,7 @@ function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
   const layout = [
-    ["Total Ticket", m.total, "text-slate-700"],
+    ["Total Ticket", m.total, "text-slate-800"],
     ["Closed", m.closed, "text-emerald-600"],
     ["% Closed", m.pct + "%", "text-emerald-600"],
     ["Konv (C)", m.convC, "text-emerald-500"],
@@ -157,11 +157,11 @@ function renderMetrikBox(containerId, m) {
     ["Konv (K)", m.convK, "text-amber-500"],
     ["Score Layanan", m.final, "text-white"]
   ];
-  // UI Metric yang Diperbaiki (Font Angka Terbesar dan Rapi)
+  // UI Metric yang Diperbaiki (Lebih proporsional, font pas, gap lebih rapat)
   container.innerHTML = layout.map((item, i) => `
-    <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-lg' : 'bg-white border border-slate-200 shadow-sm'} p-5 lg:p-6 rounded-[1.5rem] flex flex-col justify-center transform transition-transform hover:-translate-y-1">
-      <p class="text-[10px] font-black ${i === 8 ? 'text-indigo-100' : 'text-slate-400'} uppercase tracking-widest mb-2">${item[0]}</p>
-      <p class="text-3xl lg:text-4xl font-black italic tracking-tight ${item[2]}">${item[1]}</p>
+    <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md border-transparent' : 'bg-white border border-slate-200 shadow-sm'} p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold ${i === 8 ? 'text-indigo-100' : 'text-slate-400'} uppercase tracking-wider mb-1">${item[0]}</p>
+      <p class="text-2xl font-black italic tracking-tight ${item[2]}">${item[1]}</p>
     </div>
   `).join('');
 }
@@ -192,7 +192,6 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   `).join('');
 }
 
-// Logika Baru Warning Table (Menambahkan fallback Kode Toko dan memfilter yang sudah SECURED)
 function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -254,7 +253,7 @@ function showHome() {
   document.getElementById('view-home')?.classList.remove('hidden');
   document.getElementById('view-dept')?.classList.add('hidden');
   document.getElementById('btn-home')?.classList.add('nav-item-active');
-  document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept'));
+  document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept', 'bg-white'));
   
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
@@ -286,20 +285,17 @@ function updateDeptView(deptName, rank) {
   renderDetailTable(deptDataFiltered, 'Nama Penangung', 'dept-body-pic', true); 
   
   const deptDataRaw = rawData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
-  
-  // Memanggil table warning untuk departemen terpilih
   renderWarningTable(deptDataRaw, 'dept-body-warn');
 
   document.querySelectorAll('.dept-item').forEach(e => {
     if (e.querySelector('h3').innerText === deptName) {
-      e.classList.add('active-dept');
+      e.classList.add('active-dept', 'bg-white');
     } else {
-      e.classList.remove('active-dept');
+      e.classList.remove('active-dept', 'bg-white');
     }
   });
 }
 
-// FUNGSI UTAMA: AMBIL DATA DARI API
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
