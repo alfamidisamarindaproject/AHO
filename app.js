@@ -75,19 +75,19 @@ function getScale(value, type) {
     if (value < 85) return 1.00;
     if (value >= 100) return 4.00;
     // (Value - BatasBawah) / (BatasAtas - BatasBawah) * 3
-    return 1.00 + ((value - 85) / 15.0) * 3.0; 
+    return 1.00 + ((value - 85) / 15) * 3; 
   }
 
   if (type === 'sla') {
     if (value < 85) return 1.00;
     if (value >= 130) return 4.00;
-    return 1.00 + ((value - 85) / 45.0) * 3.0;
+    return 1.00 + ((value - 85) / 45) * 3;
   }
 
   if (type === 'puas') {
     if (value < 3.1) return 1.00;
     if (value >= 4.0) return 4.00;
-    return 1.00 + ((value - 3.1) / 0.9) * 3.0;
+    return 1.00 + ((value - 3.1) / 0.9) * 3;
   }
   
   return 1.00;
