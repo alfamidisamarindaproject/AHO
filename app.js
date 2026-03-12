@@ -5,7 +5,6 @@ let filteredData = [];
 let rankedDepts = [];
 let activeDeptName = null;
 
-// FUNGSI GETVAL: Mendukung inisial Kolom abjad (B, BK, BS, Y, D, AF)
 const getVal = (obj, possibleKeys) => {
   const keys = Object.keys(obj);
   if (!Array.isArray(possibleKeys)) possibleKeys = [possibleKeys];
@@ -25,7 +24,6 @@ const parseNum = (val) => {
   return parseFloat(str) || 0;
 };
 
-// FUNGSI PARSING TANGGAL
 function parseCustomDate(dateStr) {
   if (!dateStr || dateStr === 'undefined' || dateStr === '-') return null;
   
@@ -69,19 +67,32 @@ function doSearch(inputEl, tableBodyId) {
   }
 }
 
-// SKALA KONVERSI (DIKEMBALIKAN SESUAI PERMINTAAN)
+// LOGIKA PEMBOBOTAN YANG DIPERBARUI
 function getScale(value, type) {
   if (isNaN(value)) value = 0;
-  if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
-  if (type === 'sla') {
-    let scaled = 1 + ((value + 200) / 400) * 3;
-    return Math.max(1, Math.min(4, scaled));
+
+  if (type === 'closed') {
+    if (value < 85) return 1.00;
+    if (value >= 100) return 4.00;
+    // (Value - BatasBawah) / (BatasAtas - BatasBawah) * 3
+    return 1.00 + ((value - 85) / 15.0) * 3.0; 
   }
-  if (type === 'puas') return value >= 4 ? 4 : (value <= 1 ? 1 : 1 + ((value - 1) / 3) * 2.99);
-  return 1;
+
+  if (type === 'sla') {
+    if (value < 85) return 1.00;
+    if (value >= 130) return 4.00;
+    return 1.00 + ((value - 85) / 45.0) * 3.0;
+  }
+
+  if (type === 'puas') {
+    if (value < 3.1) return 1.00;
+    if (value >= 4.0) return 4.00;
+    return 1.00 + ((value - 3.1) / 0.9) * 3.0;
+  }
+  
+  return 1.00;
 }
 
-// LOGIKA KALKULASI METRIK
 function calculateMetrics(records) {
   const closedRecords = records.filter(r => {
       const status = String(getVal(r, ['Status', 'Status Problem', 'Status Request']) || '').trim().toLowerCase();
@@ -94,20 +105,16 @@ function calculateMetrics(records) {
   
   let avgSla = 0, avgPuas = 0;
   if (closed > 0) {
-    // SLA Rata-rata dari Kolom BK
     avgSla = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, ['BK', 'Nilai SLA', 'Score SLA', 'SLA'])), 0) / closed;
-    // Kepuasan Rata-rata dari Kolom BS
     avgPuas = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, ['BS', 'Nilai Kepuasan', 'Tingkat Kepuasan', 'Rating'])), 0) / closed;
   }
   
   const pctClosed = (closed / total) * 100;
   
-  // Hitung Konversi dengan getScale
   const convC = getScale(pctClosed, 'closed');
   const convS = getScale(avgSla, 'sla');
   const convK = getScale(avgPuas, 'puas');
   
-  // Score Layanan (Final) menggunakan pembobotan (0.3, 0.5, 0.2)
   const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
 
   return {
@@ -117,7 +124,7 @@ function calculateMetrics(records) {
     convC: convC.toFixed(2),
     sla: isNaN(avgSla) ? "0.0" : avgSla.toFixed(1), 
     convS: convS.toFixed(2), 
-    puas: isNaN(avgPuas) ? "0.0" : avgPuas.toFixed(1), 
+    puas: isNaN(avgPuas) ? "0.0" : avgPuas.toFixed(2), 
     convK: convK.toFixed(2),
     final: finalScore.toFixed(2)
   };
@@ -177,7 +184,6 @@ function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
   
-  // 9 Kotak Metrik (Termasuk Konversi)
   const layout = [
     ["Total Ticket", m.total, "text-slate-800"],
     ["Closed", m.closed, "text-emerald-600"],
@@ -337,6 +343,14 @@ function updateDeptView(deptName, rank) {
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
+  const globalLoader = document.getElementById('global-loader');
+  
+  // Tampilkan animasi Loading dan ubah teksnya jika diperlukan
+  if(globalLoader) {
+      const loaderText = document.getElementById('loading-text');
+      if(loaderText) loaderText.innerText = "Mengambil Data...";
+      globalLoader.classList.remove('hidden');
+  }
   
   try {
     const response = await fetch(API_URL);
@@ -346,6 +360,7 @@ async function initApp() {
     rawData = Array.isArray(result) ? result : result.data;
 
     if (!rawData || rawData.length === 0) {
+      if(globalLoader) globalLoader.classList.add('hidden');
       listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
       return;
     }
@@ -367,5 +382,8 @@ async function initApp() {
       <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
       <p class="text-slate-400 text-[10px] mt-2">Pastikan URL API Apps Script benar dan izin akses diatur ke 'Anyone'</p>
     </div>`;
+  } finally {
+    // PASTI akan dieksekusi: Sembunyikan Animasi Loading
+    if(globalLoader) globalLoader.classList.add('hidden');
   }
 }
