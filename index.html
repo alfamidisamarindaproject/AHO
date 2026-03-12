@@ -29,6 +29,14 @@
 </head>
 <body class="bg-slate-50 text-slate-800 text-sm overflow-hidden antialiased">
 
+    <div id="global-loader" class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-50/90 backdrop-blur-sm transition-opacity hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-14 h-14 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4 shadow-sm"></div>
+            <h3 class="text-indigo-700 font-black italic tracking-wider animate-pulse uppercase text-sm">Memuat Data...</h3>
+            <p class="text-[10px] text-slate-400 font-bold mt-1">Mengambil informasi dari Database</p>
+        </div>
+    </div>
+
     <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-500">
         <div class="bg-white w-full max-w-md rounded-3xl shadow-xl border border-white p-8 text-center backdrop-blur-xl">
             <div class="mb-8">
@@ -109,7 +117,7 @@
 
                     <div class="flex items-center gap-5">
                         <div class="hidden md:flex flex-col text-right">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Sinkronisasi</span>
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</span>
                             <span id="global-last-update" class="text-xs font-black text-indigo-600 uppercase italic">Menghubungkan...</span>
                         </div>
                         <button onclick="window.location.reload()" class="w-10 h-10 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl transition-all shadow-sm shadow-indigo-100/50" title="Refresh Data">
@@ -124,8 +132,8 @@
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Analisis</label>
                         <select id="f-analysis" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 min-w-[140px]">
-                            <option value="MTD">MTD (Bulan Ini)</option>
-                            <option value="YTD">YTD (Tahun Ini)</option>
+                            <option value="MTD">MTD</option>
+                            <option value="YTD">YTD</option>
                         </select>
                     </div>
                     <div class="flex flex-col">
@@ -148,7 +156,7 @@
 
                 <a href="#" target="_blank" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s-8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                    Database Toko
+                    DATABASE
                 </a>
             </div>
 
@@ -229,7 +237,7 @@
                                     <tr>
                                         <th class="p-4 border-b border-slate-100">Dept</th>
                                         <th class="p-4 border-b border-slate-100">Kode Toko</th>
-                                         <th class="p-4 border-b border-slate-100">Nama Toko</th>
+                                        <th class="p-4 border-b border-slate-100">Nama Toko</th>
                                         <th class="p-4 border-b border-slate-100">No Ticket</th>
                                         <th class="p-4 border-b border-slate-100">Masalah</th>
                                         <th class="p-4 border-b border-slate-100 text-center">PIC</th>
@@ -329,7 +337,7 @@
                                     <tr>
                                         <th class="p-4 border-b border-slate-100">Dept</th>
                                         <th class="p-4 border-b border-slate-100">Kode Toko</th>
-                                         <th class="p-4 border-b border-slate-100">Nama Toko</th>
+                                        <th class="p-4 border-b border-slate-100">Nama Toko</th>
                                         <th class="p-4 border-b border-slate-100">No Ticket</th>
                                         <th class="p-4 border-b border-slate-100">Masalah</th>
                                         <th class="p-4 border-b border-slate-100 text-center">PIC</th>
@@ -352,11 +360,10 @@
                         Internal Use Only • Made by: <span class="text-indigo-400">Akbar Rasyid - SQR</span>
                     </span>
                 </div>
-                    <button onclick="handleLogout()" class="text-xs font-black text-slate-400 hover:text-rose-600 transition-colors flex items-center gap-2 uppercase tracking-wider">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        Log Out
-                    </button>
-                </div>
+                <button onclick="handleLogout()" class="text-xs font-black text-slate-400 hover:text-rose-600 transition-colors flex items-center gap-2 uppercase tracking-wider">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Log Out
+                </button>
             </footer>
         </main>
     </div>
@@ -380,6 +387,7 @@
         const loginScreen = document.getElementById("login-screen");
         const loginError = document.getElementById("login-error");
         const savedSession = localStorage.getItem("aho_logged_in");
+        const globalLoader = document.getElementById("global-loader");
 
         if (savedSession) {
             loginScreen.style.display = "none";
@@ -396,6 +404,9 @@
             const password = document.getElementById("password").value.trim();
 
             try {
+                // Tampilkan loader saat login ditekan
+                globalLoader.classList.remove("hidden");
+                
                 const formData = new FormData();
                 formData.append("username", username);
                 formData.append("password", password);
@@ -406,17 +417,23 @@
                 });
 
                 const result = await res.json();
+                
                 if (result.status === "success") {
                     localStorage.setItem("aho_logged_in", result.token);
                     localStorage.setItem("aho_user_name", result.user.nama);
+                    
                     loginScreen.style.display = "none";
                     document.getElementById("display-nama-user").innerText = result.user.nama;
                     document.getElementById("user-info").classList.remove("hidden");
+                    
+                    // Lanjut inisiasi tarik data (loader dibiarkan menyala hingga selesai)
                     initApp();
                 } else {
+                    globalLoader.classList.add("hidden");
                     loginError.classList.remove("hidden");
                 }
             } catch (err) {
+                globalLoader.classList.add("hidden");
                 console.error(err);
                 loginError.classList.remove("hidden");
             }
