@@ -5,27 +5,57 @@ let filteredData = [];
 let rankedDepts = [];
 let activeDeptName = null;
 
-const getVal = (obj, keyName) => {
+// FUNGSI GETVAL: Mendukung banyak variasi nama kolom (Fallback), termasuk inisial Kolom abjad (BK, BS, Y, D, AF)
+const getVal = (obj, possibleKeys) => {
   const keys = Object.keys(obj);
-  const foundKey = keys.find(k => k.trim().toLowerCase() === keyName.toLowerCase());
-  return foundKey ? obj[foundKey] : null;
+  if (!Array.isArray(possibleKeys)) possibleKeys = [possibleKeys];
+  
+  for (let pKey of possibleKeys) {
+      const foundKey = keys.find(k => k.trim().toLowerCase() === pKey.toLowerCase());
+      if (foundKey && obj[foundKey] !== undefined && obj[foundKey] !== '') {
+          return obj[foundKey];
+      }
+  }
+  return null;
 };
 
 const parseNum = (val) => {
   if (!val) return 0;
+  // Ekstraksi angka (Bisa membaca format "100.0%" atau "5 - Sangat Puas" menjadi tipe data float/angka)
   const str = String(val).replace(',', '.').replace(/[^0-9.-]/g, '');
   return parseFloat(str) || 0;
 };
 
+// FUNGSI PARSING TANGGAL
 function parseCustomDate(dateStr) {
   if (!dateStr || dateStr === 'undefined' || dateStr === '-') return null;
+  
+  let d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d; 
+
   try {
     const sStr = String(dateStr).trim();
     const parts = sStr.split(' ');
-    const dateParts = parts[0].split('/');
+    const dateParts = parts[0].split(/[-/]/); 
+    
     if (dateParts.length !== 3) return null;
     const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-    return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]), parseInt(timeParts[0] || 0), parseInt(timeParts[1] || 0), parseInt(timeParts[2] || 0));
+    
+    let year, month, day;
+    if (dateParts[0].length === 4) {
+        year = dateParts[0]; month = dateParts[1]; day = dateParts[2];
+    } else {
+        day = dateParts[0]; month = dateParts[1]; year = dateParts[2];
+    }
+    
+    return new Date(
+        parseInt(year), 
+        parseInt(month) - 1, 
+        parseInt(day), 
+        parseInt(timeParts[0] || 0), 
+        parseInt(timeParts[1] || 0), 
+        parseInt(timeParts[2] || 0)
+    );
   } catch (e) { return null; }
 }
 
@@ -41,31 +71,9 @@ function doSearch(inputEl, tableBodyId) {
   }
 }
 
-// LOGIKA SLA
-function calculateNewSLAScore(row) {
-  const tglStart = parseCustomDate(getVal(row, 'Tgl Terima'));
-  const tglEnd = parseCustomDate(getVal(row, 'Tgl Closed')) || new Date(); 
-  const targetDays = parseNum(getVal(row, 'Target Hari'));
-
-  if (!tglStart) return 0;
-  if (targetDays <= 0) return 100;
-
-  const targetMins = targetDays * 1440;
-  const actualMins = (tglEnd.getTime() - tglStart.getTime()) / (1000 * 60);
-  const ratio = actualMins / targetMins;
-
-  if (actualMins <= 1440) return 200;
-  if (ratio <= 0.25) return 175;
-  if (ratio <= 0.50) return 150;
-  if (Math.abs(actualMins - targetMins) < 60) return 100;
-  if (ratio >= 4) return -200;
-  if (ratio >= 3) return -100;
-  if (ratio >= 2) return 0;
-
-  return Math.round(100 - ((ratio - 1) * 100));
-}
-
+// Skala konversi
 function getScale(value, type) {
+  if (isNaN(value)) value = 0;
   if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
   if (type === 'sla') {
     let scaled = 1 + ((value + 200) / 400) * 3;
@@ -75,16 +83,23 @@ function getScale(value, type) {
   return 1;
 }
 
+// LOGIKA KALKULASI METRIK (Rata-rata Kolom BK dan BS)
 function calculateMetrics(records) {
-  const closedRecords = records.filter(r => ['closed', 'selesai'].includes(String(getVal(r, 'Status') || '').trim().toLowerCase()));
+  const closedRecords = records.filter(r => {
+      const status = String(getVal(r, ['Status', 'Status Problem', 'Status Request']) || '').trim().toLowerCase();
+      return ['closed', 'selesai', 'done'].includes(status);
+  });
+  
   const total = records.length;
   const closed = closedRecords.length;
   if (total === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
   
   let avgSla = 0, avgPuas = 0;
   if (closed > 0) {
-    avgSla = closedRecords.reduce((sum, r) => sum + calculateNewSLAScore(r), 0) / closed;
-    avgPuas = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, 'Tingkat Kepuasan')), 0) / closed;
+    // SLA diambil dari Rata-rata Kolom BK
+    avgSla = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, ['BK', 'Nilai SLA', 'Score SLA', 'SLA'])), 0) / closed;
+    // Kepuasan diambil dari Rata-rata Kolom BS
+    avgPuas = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, ['BS', 'Nilai Kepuasan', 'Tingkat Kepuasan', 'Rating'])), 0) / closed;
   }
   
   const convC = getScale((closed / total) * 100, 'closed');
@@ -93,7 +108,10 @@ function calculateMetrics(records) {
   
   return {
     total, closed, pct: ((closed / total) * 100).toFixed(1), convC: convC.toFixed(2),
-    sla: avgSla.toFixed(1), convS: convS.toFixed(2), puas: avgPuas.toFixed(1), convK: convK.toFixed(2),
+    sla: isNaN(avgSla) ? "0.0" : avgSla.toFixed(1), 
+    convS: convS.toFixed(2), 
+    puas: isNaN(avgPuas) ? "0.0" : avgPuas.toFixed(1), 
+    convK: convK.toFixed(2),
     final: ((convC * 0.3) + (convS * 0.5) + (convK * 0.2)).toFixed(2)
   };
 }
@@ -104,10 +122,17 @@ function applyFilters() {
   const reportType = document.getElementById('f-report').value;
 
   filteredData = rawData.filter(row => {
-    const tglTerima = parseCustomDate(getVal(row, 'Tgl Terima'));
+    // Logika Filtering Bulan Tetap menggunakan Tgl Terima / Eskalasi
+    let tglMulai = getVal(row, ['Y', 'Tgl Eskalasi', 'Tanggal Eskalasi']);
+    if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
+        tglMulai = getVal(row, ['D', 'Tgl Problem', 'Tanggal Problem', 'Waktu Problem', 'Tgl Terima']);
+    }
+    
+    const tglTerima = parseCustomDate(tglMulai);
     if (!tglTerima) return false;
+    
     const rowMonth = tglTerima.getMonth();
-    const targetDays = parseNum(getVal(row, 'Target Hari'));
+    const targetDays = parseNum(getVal(row, ['AF', 'Target Hari', 'Target', 'SLA Hari']));
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
     const targetMonth = tglTarget.getMonth();
@@ -120,15 +145,14 @@ function applyFilters() {
 }
 
 function refreshDashboard() {
-  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, 'Departemen') || 'N/A').trim()))];
+  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim()))];
   rankedDepts = uniqueDepts.map(name => {
-    const deptRecords = filteredData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === name);
+    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim() === name);
     return { name, ...calculateMetrics(deptRecords) };
   }).sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
 
   const listEl = document.getElementById('dept-list');
   if (listEl) {
-    // UI Sidebar yang Diperbaiki (Lebih Rapi dan Kompak)
     listEl.innerHTML = rankedDepts.map((d, i) => `
       <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${i + 1})" 
            class="dept-item cursor-pointer p-3 mb-2 rounded-xl hover:bg-slate-100 border-l-4 border-transparent transition-all group ${activeDeptName === d.name ? 'active-dept shadow-sm bg-white' : ''}">
@@ -157,7 +181,6 @@ function renderMetrikBox(containerId, m) {
     ["Konv (K)", m.convK, "text-amber-500"],
     ["Score Layanan", m.final, "text-white"]
   ];
-  // UI Metric yang Diperbaiki (Lebih proporsional, font pas, gap lebih rapat)
   container.innerHTML = layout.map((item, i) => `
     <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md border-transparent' : 'bg-white border border-slate-200 shadow-sm'} p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
       <p class="text-[10px] font-bold ${i === 8 ? 'text-indigo-100' : 'text-slate-400'} uppercase tracking-wider mb-1">${item[0]}</p>
@@ -166,12 +189,12 @@ function renderMetrikBox(containerId, m) {
   `).join('');
 }
 
-function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
+function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
   const groups = {};
   data.forEach(row => {
-    const key = String(getVal(row, groupKey) || 'N/A').trim();
+    const key = String(getVal(row, groupKeyObj) || 'N/A').trim();
     if (!groups[key]) groups[key] = [];
     groups[key].push(row);
   });
@@ -192,30 +215,42 @@ function renderDetailTable(data, groupKey, tableId, sortByScore = false) {
   `).join('');
 }
 
+// LOGIKA WARNING TABLE YANG DIPERBARUI
 function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
   
-  // Ambil tiket yang statusnya BUKAN closed/selesai
   const unclosed = baseData.filter(d => {
-    const status = String(getVal(d, 'Status') || '').trim().toLowerCase();
-    return status !== 'closed' && status !== 'selesai';
+    const status = String(getVal(d, ['Status', 'Status Problem', 'Status Request']) || '').trim().toLowerCase();
+    return !['closed', 'selesai', 'done'].includes(status);
   });
   
   const critical = unclosed.map(d => {
-    const tgl = parseCustomDate(getVal(d, 'Tgl Terima'));
-    const targetDays = parseNum(getVal(d, 'Target Hari'));
+    
+    // Logika Pengambilan Tanggal
+    // Coba ambil Tanggal Eskalasi (Kolom Y) terlebih dahulu
+    let tglRawStr = getVal(d, ['Y', 'Tgl Eskalasi', 'Tanggal Eskalasi']);
+    
+    // Jika tidak valid/kosong, fallback ke Tanggal Problem (Kolom D)
+    if (!tglRawStr || String(tglRawStr).trim() === '' || String(tglRawStr).trim() === '-') {
+        tglRawStr = getVal(d, ['D', 'Tgl Problem', 'Tanggal Problem', 'Waktu Problem']);
+    }
+    
+    const tgl = parseCustomDate(tglRawStr);
+    
+    // Ambil Target Hari dari Kolom AF
+    const targetDays = parseNum(getVal(d, ['AF', 'Target Hari', 'Target', 'SLA Hari']));
+    
     if (!tgl || targetDays <= 0) return null;
     
+    // Kalkulasi perbedaan usia tiket berdasarkan tanggal yang valid
     const diffMs = new Date() - tgl.getTime();
     const usiaHari = diffMs / (1000 * 60 * 60 * 24);
     
     let label = 'SECURED', badge = 'bg-green-500';
-    // Warning jika usia mencapai 70% dari target hari
     if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
     else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
     
-    // Hanya render jika melebihi SLA atau Warning, abaikan yang ON TRACK
     if (label === 'SECURED') return null;
 
     return { 
@@ -224,19 +259,20 @@ function renderWarningTable(baseData, tableId) {
       targetDays, 
       label, 
       badge,
-      kodeToko: getVal(d, 'Kode Toko') ||  '-',
-      namaToko: getVal(d, 'Nama Toko') || '-',
-      masalah: getVal(d, 'Masalah') || '-',
-      noTicket: getVal(d, 'No Problem') || '-',
-      pic: getVal(d, 'Nama Penangung') || '-'
+      dept: getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || '-',
+      kodeToko: getVal(d, ['Kode Toko', 'Toko', 'Code']) ||  '-',
+      namaToko: getVal(d, ['Nama Toko', 'Name']) || '-',
+      masalah: getVal(d, ['Masalah', 'Problem', 'Kategori', 'Sub Kategori']) || '-',
+      noTicket: getVal(d, ['No Problem', 'No Ticket', 'Ticket ID', 'No Request']) || '-',
+      pic: getVal(d, ['Nama Penangung', 'PIC', 'Penanggung Jawab', 'Assigned To']) || '-'
     };
-  }).filter(d => d !== null); // Hapus hasil null
+  }).filter(d => d !== null); 
   
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
   
   tbody.innerHTML = critical.map(d => `
     <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
-      <td class="p-3 font-bold text-slate-500">${getVal(d, 'Departemen') || '-'}</td>
+      <td class="p-3 font-bold text-slate-500">${d.dept}</td>
       <td class="p-3 font-bold text-slate-700">${d.kodeToko}</td>
       <td class="p-3 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
       <td class="p-3 font-mono font-bold text-indigo-600">${d.noTicket}</td>
@@ -257,8 +293,9 @@ function showHome() {
   
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
-  renderDetailTable(filteredData, 'Masalah', 'home-body-prob', false);
-  renderDetailTable(filteredData, 'Nama Penangung', 'home-body-pic', true); 
+  
+  renderDetailTable(filteredData, ['Masalah', 'Problem', 'Kategori'], 'home-body-prob', false);
+  renderDetailTable(filteredData, ['Nama Penangung', 'PIC', 'Penanggung Jawab'], 'home-body-pic', true); 
   
   renderWarningTable(rawData, 'home-body-warn');
 }
@@ -273,7 +310,7 @@ function updateDeptView(deptName, rank) {
   document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
   
-  const deptDataFiltered = filteredData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
+  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim() === deptName);
   const m = calculateMetrics(deptDataFiltered);
   
   document.getElementById('det-name').innerText = deptName;
@@ -281,10 +318,10 @@ function updateDeptView(deptName, rank) {
   document.getElementById('det-score').innerText = m.final;
   
   renderMetrikBox('dept-metrics', m);
-  renderDetailTable(deptDataFiltered, 'Masalah', 'dept-body-prob', false);
-  renderDetailTable(deptDataFiltered, 'Nama Penangung', 'dept-body-pic', true); 
+  renderDetailTable(deptDataFiltered, ['Masalah', 'Problem', 'Kategori'], 'dept-body-prob', false);
+  renderDetailTable(deptDataFiltered, ['Nama Penangung', 'PIC', 'Penanggung Jawab'], 'dept-body-pic', true); 
   
-  const deptDataRaw = rawData.filter(d => String(getVal(d, 'Departemen') || 'N/A').trim() === deptName);
+  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim() === deptName);
   renderWarningTable(deptDataRaw, 'dept-body-warn');
 
   document.querySelectorAll('.dept-item').forEach(e => {
