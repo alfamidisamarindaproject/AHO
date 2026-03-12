@@ -130,10 +130,11 @@ function calculateMetrics(records) {
   };
 }
 
+// LOGIKA FILTERING YANG DIPERBARUI SESUAI INSTRUKSI
 function applyFilters() {
-  const analysis = document.getElementById('f-analysis').value;
+  const analysis = document.getElementById('f-analysis').value; // MTD atau YTD
   const selectedMonth = parseInt(document.getElementById('f-month').value);
-  const reportType = document.getElementById('f-report').value;
+  const reportType = document.getElementById('f-report').value; // monitoring atau score
 
   filteredData = rawData.filter(row => {
     let tglMulai = getVal(row, ['Y', 'Tgl Eskalasi', 'Tanggal Eskalasi']);
@@ -146,14 +147,32 @@ function applyFilters() {
     
     const rowMonth = tglTerima.getMonth();
     const targetDays = parseNum(getVal(row, ['AF', 'Target Hari', 'Target', 'SLA Hari']));
+    
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
     const targetMonth = tglTarget.getMonth();
 
-    if (analysis === 'MTD') return (reportType === 'monitoring' ? rowMonth : targetMonth) === selectedMonth;
-    else if (analysis === 'YTD') return (reportType === 'monitoring' ? rowMonth : targetMonth) <= selectedMonth;
+    if (analysis === 'YTD') {
+        if (reportType === 'monitoring') {
+            // YTD + Monitoring: Semua problem dari Jan hingga bulan terpilih (target closed melebihi bulan terpilih diizinkan)
+            return rowMonth <= selectedMonth;
+        } else if (reportType === 'score') {
+            // YTD + Score: Semua problem dari Jan hingga bulan terpilih, TAPI target closed melebihi bulan terpilih TIDAK diizinkan
+            return rowMonth <= selectedMonth && targetMonth <= selectedMonth;
+        }
+    } else if (analysis === 'MTD') {
+        if (reportType === 'monitoring') {
+            // MTD + Monitoring: Problem murni bulan terpilih (target closed melebihi bulan terpilih diizinkan)
+            return rowMonth === selectedMonth;
+        } else if (reportType === 'score') {
+            // MTD + Score: Problem murni bulan terpilih, TAPI target closed melebihi bulan terpilih TIDAK diizinkan
+            return rowMonth === selectedMonth && targetMonth <= selectedMonth;
+        }
+    }
+    
     return true;
   });
+  
   refreshDashboard();
 }
 
@@ -189,7 +208,7 @@ function renderMetrikBox(containerId, m) {
     ["Closed", m.closed, "text-emerald-600"],
     ["% Closed", m.pct + "%", "text-emerald-600"],
     ["Konv (C)", m.convC, "text-emerald-500"],
-    ["Avg SLA", m.sla, "text-blue-600"],
+    ["Avg SLA %", m.sla, "text-blue-600"],
     ["Konv (S)", m.convS, "text-blue-500"],
     ["Avg Puas", m.puas, "text-amber-600"],
     ["Konv (K)", m.convK, "text-amber-500"],
@@ -217,7 +236,6 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
   
-  // Menggunakan styling "truncate" (pangkas teks panjang menjadi ...) pada sel nama
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
     <tr class="hover:bg-slate-50 transition-colors text-[10px]">
       <td class="p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
@@ -225,6 +243,7 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
       <td class="p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
       <td class="p-3 text-center">${i.pct}%</td>
       <td class="p-3 text-center text-blue-600">${i.sla}</td>
+      <td class="p-3 text-center text-amber-600">${i.puas}</td>
       <td class="p-3 text-center font-black text-indigo-700">${i.final}</td>
     </tr>
   `).join('');
@@ -268,6 +287,7 @@ function renderWarningTable(baseData, tableId) {
       badge,
       dept: getVal(d, ['B', 'Departemen']) || '-',
       kodeToko: getVal(d, ['Kode Toko']) ||  '-',
+      namaToko: getVal(d, ['Nama Toko']) || '-',
       masalah: getVal(d, ['Masalah', 'Problem', 'Kategori']) || '-',
       noTicket: getVal(d, ['No Problem']) || '-',
       pic: getVal(d, ['Nama Penangung']) || '-'
@@ -280,6 +300,7 @@ function renderWarningTable(baseData, tableId) {
     <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
       <td class="p-3 font-bold text-slate-500 truncate max-w-[80px]" title="${d.dept}">${d.dept}</td>
       <td class="p-3 font-bold text-slate-700">${d.kodeToko}</td>
+      <td class="p-3 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
       <td class="p-3 font-mono font-bold text-indigo-600">${d.noTicket}</td>
       <td class="p-3 truncate max-w-[120px]" title="${d.masalah}">${d.masalah}</td>
       <td class="p-3 truncate font-semibold max-w-[80px]" title="${d.pic}">${d.pic}</td>
@@ -338,7 +359,7 @@ function updateDeptView(deptName, rank) {
   });
 }
 
-// Inisiasi aplikasi yang lebih cepat tanpa overlay
+// Inisiasi aplikasi langsung jalan
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
