@@ -5,7 +5,7 @@ let filteredData = [];
 let rankedDepts = [];
 let activeDeptName = null;
 
-// FUNGSI GETVAL: Mendukung banyak variasi nama kolom (Fallback), termasuk inisial Kolom abjad (BK, BS, Y, D, AF)
+// FUNGSI GETVAL: Mendukung inisial Kolom abjad (B, BK, BS, Y, D, AF)
 const getVal = (obj, possibleKeys) => {
   const keys = Object.keys(obj);
   if (!Array.isArray(possibleKeys)) possibleKeys = [possibleKeys];
@@ -21,7 +21,6 @@ const getVal = (obj, possibleKeys) => {
 
 const parseNum = (val) => {
   if (!val) return 0;
-  // Ekstraksi angka (Bisa membaca format "100.0%" atau "5 - Sangat Puas" menjadi tipe data float/angka)
   const str = String(val).replace(',', '.').replace(/[^0-9.-]/g, '');
   return parseFloat(str) || 0;
 };
@@ -59,7 +58,6 @@ function parseCustomDate(dateStr) {
   } catch (e) { return null; }
 }
 
-// Fitur Pencarian / Filter Tabel
 function doSearch(inputEl, tableBodyId) {
   const term = inputEl.value.toLowerCase();
   const tbody = document.getElementById(tableBodyId);
@@ -71,7 +69,7 @@ function doSearch(inputEl, tableBodyId) {
   }
 }
 
-// Skala konversi
+// SKALA KONVERSI (DIKEMBALIKAN SESUAI PERMINTAAN)
 function getScale(value, type) {
   if (isNaN(value)) value = 0;
   if (type === 'closed') return value < 85 ? 1 : (value >= 100 ? 4 : 1 + ((value - 85) / 14.99) * 2.99);
@@ -83,7 +81,7 @@ function getScale(value, type) {
   return 1;
 }
 
-// LOGIKA KALKULASI METRIK (Rata-rata Kolom BK dan BS)
+// LOGIKA KALKULASI METRIK
 function calculateMetrics(records) {
   const closedRecords = records.filter(r => {
       const status = String(getVal(r, ['Status', 'Status Problem', 'Status Request']) || '').trim().toLowerCase();
@@ -96,23 +94,32 @@ function calculateMetrics(records) {
   
   let avgSla = 0, avgPuas = 0;
   if (closed > 0) {
-    // SLA diambil dari Rata-rata Kolom BK
+    // SLA Rata-rata dari Kolom BK
     avgSla = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, ['BK', 'Nilai SLA', 'Score SLA', 'SLA'])), 0) / closed;
-    // Kepuasan diambil dari Rata-rata Kolom BS
+    // Kepuasan Rata-rata dari Kolom BS
     avgPuas = closedRecords.reduce((sum, r) => sum + parseNum(getVal(r, ['BS', 'Nilai Kepuasan', 'Tingkat Kepuasan', 'Rating'])), 0) / closed;
   }
   
-  const convC = getScale((closed / total) * 100, 'closed');
+  const pctClosed = (closed / total) * 100;
+  
+  // Hitung Konversi dengan getScale
+  const convC = getScale(pctClosed, 'closed');
   const convS = getScale(avgSla, 'sla');
   const convK = getScale(avgPuas, 'puas');
   
+  // Score Layanan (Final) menggunakan pembobotan (0.3, 0.5, 0.2)
+  const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
+
   return {
-    total, closed, pct: ((closed / total) * 100).toFixed(1), convC: convC.toFixed(2),
+    total, 
+    closed, 
+    pct: pctClosed.toFixed(1), 
+    convC: convC.toFixed(2),
     sla: isNaN(avgSla) ? "0.0" : avgSla.toFixed(1), 
     convS: convS.toFixed(2), 
     puas: isNaN(avgPuas) ? "0.0" : avgPuas.toFixed(1), 
     convK: convK.toFixed(2),
-    final: ((convC * 0.3) + (convS * 0.5) + (convK * 0.2)).toFixed(2)
+    final: finalScore.toFixed(2)
   };
 }
 
@@ -122,7 +129,6 @@ function applyFilters() {
   const reportType = document.getElementById('f-report').value;
 
   filteredData = rawData.filter(row => {
-    // Logika Filtering Bulan Tetap menggunakan Tgl Terima / Eskalasi
     let tglMulai = getVal(row, ['Y', 'Tgl Eskalasi', 'Tanggal Eskalasi']);
     if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
         tglMulai = getVal(row, ['D', 'Tgl Problem', 'Tanggal Problem', 'Waktu Problem', 'Tgl Terima']);
@@ -145,9 +151,9 @@ function applyFilters() {
 }
 
 function refreshDashboard() {
-  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim()))];
+  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['B', 'Departemen']) || 'N/A').trim()))];
   rankedDepts = uniqueDepts.map(name => {
-    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim() === name);
+    const deptRecords = filteredData.filter(d => String(getVal(d, ['B', 'Departemen']) || 'N/A').trim() === name);
     return { name, ...calculateMetrics(deptRecords) };
   }).sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
 
@@ -170,6 +176,8 @@ function refreshDashboard() {
 function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
+  
+  // 9 Kotak Metrik (Termasuk Konversi)
   const layout = [
     ["Total Ticket", m.total, "text-slate-800"],
     ["Closed", m.closed, "text-emerald-600"],
@@ -181,6 +189,7 @@ function renderMetrikBox(containerId, m) {
     ["Konv (K)", m.convK, "text-amber-500"],
     ["Score Layanan", m.final, "text-white"]
   ];
+  
   container.innerHTML = layout.map((item, i) => `
     <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md border-transparent' : 'bg-white border border-slate-200 shadow-sm'} p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
       <p class="text-[10px] font-bold ${i === 8 ? 'text-indigo-100' : 'text-slate-400'} uppercase tracking-wider mb-1">${item[0]}</p>
@@ -215,7 +224,6 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   `).join('');
 }
 
-// LOGIKA WARNING TABLE YANG DIPERBARUI
 function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -226,24 +234,17 @@ function renderWarningTable(baseData, tableId) {
   });
   
   const critical = unclosed.map(d => {
-    
-    // Logika Pengambilan Tanggal
-    // Coba ambil Tanggal Eskalasi (Kolom Y) terlebih dahulu
     let tglRawStr = getVal(d, ['Y', 'Tgl Eskalasi', 'Tanggal Eskalasi']);
     
-    // Jika tidak valid/kosong, fallback ke Tanggal Problem (Kolom D)
     if (!tglRawStr || String(tglRawStr).trim() === '' || String(tglRawStr).trim() === '-') {
         tglRawStr = getVal(d, ['D', 'Tgl Problem', 'Tanggal Problem', 'Waktu Problem']);
     }
     
     const tgl = parseCustomDate(tglRawStr);
-    
-    // Ambil Target Hari dari Kolom AF
     const targetDays = parseNum(getVal(d, ['AF', 'Target Hari', 'Target', 'SLA Hari']));
     
     if (!tgl || targetDays <= 0) return null;
     
-    // Kalkulasi perbedaan usia tiket berdasarkan tanggal yang valid
     const diffMs = new Date() - tgl.getTime();
     const usiaHari = diffMs / (1000 * 60 * 60 * 24);
     
@@ -259,7 +260,7 @@ function renderWarningTable(baseData, tableId) {
       targetDays, 
       label, 
       badge,
-      dept: getVal(d, ['Departement']) || '-',
+      dept: getVal(d, ['B', 'Departemen']) || '-',
       kodeToko: getVal(d, ['Kode Toko']) ||  '-',
       namaToko: getVal(d, ['Nama Toko']) || '-',
       masalah: getVal(d, ['Masalah']) || '-',
@@ -310,7 +311,7 @@ function updateDeptView(deptName, rank) {
   document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
   
-  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim() === deptName);
+  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['B', 'Departemen']) || 'N/A').trim() === deptName);
   const m = calculateMetrics(deptDataFiltered);
   
   document.getElementById('det-name').innerText = deptName;
@@ -321,7 +322,7 @@ function updateDeptView(deptName, rank) {
   renderDetailTable(deptDataFiltered, ['Masalah', 'Problem', 'Kategori'], 'dept-body-prob', false);
   renderDetailTable(deptDataFiltered, ['Nama Penangung', 'PIC', 'Penanggung Jawab'], 'dept-body-pic', true); 
   
-  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departemen', 'Dept', 'Ditujukan Ke']) || 'N/A').trim() === deptName);
+  const deptDataRaw = rawData.filter(d => String(getVal(d, ['B', 'Departemen']) || 'N/A').trim() === deptName);
   renderWarningTable(deptDataRaw, 'dept-body-warn');
 
   document.querySelectorAll('.dept-item').forEach(e => {
