@@ -379,6 +379,14 @@
     </div>
 
     <script>
+    document.getElementById('btnDatabase').addEventListener('click', function() {
+    // URL Google Sheets yang sudah di-encode ke Base64
+    var secretUrl = "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvMXJMR1JESGhaZ2QzNFVLTUxmam9KZ2I3RnFuaDYwcHpvbHdZdmxMYmZhandvL2VkaXQ/dXNwPXNoYXJpbmc=";
+    
+    // Menerjemahkan (decode) dan membuka di tab baru
+    window.open(atob(secretUrl), '_blank');
+    });
+        
     function toggleSidebar() {
         const s = document.getElementById('main-sidebar');
         const o = document.getElementById('sidebar-overlay');
