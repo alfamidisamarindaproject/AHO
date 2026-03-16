@@ -129,8 +129,8 @@ function calculateMetrics(records) {
   if (total === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
 
   const closedRecords = records.filter(r => {
-      const status = String(getVal(r, ['Status', 'Status Problem',]) || '').trim().toLowerCase();
-      return ['closed', 'selesai', 'done'].includes(status);
+      const status = String(getVal(r, ['Status']) || '').trim().toLowerCase();
+      return ['Closed'].includes(status);
   });
   
   const closed = closedRecords.length;
@@ -169,7 +169,7 @@ function applyFilters() {
   const reportType = document.getElementById('f-report').value;
 
   filteredData = rawData.filter(row => {
-    let tglMulai = getVal(row, ['Tgl Eskalasi', 'Tanggal Eskalasi', 'Y']);
+    let tglMulai = getVal(row, ['Tgl Eskalasi']);
     if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
         tglMulai = getVal(row, ['Tgl Problem']);
     }
@@ -282,8 +282,8 @@ function renderWarningTable(baseData, tableId) {
   if (!tbody) return;
   
   const unclosed = baseData.filter(d => {
-    const status = String(getVal(d, ['Status', 'Status Problem']) || '').trim().toLowerCase();
-    return !['closed', 'selesai', 'done'].includes(status);
+    const status = String(getVal(d, ['Status']) || '').trim().toLowerCase();
+    return !['Closed'].includes(status);
   });
   
   const critical = unclosed.map(d => {
@@ -313,7 +313,7 @@ function renderWarningTable(baseData, tableId) {
       targetDays, 
       label, 
       badge,
-      dept: getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || '-',
+      dept: getVal(d, ['Departement']) || '-',
       kodeToko: getVal(d, ['Kode Toko']) ||  '-',
       namaToko: getVal(d, ['Nama Toko']) || '-',
       masalah: getVal(d, ['Masalah']) || '-',
