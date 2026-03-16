@@ -115,7 +115,7 @@ function getScale(value, type) {
   }
 
   if (type === 'puas') {
-    if (value < 3.1) return 1.00;
+    if (value <= 3.1) return 1.00;
     if (value >= 4.0) return 4.00;
     return 1.00 + ((value - 3.1) / 0.9) * 3.0;
   }
