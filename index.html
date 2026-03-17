@@ -25,7 +25,6 @@
             background: #eef2ff;
             border-left: 4px solid #6366f1;
         }
-        /* Efek Disabled Button */
         button:disabled { opacity: 0.7; cursor: not-allowed; }
     </style>
 </head>
@@ -50,11 +49,7 @@
                     <input type="password" id="password" required placeholder="Masukkan Divisi" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm">
                 </div>
                 <button type="submit" id="btn-submit-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all transform active:scale-[0.98] mt-4 flex items-center justify-center gap-2">
-                    <svg id="btn-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span id="btn-text">Masuk ke Dashboard</span>
+                    <span>Masuk ke Dashboard</span>
                 </button>
             </form>
             <div id="login-error" class="hidden mt-5 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100">❌ NIK atau Division Salah!</div>
@@ -87,6 +82,10 @@
             <div class="px-6 py-4 flex items-center justify-between border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Peringkat Dept</span>
                 <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold italic">LIVE</span>
+            </div>
+
+            <div class="px-4 pb-2 pt-3 bg-slate-50/50 shrink-0">
+                <input type="text" id="search-dept" onkeyup="searchDept()" placeholder="Cari Departemen..." class="w-full text-xs font-bold border border-slate-200 px-3 py-2 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 bg-white transition-all">
             </div>
 
             <div id="dept-list" class="flex-1 overflow-y-auto custom-scroll px-4 pb-6 space-y-2 pt-2"></div>
@@ -237,8 +236,8 @@
                             </div>
                         </div>
                         <div class="overflow-y-auto overflow-x-auto flex-1 custom-scroll">
-                            <table class="w-full text-left border-collapse text-xs min-w-[700px]">
-                                <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
+                            <table class="w-full text-left border-collapse text-xs min-w-[750px]">
+                                <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                     <tr>
                                         <th class="p-4 border-b border-slate-100">Dept</th>
                                         <th class="p-4 border-b border-slate-100">Kode Toko</th>
@@ -247,6 +246,7 @@
                                         <th class="p-4 border-b border-slate-100">Masalah</th>
                                         <th class="p-4 border-b border-slate-100 text-center">PIC</th>
                                         <th class="p-4 border-b border-slate-100 text-center">Usia Tiket</th>
+                                        <th class="p-4 border-b border-slate-100 text-center text-indigo-600">Indikator</th>
                                         <th class="p-4 border-b border-slate-100 text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -342,7 +342,7 @@
                             </div>
                         </div>
                         <div class="overflow-y-auto overflow-x-auto flex-1 custom-scroll">
-                            <table class="w-full text-left border-collapse text-xs min-w-[700px]">
+                            <table class="w-full text-left border-collapse text-xs min-w-[750px]">
                                 <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                     <tr>
                                         <th class="p-4 border-b border-slate-100">Dept</th>
@@ -352,6 +352,7 @@
                                         <th class="p-4 border-b border-slate-100">Masalah</th>
                                         <th class="p-4 border-b border-slate-100 text-center">PIC</th>
                                         <th class="p-4 border-b border-slate-100 text-center">Usia Tiket</th>
+                                        <th class="p-4 border-b border-slate-100 text-center text-indigo-600">Indikator</th>
                                         <th class="p-4 border-b border-slate-100 text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -380,10 +381,7 @@
 
     <script>
     document.getElementById('btnDatabase').addEventListener('click', function() {
-    // URL Google Sheets yang sudah di-encode ke Base64
     var secretUrl = "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvMXJMR1JESGhaZ2QzNFVLTUxmam9KZ2I3RnFuaDYwcHpvbHdZdmxMYmZhandvL2VkaXQ/dXNwPXNoYXJpbmc=";
-    
-    // Menerjemahkan (decode) dan membuka di tab baru
     window.open(atob(secretUrl), '_blank');
     });
         
@@ -398,22 +396,6 @@
         localStorage.removeItem("aho_logged_in");
         localStorage.removeItem("aho_user_name");
         location.reload();
-    }
-
-    function toggleBtnLoading(isLoading) {
-        const btn = document.getElementById("btn-submit-login");
-        const spinner = document.getElementById("btn-spinner");
-        const text = document.getElementById("btn-text");
-        
-        if (isLoading) {
-            btn.disabled = true;
-            spinner.classList.remove("hidden");
-            text.innerText = "Memuat...";
-        } else {
-            btn.disabled = false;
-            spinner.classList.add("hidden");
-            text.innerText = "Masuk ke Dashboard";
-        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -439,15 +421,14 @@
             const password = document.getElementById("password").value.trim();
 
             try {
-                toggleBtnLoading(true);
-                
-                const formData = new FormData();
-                formData.append("username", username);
-                formData.append("password", password);
+                const params = new URLSearchParams();
+                params.append("username", username);
+                params.append("password", password);
 
                 const res = await fetch(API_URL, {
                     method: "POST",
-                    body: formData
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: params
                 });
 
                 const result = await res.json();
@@ -468,8 +449,6 @@
             } catch (err) {
                 console.error(err);
                 loginError.classList.remove("hidden");
-            } finally {
-                toggleBtnLoading(false);
             }
         });
     });
