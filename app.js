@@ -130,7 +130,7 @@ function calculateMetrics(records) {
 
   const closedRecords = records.filter(r => {
       const status = String(getVal(r, ['Status']) || '').trim().toLowerCase();
-      return ['Closed'].includes(status);
+      return ['closed'].includes(status);
   });
   
   const closed = closedRecords.length;
