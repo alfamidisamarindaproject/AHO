@@ -85,7 +85,7 @@ function downloadTableAsCSV(tbodyId, filename) {
   if (!tbody) return;
   
   const rows = tbody.querySelectorAll('tr');
-  let csvContent = "Dept,Kode Toko,Nama Toko,No Ticket,Masalah,PIC,Usia Tiket,Indikator,Status\n";
+  let csvContent = "Dept,Kode Toko,Nama Toko,No Ticket,Masalah,PIC,Usia/Target,Indikator,Status\n";
   
   rows.forEach(row => {
     if (row.style.display !== 'none') { 
