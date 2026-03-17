@@ -177,9 +177,9 @@ function applyFilters() {
   const reportType = document.getElementById('f-report').value;
 
   filteredData = rawData.filter(row => {
-    let tglMulai = getVal(row, ['Tgl Eskalasi', 'Tanggal Eskalasi', 'Y']);
+    let tglMulai = getVal(row, ['Tgl Eskalasi','Y']);
     if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
-        tglMulai = getVal(row, ['Tgl Problem', 'Tanggal Problem', 'D']);
+        tglMulai = getVal(row, ['Tgl Problem','D']);
     }
     
     const tglTerima = parseCustomDate(tglMulai);
@@ -213,9 +213,9 @@ function applyFilters() {
 }
 
 function refreshDashboard() {
-  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim()))];
+  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departement','B']) || 'N/A').trim()))];
   rankedDepts = uniqueDepts.map(name => {
-    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim() === name);
+    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departement','B']) || 'N/A').trim() === name);
     return { name, ...calculateMetrics(deptRecords) };
   }).sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
 
@@ -295,10 +295,10 @@ function renderWarningTable(baseData, tableId) {
   });
   
   const critical = unclosed.map(d => {
-    let tglRawStr = getVal(d, ['Tgl Eskalasi', 'Tanggal Eskalasi', 'Y']);
+    let tglRawStr = getVal(d, ['Tgl Eskalasi','Y']);
     
     if (!tglRawStr || String(tglRawStr).trim() === '' || String(tglRawStr).trim() === '-') {
-        tglRawStr = getVal(d, ['Tgl Problem', 'Tanggal Problem', 'D']);
+        tglRawStr = getVal(d, ['Tgl Problem','D']);
     }
     
     const tgl = parseCustomDate(tglRawStr);
@@ -322,12 +322,12 @@ function renderWarningTable(baseData, tableId) {
       label, 
       badge,
       sheetStatus: String(getVal(d, ['Status']) || '-').toUpperCase(),
-      dept: getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || '-',
+      dept: getVal(d, ['Departement','B']) || '-',
       kodeToko: getVal(d, ['Kode Toko']) ||  '-',
       namaToko: getVal(d, ['Nama Toko']) || '-',
-      masalah: getVal(d, ['Masalah', 'Problem', 'Kategori']) || '-',
-      noTicket: getVal(d, ['No Problem', 'No Ticket']) || '-',
-      pic: getVal(d, ['Nama Penangung', 'Nama Penanggung', 'PIC']) || '-'
+      masalah: getVal(d, ['Masalah']) || '-',
+      noTicket: getVal(d, ['No Problem']) || '-',
+      pic: getVal(d, ['Nama Penangung') || '-'
     };
   }).filter(d => d !== null); 
   
@@ -358,8 +358,8 @@ function showHome() {
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
   
-  renderDetailTable(filteredData, ['Masalah', 'Problem', 'Kategori'], 'home-body-prob', false);
-  renderDetailTable(filteredData, ['Nama Penangung', 'Nama Penanggung', 'PIC', 'Penanggung Jawab'], 'home-body-pic', true); 
+  renderDetailTable(filteredData, ['Masalah'], 'home-body-prob', false);
+  renderDetailTable(filteredData, ['Nama Penangung'], 'home-body-pic', true); 
   
   renderWarningTable(rawData, 'home-body-warn');
 }
@@ -374,7 +374,7 @@ function updateDeptView(deptName, rank) {
   document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
   
-  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim() === deptName);
+  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departement','B']) || 'N/A').trim() === deptName);
   const m = calculateMetrics(deptDataFiltered);
   
   document.getElementById('det-name').innerText = deptName;
@@ -382,10 +382,10 @@ function updateDeptView(deptName, rank) {
   document.getElementById('det-score').innerText = m.final;
   
   renderMetrikBox('dept-metrics', m);
-  renderDetailTable(deptDataFiltered, ['Masalah', 'Problem', 'Kategori'], 'dept-body-prob', false);
-  renderDetailTable(deptDataFiltered, ['Nama Penangung', 'Nama Penanggung', 'PIC', 'Penanggung Jawab'], 'dept-body-pic', true); 
+  renderDetailTable(deptDataFiltered, ['Masalah'], 'dept-body-prob', false);
+  renderDetailTable(deptDataFiltered, ['Nama Penangung'], 'dept-body-pic', true); 
   
-  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departement', 'Departemen', 'Dept', 'B']) || 'N/A').trim() === deptName);
+  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departement','B']) || 'N/A').trim() === deptName);
   renderWarningTable(deptDataRaw, 'dept-body-warn');
 
   document.querySelectorAll('.dept-item').forEach(e => {
