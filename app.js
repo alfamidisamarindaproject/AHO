@@ -136,14 +136,20 @@ function getScale(value, type) {
 
 function calculateMetrics(records) {
   const total = records.length;
-  if (total === 0) return { total:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
+  // Tambahkan default return untuk New, Progress, Solve
+  if (total === 0) return { total:0, newT:0, progT:0, solveT:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
 
-  const closedRecords = records.filter(r => {
+  let closed = 0, newT = 0, progT = 0, solveT = 0;
+
+  records.forEach(r => {
       const status = String(getVal(r, ['Status']) || '').trim().toLowerCase();
-      return ['closed'].includes(status);
+      // Perhitungan Status Detail
+      if (['closed'].includes(status)) closed++;
+      else if (['new'].includes(status)) newT++;
+      else if (status.includes('progress')) progT++;
+      else if (status.includes('solve')) solveT++;
   });
   
-  const closed = closedRecords.length;
   const pctClosed = (closed / total) * 100;
   
   const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['SLA'])), 0);
@@ -160,6 +166,9 @@ function calculateMetrics(records) {
 
   return {
     total, 
+    newT, // Output baru
+    progT, // Output baru
+    solveT, // Output baru
     closed, 
     pct: pctClosed.toFixed(1), 
     convC: convC.toFixed(2),
@@ -272,10 +281,14 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
   
+  // Render HTML dengan tambahan kolom New, Prog, Slv
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
     <tr class="hover:bg-slate-50 transition-colors text-[10px]">
       <td class="p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
       <td class="p-3 text-center">${i.total}</td>
+      <td class="p-3 text-center text-slate-400 font-bold">${i.newT}</td>
+      <td class="p-3 text-center text-blue-500 font-bold">${i.progT}</td>
+      <td class="p-3 text-center text-teal-600 font-bold">${i.solveT}</td>
       <td class="p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
       <td class="p-3 text-center">${i.pct}%</td>
       <td class="p-3 text-center text-blue-600">${i.sla}</td>
@@ -289,6 +302,7 @@ function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
   
+  // Filter utama: HANYA tampilkan yang BUKAN Closed (menampilkan semua tiket aktif/New/Progress/Solve)
   const unclosed = baseData.filter(d => {
     const status = String(getVal(d, ['Status']) || '').trim().toLowerCase();
     return !['closed'].includes(status);
@@ -304,21 +318,27 @@ function renderWarningTable(baseData, tableId) {
     const tgl = parseCustomDate(tglRawStr);
     const targetDays = parseNum(getVal(d, ['Target Hari']));
     
-    if (!tgl || targetDays <= 0) return null;
+    let usiaHari = 0;
+    // Set default ke AMAN untuk semua tiket unclosed yang belum melewati target hari
+    let label = 'SECURED', badge = 'bg-emerald-500'; 
     
-    const diffMs = new Date() - tgl.getTime();
-    const usiaHari = diffMs / (1000 * 60 * 60 * 24);
-    
-    let label = 'SECURED', badge = 'bg-green-500';
-    if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
-    else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
-    
-    if (label === 'SECURED') return null;
+    if (tgl && targetDays > 0) {
+        const diffMs = new Date() - tgl.getTime();
+        usiaHari = diffMs / (1000 * 60 * 60 * 24);
+        
+        if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
+        else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
+    } else {
+        label = 'NO TGT'; badge = 'bg-slate-400';
+    }
+
+    // Perbaikan: Hapus batasan "SECURED/AMAN" disembunyikan. 
+    // Sekarang semua tiket Unclosed akan ditampilkan di tabel bawah.
 
     return { 
       ...d, 
       usiaHari: usiaHari.toFixed(1), 
-      targetDays, 
+      targetDays: targetDays || '-', 
       label, 
       badge,
       sheetStatus: String(getVal(d, ['Status']) || '-').toUpperCase(),
@@ -331,6 +351,7 @@ function renderWarningTable(baseData, tableId) {
     };
   }).filter(d => d !== null); 
   
+  // Urutkan dari usia hari paling lama (paling kritis) di atas
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
   
   tbody.innerHTML = critical.map(d => `
@@ -397,7 +418,7 @@ function updateDeptView(deptName, rank) {
   });
 }
 
-// PERBAIKAN: Inisiasi aplikasi dengan proteksi Cache dan Render Otomatis
+// Inisiasi aplikasi dengan proteksi Cache dan Render Otomatis
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
@@ -405,7 +426,6 @@ async function initApp() {
   const syncIcon = document.getElementById('sync-icon');
   
   try {
-    // 1. Eksekusi Teks Status: Sedang Mengambil Data (Warna Kuning)
     if (statusEl) {
         statusEl.innerText = "MENGAMBIL DATA...";
         statusEl.classList.remove('text-indigo-600', 'text-red-500', 'text-emerald-600');
@@ -413,28 +433,23 @@ async function initApp() {
     }
     if (syncIcon) syncIcon.classList.add('animate-spin');
     
-    // 2. Memanggil API Google Apps Script
     const response = await fetch(API_URL);
     if (!response.ok) throw new Error("Gagal terhubung ke server");
     
     const result = await response.json();
     
-    // Validasi jika API me-return error internal
     if (result.status === "error") {
         throw new Error(result.message || "API Error");
     }
     
-    // 3. Ekstrak data yang baru
     rawData = Array.isArray(result) ? result : (result.data || []);
     
-    // 4. PROTEKSI CACHE: Update Cache Baru dibungkus try-catch
     try {
         localStorage.setItem("aho_raw_data", JSON.stringify(rawData));
     } catch (storageErr) {
         console.warn("Storage penuh, data terlalu besar untuk cache lokal, tapi sistem tetap berjalan normal:", storageErr);
     }
 
-    // Validasi apabila database di sheet benar-benar kosong
     if (!rawData || rawData.length === 0) {
       if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
       if (statusEl) {
@@ -445,10 +460,8 @@ async function initApp() {
       return;
     }
 
-    // 5. PAKSA RENDER KE LAYAR SEKARANG JUGA
     applyFilters(); 
     
-    // 6. Update Status Berhasil setelah data dirender (Warna Hijau)
     if (statusEl) {
       statusEl.innerText = `SYNCED: ${new Date().toLocaleTimeString('id-ID')}`;
       statusEl.classList.remove('text-amber-500', 'text-red-500', 'text-indigo-600');
@@ -458,14 +471,12 @@ async function initApp() {
   } catch (error) {
     console.error("Error initApp:", error);
     
-    // Berikan feedback kalau gagal tarik data baru (Warna Merah)
     if (statusEl) {
         statusEl.innerText = "GAGAL SYNC (PAKAI CACHE)";
         statusEl.classList.remove('text-amber-500', 'text-emerald-600', 'text-indigo-600');
         statusEl.classList.add('text-red-500');
     }
     
-    // Tetap coba render apa pun data yang terselamatkan (misal dari cache lama)
     if(rawData && rawData.length > 0) {
         applyFilters();
     } else {
@@ -476,7 +487,6 @@ async function initApp() {
         </div>`;
     }
   } finally {
-    // Matikan animasi icon putar apa pun yang terjadi
     if (syncIcon) syncIcon.classList.remove('animate-spin');
   }
 }
