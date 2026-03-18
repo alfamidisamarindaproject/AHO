@@ -179,13 +179,16 @@
                                 <table class="w-full text-left border-collapse text-xs table-fixed">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Masalah</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Masalah</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="home-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -207,13 +210,16 @@
                                 <table class="w-full text-left border-collapse text-xs table-fixed">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Nama PIC</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Nama PIC</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="home-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -226,7 +232,7 @@
                         <div class="p-5 border-b border-red-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30">
                             <h3 class="font-black text-red-600 flex items-center gap-2 uppercase tracking-tight">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                Ticket Melebihi / Mendekati Target Hari
+                                Monitoring Ticket Belum Closed (Aktif)
                             </h3>
                             <div class="flex gap-2 w-full sm:w-auto">
                                 <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari toko/tiket/masalah..." class="text-xs font-bold border border-red-100 px-4 py-2 rounded-xl outline-none focus:border-red-300 flex-1 sm:w-64 bg-white shadow-sm">
@@ -285,13 +291,16 @@
                                 <table class="w-full text-left border-collapse text-xs table-fixed">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Masalah</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Masalah</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dept-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -313,13 +322,16 @@
                                 <table class="w-full text-left border-collapse text-xs table-fixed">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Nama PIC</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Nama PIC</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dept-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -332,7 +344,7 @@
                         <div class="p-5 border-b border-red-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30">
                             <h3 class="font-black text-red-600 flex items-center gap-2 uppercase tracking-tight">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                Ticket Dept Melebihi / Mendekati Target Hari
+                                Monitoring Ticket Dept Belum Closed (Aktif)
                             </h3>
                             <div class="flex gap-2 w-full sm:w-auto">
                                 <input type="text" onkeyup="doSearch(this, 'dept-body-warn')" placeholder="Cari toko/tiket/masalah..." class="text-xs font-bold border border-red-100 px-4 py-2 rounded-xl outline-none focus:border-red-300 flex-1 sm:w-64 bg-white shadow-sm">
@@ -424,12 +436,10 @@
             document.getElementById("display-nama-user").innerText = localStorage.getItem("aho_user_name") || "USER";
             document.getElementById("user-info").classList.remove("hidden");
             
-            // PERBAIKAN: Menyamakan default drop-down HTML dengan bulan dan tahun berjalan sebelum render cache
             const currentMonth = new Date().getMonth();
             const monthSelect = document.getElementById('f-month');
             if (monthSelect) monthSelect.value = String(currentMonth);
             
-            // Render dari cache jika ada, dibungkus Try-Catch agar aman
             if(cachedData) {
                 try {
                     rawData = JSON.parse(cachedData);
@@ -440,7 +450,6 @@
                 }
             }
             
-            // Langsung panggil API untuk tarik data paling *fresh*
             initApp();
         }
 
