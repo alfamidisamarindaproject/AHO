@@ -119,8 +119,8 @@
                             <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Sinkronisasi</span>
                             <span id="global-last-update" class="text-xs font-black text-indigo-600 uppercase italic">Menghubungkan...</span>
                         </div>
-                        <button onclick="window.location.reload()" class="w-10 h-10 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl transition-all shadow-sm shadow-indigo-100/50" title="Refresh Data">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <button onclick="forceRefresh()" class="w-10 h-10 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl transition-all shadow-sm shadow-indigo-100/50" title="Refresh Data">
+                            <svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -245,8 +245,8 @@
                                         <th class="p-4 border-b border-slate-100">No Ticket</th>
                                         <th class="p-4 border-b border-slate-100">Masalah</th>
                                         <th class="p-4 border-b border-slate-100 text-center">PIC</th>
-                                        <th class="p-4 border-b border-slate-100 text-center">Usia/Target</th>
-                                        <th class="p-4 border-b border-slate-100 text-center">Indikator</th>
+                                        <th class="p-4 border-b border-slate-100 text-center">Usia Tiket</th>
+                                        <th class="p-4 border-b border-slate-100 text-center text-indigo-600">Indikator</th>
                                         <th class="p-4 border-b border-slate-100 text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -351,8 +351,8 @@
                                         <th class="p-4 border-b border-slate-100">No Ticket</th>
                                         <th class="p-4 border-b border-slate-100">Masalah</th>
                                         <th class="p-4 border-b border-slate-100 text-center">PIC</th>
-                                        <th class="p-4 border-b border-slate-100 text-center">Usia/Target</th>
-                                        <th class="p-4 border-b border-slate-100 text-center">Indikator</th>
+                                        <th class="p-4 border-b border-slate-100 text-center">Usia Tiket</th>
+                                        <th class="p-4 border-b border-slate-100 text-center text-indigo-600">Indikator</th>
                                         <th class="p-4 border-b border-slate-100 text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -381,10 +381,10 @@
 
     <script>
     document.getElementById('btnDatabase').addEventListener('click', function() {
-    var secretUrl = "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvMXJMR1JESGhaZ2QzNFVLTUxmam9KZ2I3RnFuaDYwcHpvbHdZdmxMYmZhandvL2VkaXQ/dXNwPXNoYXJpbmc=";
-    window.open(atob(secretUrl), '_blank');
+        var secretUrl = "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvMXJMR1JESGhaZ2QzNFVLTUxmam9KZ2I3RnFuaDYwcHpvbHdZdmxMYmZhandvL2VkaXQ/dXNwPXNoYXJpbmc=";
+        window.open(atob(secretUrl), '_blank');
     });
-        
+
     function toggleSidebar() {
         const s = document.getElementById('main-sidebar');
         const o = document.getElementById('sidebar-overlay');
@@ -398,18 +398,42 @@
         location.reload();
     }
 
+    // Fungsi fetch manual untuk memutar icon sinkronisasi
+    async function forceRefresh() {
+        const syncIcon = document.getElementById('sync-icon');
+        const statusText = document.getElementById('global-last-update');
+        
+        syncIcon.classList.add('animate-spin');
+        statusText.innerText = "MENGAMBIL DATA...";
+        
+        await initApp();
+        
+        syncIcon.classList.remove('animate-spin');
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const loginForm = document.getElementById("form-login");
         const loginScreen = document.getElementById("login-screen");
         const loginError = document.getElementById("login-error");
+        const btnSubmit = document.getElementById("btn-submit-login");
+
+        // Jika user memiliki data localStorage (cache cepat)
+        const cachedData = localStorage.getItem("aho_raw_data");
         const savedSession = localStorage.getItem("aho_logged_in");
 
         if (savedSession) {
             loginScreen.style.display = "none";
-            const name = localStorage.getItem("aho_user_name") || "USER";
-            document.getElementById("display-nama-user").innerText = name;
+            document.getElementById("display-nama-user").innerText = localStorage.getItem("aho_user_name") || "USER";
             document.getElementById("user-info").classList.remove("hidden");
             
+            // Render instan dari cache jika ada
+            if(cachedData) {
+                rawData = JSON.parse(cachedData);
+                document.getElementById('global-last-update').innerText = `CACHE LOCAL (Sedang Sinkronisasi...)`;
+                applyFilters(); 
+            }
+            
+            // Tetap lakukan pull terbaru di background
             initApp();
         }
 
@@ -421,6 +445,9 @@
             const password = document.getElementById("password").value.trim();
 
             try {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = "Memverifikasi...";
+
                 const params = new URLSearchParams();
                 params.append("username", username);
                 params.append("password", password);
@@ -440,15 +467,17 @@
                     document.getElementById("display-nama-user").innerText = result.user.nama;
                     document.getElementById("user-info").classList.remove("hidden");
                     
-                    await initApp();
-                    
                     loginScreen.style.display = "none";
+                    await initApp();
                 } else {
                     loginError.classList.remove("hidden");
                 }
             } catch (err) {
                 console.error(err);
                 loginError.classList.remove("hidden");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = "Masuk ke Dashboard";
             }
         });
     });
