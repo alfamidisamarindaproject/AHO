@@ -62,7 +62,12 @@
 
         <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-white flex flex-col z-40 slide-in sidebar-closed lg:transform-none border-r border-slate-200">
             <div class="p-6 border-b border-slate-100 shrink-0">
-                <h1 class="text-2xl font-bold italic tracking-tight text-indigo-700">AHO <span class="text-slate-400 not-italic font-medium">- SGZ1</span></h1>
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold italic tracking-tight text-indigo-700">AHO <span class="text-slate-400 not-italic font-medium">- SGZ1</span></h1>
+                    <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
                 <div class="flex items-center gap-2 mt-2">
                     <span class="relative flex h-2.5 w-2.5">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -92,18 +97,18 @@
         </aside>
 
         <main class="flex-1 flex flex-col relative min-w-0 bg-slate-50">
-            <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-20 shrink-0">
+            <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-20 shrink-0">
                 <div class="flex items-center gap-4">
                     <button onclick="toggleSidebar()" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg lg:hidden transition-colors text-slate-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <div>
-                        <h2 class="text-lg sm:text-xl font-black text-slate-800 tracking-tight">Alfamidi Branch Samarinda</h2>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Realtime Helpdesk Dashboard</p>
+                        <h2 class="text-base sm:text-xl font-black text-slate-800 tracking-tight leading-tight">Alfamidi Samarinda</h2>
+                        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Helpdesk Dashboard</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3 sm:gap-6">
                     <div id="user-info" class="hidden md:flex items-center gap-3 pr-6 border-r border-slate-200">
                         <div class="text-right">
                             <p class="text-[9px] font-black text-slate-400 uppercase">Logged in as</p>
@@ -114,78 +119,82 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-5">
-                        <div class="hidden md:flex flex-col text-right">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Sinkronisasi</span>
-                            <span id="global-last-update" class="text-xs font-black text-indigo-600 uppercase italic">Menghubungkan...</span>
+                    <div class="flex items-center gap-3 sm:gap-5">
+                        <div class="hidden sm:flex flex-col text-right">
+                            <span class="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">Sinkronisasi</span>
+                            <span id="global-last-update" class="text-[10px] sm:text-xs font-black text-indigo-600 uppercase italic">Menghubungkan...</span>
                         </div>
-                        <button onclick="forceRefresh()" class="w-10 h-10 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl transition-all shadow-sm shadow-indigo-100/50" title="Refresh Data">
-                            <svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <button onclick="forceRefresh()" class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl transition-all shadow-sm shadow-indigo-100/50" title="Refresh Data">
+                            <svg id="sync-icon" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                         </button>
                     </div>
                 </div>
             </header>
 
-            <div class="bg-white border-b border-slate-200 px-6 py-4 flex items-end justify-between shrink-0">
-                <div class="flex flex-wrap gap-4">
-                    <div class="flex flex-col">
+            <div class="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col lg:flex-row lg:items-end justify-between shrink-0 gap-4">
+                <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 w-full lg:w-auto">
+                    <div class="flex flex-col w-full sm:w-auto flex-1">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Analisis</label>
-                        <select id="f-analysis" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 min-w-[140px]">
+                        <select id="f-analysis" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 w-full sm:min-w-[120px]">
                             <option value="YTD">YTD</option>
                             <option value="MTD">MTD</option>
                         </select>
                     </div>
-                    <div class="flex flex-col">
+                    <div class="flex flex-col w-full sm:w-auto flex-1">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Periode Bulan</label>
-                        <select id="f-month" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 min-w-[140px]">
+                        <select id="f-month" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 w-full sm:min-w-[140px]">
                             <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
                             <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
                             <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
                             <option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
                         </select>
                     </div>
-                    <div class="flex flex-col">
+                    <div class="flex flex-col w-full sm:w-auto flex-1">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jenis Report</label>
-                        <select id="f-report" onchange="applyFilters()" class="text-xs font-bold border border-indigo-100 rounded-xl px-4 py-2.5 bg-indigo-50 text-indigo-700 outline-none min-w-[180px]">
+                        <select id="f-report" onchange="applyFilters()" class="text-xs font-bold border border-indigo-100 rounded-xl px-4 py-2.5 bg-indigo-50 text-indigo-700 outline-none w-full sm:min-w-[180px]">
                             <option value="monitoring">Monitoring (Realtime)</option>
                             <option value="score">Score Akhir Bulan</option>
                         </select>
                     </div>
                 </div>
 
-                  <a id="btnDatabase" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 transition-all shadow-sm cursor-pointer">
+                <a id="btnDatabase" class="flex items-center justify-center gap-2 px-5 py-3 lg:py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 transition-all shadow-sm cursor-pointer w-full lg:w-auto mt-2 lg:mt-0">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s-8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
                     Database
-                  </a>
+                </a>
             </div>
 
-            <div class="flex-1 overflow-y-auto custom-scroll p-6 lg:p-8">
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6 lg:p-8">
                 
                 <div id="view-home" class="space-y-6">
-                    <div id="home-metrics" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4"></div>
+                    <div id="home-metrics" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"></div>
 
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        
                         <div class="glass-card rounded-3xl flex flex-col min-h-[400px] max-h-[500px] overflow-hidden shadow-sm">
-                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
+                            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
                                 <h3 class="font-black text-slate-800 flex items-center gap-2 uppercase tracking-tight">
-                                    <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012-2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                                     </span>
                                     Top Problem Cabang
                                 </h3>
-                                <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-64">
+                                <input type="text" onkeyup="doSearch(this, 'home-body-prob')" placeholder="Cari masalah..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-56">
                             </div>
-                            <div class="overflow-y-auto overflow-x-hidden flex-1 custom-scroll">
-                                <table class="w-full text-left border-collapse text-xs table-fixed">
+                            <div class="overflow-y-auto overflow-x-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-xs table-fixed min-w-[700px]">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Masalah</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Masalah</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="home-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -194,26 +203,29 @@
                         </div>
 
                         <div class="glass-card rounded-3xl flex flex-col min-h-[400px] max-h-[500px] overflow-hidden shadow-sm">
-                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
+                            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
                                 <h3 class="font-black text-slate-800 flex items-center gap-2 uppercase tracking-tight">
-                                    <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                     </span>
                                     Kinerja PIC Cabang
                                 </h3>
-                                <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-64">
+                                <input type="text" onkeyup="doSearch(this, 'home-body-pic')" placeholder="Cari PIC..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-56">
                             </div>
-                            <div class="overflow-y-auto overflow-x-hidden flex-1 custom-scroll">
-                                <table class="w-full text-left border-collapse text-xs table-fixed">
+                            <div class="overflow-y-auto overflow-x-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-xs table-fixed min-w-[700px]">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Nama PIC</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Nama PIC</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="home-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -223,14 +235,14 @@
                     </div>
 
                     <div class="bg-white rounded-[2rem] shadow-sm border border-red-100 flex flex-col overflow-hidden max-h-[450px]">
-                        <div class="p-5 border-b border-red-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30">
+                        <div class="p-4 sm:p-5 border-b border-red-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30">
                             <h3 class="font-black text-red-600 flex items-center gap-2 uppercase tracking-tight">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                Monitoring Ticket Belum Closed (Aktif)
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Monitoring Problem Aktif
                             </h3>
                             <div class="flex gap-2 w-full sm:w-auto">
-                                <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari toko/tiket/masalah..." class="text-xs font-bold border border-red-100 px-4 py-2 rounded-xl outline-none focus:border-red-300 flex-1 sm:w-64 bg-white shadow-sm">
-                                <button onclick="downloadTableAsCSV('home-body-warn', 'Ticket_Warning_Cabang.csv')" class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center shadow-sm" title="Download ke Excel">
+                                <input type="text" onkeyup="doSearch(this, 'home-body-warn')" placeholder="Cari tiket..." class="text-xs font-bold border border-red-100 px-4 py-2 rounded-xl outline-none focus:border-red-300 flex-1 sm:w-56 bg-white shadow-sm">
+                                <button onclick="downloadTableAsCSV('home-body-warn', 'Ticket_Warning_Cabang.csv')" class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center shadow-sm" title="Download Excel">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 </button>
                             </div>
@@ -257,41 +269,45 @@
                 </div>
 
                 <div id="view-dept" class="hidden space-y-6">
-                    <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-[2rem] p-6 lg:p-8 text-white shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                        <div>
-                            <span id="det-rank" class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 inline-block"></span>
-                            <h2 id="det-name" class="text-3xl lg:text-4xl font-black italic tracking-tight uppercase"></h2>
+                    <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-[2rem] p-5 sm:p-6 lg:p-8 text-white shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
+                        <div class="w-full sm:w-auto">
+                            <span id="det-rank" class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 sm:mb-3 inline-block"></span>
+                            <h2 id="det-name" class="text-2xl sm:text-3xl lg:text-4xl font-black italic tracking-tight uppercase truncate max-w-full" title=""></h2>
                         </div>
-                        <div class="text-left sm:text-right bg-black/10 p-4 rounded-2xl w-full sm:w-auto min-w-[150px]">
-                            <p class="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">Total Score Kinerja</p>
-                            <p id="det-score" class="text-4xl font-black tracking-tighter text-yellow-300"></p>
+                        <div class="text-left sm:text-right bg-black/10 p-3 sm:p-4 rounded-2xl w-full sm:w-auto sm:min-w-[150px]">
+                            <p class="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">Total Score</p>
+                            <p id="det-score" class="text-3xl sm:text-4xl font-black tracking-tighter text-yellow-300"></p>
                         </div>
                     </div>
 
-                    <div id="dept-metrics" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4"></div>
+                    <div id="dept-metrics" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"></div>
 
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        
                         <div class="glass-card rounded-3xl flex flex-col min-h-[400px] max-h-[500px] overflow-hidden shadow-sm">
-                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
+                            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
                                 <h3 class="font-black text-slate-800 flex items-center gap-2 uppercase tracking-tight">
-                                    <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012-2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                                     </span>
                                     Top Problem Dept
                                 </h3>
-                                <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari masalah..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-64">
+                                <input type="text" onkeyup="doSearch(this, 'dept-body-prob')" placeholder="Cari masalah..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-56">
                             </div>
-                            <div class="overflow-y-auto overflow-x-hidden flex-1 custom-scroll">
-                                <table class="w-full text-left border-collapse text-xs table-fixed">
+                            <div class="overflow-y-auto overflow-x-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-xs table-fixed min-w-[700px]">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Masalah</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Masalah</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dept-body-prob" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -300,26 +316,29 @@
                         </div>
 
                         <div class="glass-card rounded-3xl flex flex-col min-h-[400px] max-h-[500px] overflow-hidden shadow-sm">
-                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
+                            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
                                 <h3 class="font-black text-slate-800 flex items-center gap-2 uppercase tracking-tight">
-                                    <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                     </span>
                                     Kinerja PIC Dept
                                 </h3>
-                                <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-64">
+                                <input type="text" onkeyup="doSearch(this, 'dept-body-pic')" placeholder="Cari PIC..." class="text-xs font-bold bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl outline-none focus:border-indigo-500 w-full sm:w-56">
                             </div>
-                            <div class="overflow-y-auto overflow-x-hidden flex-1 custom-scroll">
-                                <table class="w-full text-left border-collapse text-xs table-fixed">
+                            <div class="overflow-y-auto overflow-x-auto flex-1 custom-scroll">
+                                <table class="w-full text-left border-collapse text-xs table-fixed min-w-[700px]">
                                     <thead class="bg-slate-100 text-slate-400 text-[10px] uppercase font-black sticky top-0 z-10">
                                         <tr>
-                                            <th class="p-4 border-b border-slate-100 w-[30%]">Nama PIC</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Total</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">%Clsd</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">SLA</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[10%]">Puas</th>
-                                            <th class="p-4 border-b border-slate-100 text-center w-[15%]">Score</th>
+                                            <th class="p-3 border-b border-slate-100 w-[20%]">Nama PIC</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Total</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">New</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Prog</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Slv</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">%Clsd</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">SLA</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[8%]">Puas</th>
+                                            <th class="p-3 border-b border-slate-100 text-center w-[16%]">Score</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dept-body-pic" class="divide-y divide-slate-50 bg-white"></tbody>
@@ -329,14 +348,14 @@
                     </div>
 
                     <div class="bg-white rounded-[2rem] shadow-sm border border-red-100 flex flex-col overflow-hidden max-h-[450px]">
-                        <div class="p-5 border-b border-red-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30">
+                        <div class="p-4 sm:p-5 border-b border-red-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30">
                             <h3 class="font-black text-red-600 flex items-center gap-2 uppercase tracking-tight">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                Monitoring Ticket Dept Belum Closed (Aktif)
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Monitoring Problem Dept Aktif
                             </h3>
                             <div class="flex gap-2 w-full sm:w-auto">
-                                <input type="text" onkeyup="doSearch(this, 'dept-body-warn')" placeholder="Cari toko/tiket/masalah..." class="text-xs font-bold border border-red-100 px-4 py-2 rounded-xl outline-none focus:border-red-300 flex-1 sm:w-64 bg-white shadow-sm">
-                                <button onclick="downloadTableAsCSV('dept-body-warn', 'Ticket_Warning_Dept.csv')" class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center shadow-sm" title="Download ke Excel">
+                                <input type="text" onkeyup="doSearch(this, 'dept-body-warn')" placeholder="Cari tiket..." class="text-xs font-bold border border-red-100 px-4 py-2 rounded-xl outline-none focus:border-red-300 flex-1 sm:w-56 bg-white shadow-sm">
+                                <button onclick="downloadTableAsCSV('dept-body-warn', 'Ticket_Warning_Dept.csv')" class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center shadow-sm" title="Download Excel">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 </button>
                             </div>
@@ -364,16 +383,16 @@
 
             </div>
 
-            <footer class="h-14 bg-white border-t border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
+            <footer class="h-14 bg-white border-t border-slate-200 flex items-center justify-between px-4 sm:px-6 shrink-0 z-20">
                 <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        Internal Use Only • Made by: <span class="text-indigo-400">Akbar Rasyid - SQR</span>
+                    <span class="w-2 h-2 bg-rose-500 rounded-full animate-pulse shrink-0"></span>
+                    <span class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">
+                        Internal Use • <span class="text-indigo-400 hidden sm:inline">Made by: Akbar Rasyid - SQR</span>
                     </span>
                 </div>
-                <button onclick="handleLogout()" class="text-xs font-black text-slate-400 hover:text-rose-600 transition-colors flex items-center gap-2 uppercase tracking-wider">
+                <button onclick="handleLogout()" class="text-xs font-black text-slate-400 hover:text-rose-600 transition-colors flex items-center gap-2 uppercase tracking-wider shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Log Out
+                    <span class="hidden sm:block">Log Out</span>
                 </button>
             </footer>
         </main>
