@@ -397,44 +397,68 @@ function updateDeptView(deptName, rank) {
   });
 }
 
-// Inisiasi aplikasi yang lebih mulus dengan menyimpan rawData di localStorage
+// PERBAIKAN: Inisiasi aplikasi dengan handling status & UI Rendering yang pasti jalan
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
+  const statusEl = document.getElementById('global-last-update');
+  const syncIcon = document.getElementById('sync-icon');
   
   try {
+    // 1. Eksekusi Teks Status: Sedang Mengambil Data
+    if (statusEl) statusEl.innerText = "MENGAMBIL DATA...";
+    if (syncIcon) syncIcon.classList.add('animate-spin');
+    
+    // 2. Memanggil Google Apps Script
     const response = await fetch(API_URL);
-    if (!response.ok) throw new Error("Gagal mengambil data");
+    if (!response.ok) throw new Error("Gagal terhubung ke server");
     
     const result = await response.json();
-    rawData = Array.isArray(result) ? result : result.data;
     
-    // Menyimpan data di cache untuk mempercepat loading berikutnya
+    // 3. Ekstrak data yang baru
+    rawData = Array.isArray(result) ? result : (result.data || []);
+    
+    // 4. Update Cache Baru
     localStorage.setItem("aho_raw_data", JSON.stringify(rawData));
 
+    // Validasi apabila kosong
     if (!rawData || rawData.length === 0) {
-      listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
+      if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
+      if (statusEl) statusEl.innerText = "DATA KOSONG";
       return;
     }
 
+    // 5. Update UI Dropdown (Aman karena menggunakan type String)
     const now = new Date();
-    document.getElementById('f-month').value = now.getMonth();
+    const monthSelect = document.getElementById('f-month');
+    if (monthSelect) {
+        monthSelect.value = String(now.getMonth());
+    }
     
-    const statusEl = document.getElementById('global-last-update');
+    // 6. Update Status Berhasil
     if (statusEl) {
-      statusEl.innerText = `Synced: ${now.toLocaleTimeString('id-ID')}`;
+      statusEl.innerText = `SYNCED: ${now.toLocaleTimeString('id-ID')}`;
     }
 
+    // 7. Paksa render otomatis ke Layar
     applyFilters(); 
 
   } catch (error) {
-    console.error("Error:", error);
-    if(rawData.length === 0) { // Hanya error jika belum ada data di cache
-        listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
-        metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
+    console.error("Error initApp:", error);
+    
+    // Berikan feedback kalau gagal tarik script baru
+    if (statusEl) statusEl.innerText = "GAGAL SYNC";
+    
+    // Jika tidak ada data backup dari Cache sama sekali
+    if(!rawData || rawData.length === 0) { 
+        if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
+        if (metricsEl) metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
           <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
-          <p class="text-slate-400 text-[10px] mt-2">Pastikan API Google Apps Script merespons dengan benar.</p>
+          <p class="text-slate-400 text-[10px] mt-2">Pastikan internet stabil & API Script merespons.</p>
         </div>`;
     }
+  } finally {
+    // Matikan animasi icon putar apa pun hasilnya
+    if (syncIcon) syncIcon.classList.remove('animate-spin');
   }
 }
