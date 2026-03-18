@@ -397,7 +397,7 @@ function updateDeptView(deptName, rank) {
   });
 }
 
-// PERBAIKAN: Inisiasi aplikasi dengan handling status & UI Rendering yang pasti jalan
+// PERBAIKAN: Inisiasi aplikasi dengan proteksi Cache dan Render Otomatis
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
@@ -405,52 +405,70 @@ async function initApp() {
   const syncIcon = document.getElementById('sync-icon');
   
   try {
-    // 1. Eksekusi Teks Status: Sedang Mengambil Data
-    if (statusEl) statusEl.innerText = "MENGAMBIL DATA...";
+    // 1. Eksekusi Teks Status: Sedang Mengambil Data (Warna Kuning)
+    if (statusEl) {
+        statusEl.innerText = "MENGAMBIL DATA...";
+        statusEl.classList.remove('text-indigo-600', 'text-red-500', 'text-emerald-600');
+        statusEl.classList.add('text-amber-500');
+    }
     if (syncIcon) syncIcon.classList.add('animate-spin');
     
-    // 2. Memanggil Google Apps Script
+    // 2. Memanggil API Google Apps Script
     const response = await fetch(API_URL);
     if (!response.ok) throw new Error("Gagal terhubung ke server");
     
     const result = await response.json();
     
+    // Validasi jika API me-return error internal
+    if (result.status === "error") {
+        throw new Error(result.message || "API Error");
+    }
+    
     // 3. Ekstrak data yang baru
     rawData = Array.isArray(result) ? result : (result.data || []);
     
-    // 4. Update Cache Baru
-    localStorage.setItem("aho_raw_data", JSON.stringify(rawData));
+    // 4. PROTEKSI CACHE: Update Cache Baru dibungkus try-catch
+    try {
+        localStorage.setItem("aho_raw_data", JSON.stringify(rawData));
+    } catch (storageErr) {
+        console.warn("Storage penuh, data terlalu besar untuk cache lokal, tapi sistem tetap berjalan normal:", storageErr);
+    }
 
-    // Validasi apabila kosong
+    // Validasi apabila database di sheet benar-benar kosong
     if (!rawData || rawData.length === 0) {
       if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
-      if (statusEl) statusEl.innerText = "DATA KOSONG";
+      if (statusEl) {
+          statusEl.innerText = "DATA KOSONG";
+          statusEl.classList.remove('text-amber-500');
+          statusEl.classList.add('text-red-500');
+      }
       return;
     }
 
-    // 5. Update UI Dropdown (Aman karena menggunakan type String)
-    const now = new Date();
-    const monthSelect = document.getElementById('f-month');
-    if (monthSelect) {
-        monthSelect.value = String(now.getMonth());
-    }
-    
-    // 6. Update Status Berhasil
-    if (statusEl) {
-      statusEl.innerText = `SYNCED: ${now.toLocaleTimeString('id-ID')}`;
-    }
-
-    // 7. Paksa render otomatis ke Layar
+    // 5. PAKSA RENDER KE LAYAR SEKARANG JUGA
     applyFilters(); 
+    
+    // 6. Update Status Berhasil setelah data dirender (Warna Hijau)
+    if (statusEl) {
+      statusEl.innerText = `SYNCED: ${new Date().toLocaleTimeString('id-ID')}`;
+      statusEl.classList.remove('text-amber-500', 'text-red-500', 'text-indigo-600');
+      statusEl.classList.add('text-emerald-600');
+    }
 
   } catch (error) {
     console.error("Error initApp:", error);
     
-    // Berikan feedback kalau gagal tarik script baru
-    if (statusEl) statusEl.innerText = "GAGAL SYNC";
+    // Berikan feedback kalau gagal tarik data baru (Warna Merah)
+    if (statusEl) {
+        statusEl.innerText = "GAGAL SYNC (PAKAI CACHE)";
+        statusEl.classList.remove('text-amber-500', 'text-emerald-600', 'text-indigo-600');
+        statusEl.classList.add('text-red-500');
+    }
     
-    // Jika tidak ada data backup dari Cache sama sekali
-    if(!rawData || rawData.length === 0) { 
+    // Tetap coba render apa pun data yang terselamatkan (misal dari cache lama)
+    if(rawData && rawData.length > 0) {
+        applyFilters();
+    } else {
         if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
         if (metricsEl) metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
           <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
@@ -458,7 +476,7 @@ async function initApp() {
         </div>`;
     }
   } finally {
-    // Matikan animasi icon putar apa pun hasilnya
+    // Matikan animasi icon putar apa pun yang terjadi
     if (syncIcon) syncIcon.classList.remove('animate-spin');
   }
 }
