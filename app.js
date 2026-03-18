@@ -136,14 +136,12 @@ function getScale(value, type) {
 
 function calculateMetrics(records) {
   const total = records.length;
-  // Tambahkan default return untuk New, Progress, Solve
   if (total === 0) return { total:0, newT:0, progT:0, solveT:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
 
   let closed = 0, newT = 0, progT = 0, solveT = 0;
 
   records.forEach(r => {
       const status = String(getVal(r, ['Status']) || '').trim().toLowerCase();
-      // Perhitungan Status Detail
       if (['closed'].includes(status)) closed++;
       else if (['new'].includes(status)) newT++;
       else if (status.includes('progress')) progT++;
@@ -151,10 +149,8 @@ function calculateMetrics(records) {
   });
   
   const pctClosed = (closed / total) * 100;
-  
   const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['SLA'])), 0);
   const avgSla = totalSla / total;
-  
   const totalPuas = records.reduce((sum, r) => sum + parseNum(getVal(r, ['TINGKAT KEPUASAN OLAHAN'])), 0);
   const avgPuas = totalPuas / total;
   
@@ -165,11 +161,7 @@ function calculateMetrics(records) {
   const finalScore = (convC * 0.3) + (convS * 0.5) + (convK * 0.2);
 
   return {
-    total, 
-    newT, // Output baru
-    progT, // Output baru
-    solveT, // Output baru
-    closed, 
+    total, newT, progT, solveT, closed, 
     pct: pctClosed.toFixed(1), 
     convC: convC.toFixed(2),
     sla: isNaN(avgSla) ? "0.0" : avgSla.toFixed(1), 
@@ -244,28 +236,65 @@ function refreshDashboard() {
   activeDeptName ? updateDeptView(activeDeptName, rankedDepts.findIndex(d => d.name === activeDeptName) + 1) : showHome();
 }
 
+// PERBAIKAN: Menambahkan layout khusus untuk 3 Status (New, Prog, Solve) di Metrics
 function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
   
-  const layout = [
-    ["Total Ticket", m.total, "text-slate-800"],
-    ["Closed", m.closed, "text-emerald-600"],
-    ["% Closed", m.pct + "%", "text-emerald-600"],
-    ["Konv (C)", m.convC, "text-emerald-500"],
-    ["Avg SLA %", m.sla, "text-blue-600"],
-    ["Konv (S)", m.convS, "text-blue-500"],
-    ["Avg Puas", m.puas, "text-amber-600"],
-    ["Konv (K)", m.convK, "text-amber-500"],
-    ["Score Layanan", m.final, "text-white"]
-  ];
-  
-  container.innerHTML = layout.map((item, i) => `
-    <div class="${i === 8 ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md border-transparent' : 'bg-white border border-slate-200 shadow-sm'} p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
-      <p class="text-[10px] font-bold ${i === 8 ? 'text-indigo-100' : 'text-slate-400'} uppercase tracking-wider mb-1">${item[0]}</p>
-      <p class="text-2xl font-black italic tracking-tight ${item[2]}">${item[1]}</p>
+  container.innerHTML = `
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Ticket</p>
+      <p class="text-2xl font-black italic tracking-tight text-slate-800">${m.total}</p>
     </div>
-  `).join('');
+    
+    <div class="bg-white border border-slate-200 shadow-sm p-3 rounded-2xl flex flex-col justify-center min-h-[90px] gap-1">
+      <div class="flex justify-between items-center w-full">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">New</span>
+        <span class="text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">${m.newT}</span>
+      </div>
+      <div class="flex justify-between items-center w-full">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Prog</span>
+        <span class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${m.progT}</span>
+      </div>
+      <div class="flex justify-between items-center w-full">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Slv</span>
+        <span class="text-xs font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded">${m.solveT}</span>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Closed</p>
+      <p class="text-2xl font-black italic tracking-tight text-emerald-600">${m.closed}</p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">% Closed</p>
+      <p class="text-2xl font-black italic tracking-tight text-emerald-600">${m.pct}%</p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Konv (C)</p>
+      <p class="text-2xl font-black italic tracking-tight text-emerald-500">${m.convC}</p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Avg SLA %</p>
+      <p class="text-2xl font-black italic tracking-tight text-blue-600">${m.sla}</p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Konv (S)</p>
+      <p class="text-2xl font-black italic tracking-tight text-blue-500">${m.convS}</p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Avg Puas</p>
+      <p class="text-2xl font-black italic tracking-tight text-amber-600">${m.puas}</p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Konv (K)</p>
+      <p class="text-2xl font-black italic tracking-tight text-amber-500">${m.convK}</p>
+    </div>
+    <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md border-transparent p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
+      <p class="text-[10px] font-bold text-indigo-100 uppercase tracking-wider mb-1">Score Layanan</p>
+      <p class="text-2xl font-black italic tracking-tight text-white">${m.final}</p>
+    </div>
+  `;
 }
 
 function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
@@ -281,14 +310,11 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
   
-  // Render HTML dengan tambahan kolom New, Prog, Slv
+  // PERBAIKAN: Format detail tabel dikembalikan seperti semula
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
     <tr class="hover:bg-slate-50 transition-colors text-[10px]">
       <td class="p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
       <td class="p-3 text-center">${i.total}</td>
-      <td class="p-3 text-center text-slate-400 font-bold">${i.newT}</td>
-      <td class="p-3 text-center text-blue-500 font-bold">${i.progT}</td>
-      <td class="p-3 text-center text-teal-600 font-bold">${i.solveT}</td>
       <td class="p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
       <td class="p-3 text-center">${i.pct}%</td>
       <td class="p-3 text-center text-blue-600">${i.sla}</td>
@@ -302,7 +328,6 @@ function renderWarningTable(baseData, tableId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
   
-  // Filter utama: HANYA tampilkan yang BUKAN Closed (menampilkan semua tiket aktif/New/Progress/Solve)
   const unclosed = baseData.filter(d => {
     const status = String(getVal(d, ['Status']) || '').trim().toLowerCase();
     return !['closed'].includes(status);
@@ -319,8 +344,7 @@ function renderWarningTable(baseData, tableId) {
     const targetDays = parseNum(getVal(d, ['Target Hari']));
     
     let usiaHari = 0;
-    // Set default ke AMAN untuk semua tiket unclosed yang belum melewati target hari
-    let label = 'SECURED', badge = 'bg-emerald-500'; 
+    let label = 'AMAN', badge = 'bg-emerald-500'; 
     
     if (tgl && targetDays > 0) {
         const diffMs = new Date() - tgl.getTime();
@@ -331,9 +355,6 @@ function renderWarningTable(baseData, tableId) {
     } else {
         label = 'NO TGT'; badge = 'bg-slate-400';
     }
-
-    // Perbaikan: Hapus batasan "SECURED/AMAN" disembunyikan. 
-    // Sekarang semua tiket Unclosed akan ditampilkan di tabel bawah.
 
     return { 
       ...d, 
@@ -351,7 +372,6 @@ function renderWarningTable(baseData, tableId) {
     };
   }).filter(d => d !== null); 
   
-  // Urutkan dari usia hari paling lama (paling kritis) di atas
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
   
   tbody.innerHTML = critical.map(d => `
@@ -418,7 +438,6 @@ function updateDeptView(deptName, rank) {
   });
 }
 
-// Inisiasi aplikasi dengan proteksi Cache dan Render Otomatis
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
