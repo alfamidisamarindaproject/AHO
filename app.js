@@ -344,7 +344,7 @@ function renderWarningTable(baseData, tableId) {
     const targetDays = parseNum(getVal(d, ['Target Hari']));
     
     let usiaHari = 0;
-    let label = 'AMAN', badge = 'bg-emerald-500'; 
+    let label = 'SECURED', badge = 'bg-emerald-500'; 
     
     if (tgl && targetDays > 0) {
         const diffMs = new Date() - tgl.getTime();
