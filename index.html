@@ -131,8 +131,8 @@
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Analisis</label>
                         <select id="f-analysis" onchange="applyFilters()" class="text-xs font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 min-w-[140px]">
-                            <option value="MTD">MTD</option>
                             <option value="YTD">YTD</option>
+                            <option value="MTD">MTD</option>
                         </select>
                     </div>
                     <div class="flex flex-col">
@@ -398,17 +398,16 @@
         location.reload();
     }
 
-    // Fungsi fetch manual untuk memutar icon sinkronisasi
     async function forceRefresh() {
         const syncIcon = document.getElementById('sync-icon');
         const statusText = document.getElementById('global-last-update');
         
-        syncIcon.classList.add('animate-spin');
-        statusText.innerText = "MENGAMBIL DATA...";
+        if (syncIcon) syncIcon.classList.add('animate-spin');
+        if (statusText) statusText.innerText = "MENGAMBIL DATA...";
         
         await initApp();
         
-        syncIcon.classList.remove('animate-spin');
+        if (syncIcon) syncIcon.classList.remove('animate-spin');
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -417,7 +416,6 @@
         const loginError = document.getElementById("login-error");
         const btnSubmit = document.getElementById("btn-submit-login");
 
-        // Jika user memiliki data localStorage (cache cepat)
         const cachedData = localStorage.getItem("aho_raw_data");
         const savedSession = localStorage.getItem("aho_logged_in");
 
@@ -426,14 +424,23 @@
             document.getElementById("display-nama-user").innerText = localStorage.getItem("aho_user_name") || "USER";
             document.getElementById("user-info").classList.remove("hidden");
             
-            // Render instan dari cache jika ada
+            // PERBAIKAN: Menyamakan default drop-down HTML dengan bulan dan tahun berjalan sebelum render cache
+            const currentMonth = new Date().getMonth();
+            const monthSelect = document.getElementById('f-month');
+            if (monthSelect) monthSelect.value = String(currentMonth);
+            
+            // Render dari cache jika ada, dibungkus Try-Catch agar aman
             if(cachedData) {
-                rawData = JSON.parse(cachedData);
-                document.getElementById('global-last-update').innerText = `CACHE LOCAL (Sedang Sinkronisasi...)`;
-                applyFilters(); 
+                try {
+                    rawData = JSON.parse(cachedData);
+                    document.getElementById('global-last-update').innerText = "MEMUAT CACHE...";
+                    applyFilters(); 
+                } catch(e) {
+                    console.error("Gagal memuat cache:", e);
+                }
             }
             
-            // Tetap lakukan pull terbaru di background
+            // Langsung panggil API untuk tarik data paling *fresh*
             initApp();
         }
 
