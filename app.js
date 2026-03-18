@@ -243,7 +243,7 @@ function renderMetrikBox(containerId, m) {
   
   container.innerHTML = `
     <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
-      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Ticket</p>
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Problem</p>
       <p class="text-2xl font-black italic tracking-tight text-slate-800">${m.total}</p>
     </div>
     
