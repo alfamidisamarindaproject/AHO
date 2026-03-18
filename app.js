@@ -85,7 +85,7 @@ function downloadTableAsCSV(tbodyId, filename) {
   if (!tbody) return;
   
   const rows = tbody.querySelectorAll('tr');
-  let csvContent = "Dept,Kode Toko,Nama Toko,No Ticket,Masalah,PIC,Usia/Target,Indikator,Status\n";
+  let csvContent = "Dept,Kode Toko,Nama Toko,No Ticket,Masalah,PIC,Usia Tiket,Indikator,Status\n";
   
   rows.forEach(row => {
     if (row.style.display !== 'none') { 
@@ -177,16 +177,16 @@ function applyFilters() {
   const reportType = document.getElementById('f-report').value;
 
   filteredData = rawData.filter(row => {
-    let tglMulai = getVal(row, ['Tgl Eskalasi','Y']);
+    let tglMulai = getVal(row, ['Tgl Eskalasi']);
     if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
-        tglMulai = getVal(row, ['Tgl Problem','D']);
+        tglMulai = getVal(row, ['Tgl Problem']);
     }
     
     const tglTerima = parseCustomDate(tglMulai);
     if (!tglTerima) return false;
     
     const rowMonth = tglTerima.getMonth();
-    const targetDays = parseNum(getVal(row, ['Target Hari', 'AF']));
+    const targetDays = parseNum(getVal(row, ['Target Hari']));
     
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
@@ -213,9 +213,9 @@ function applyFilters() {
 }
 
 function refreshDashboard() {
-  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departement','B']) || 'N/A').trim()))];
+  const uniqueDepts = [...new Set(filteredData.map(d => String(getVal(d, ['Departement']) || 'N/A').trim()))];
   rankedDepts = uniqueDepts.map(name => {
-    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departement','B']) || 'N/A').trim() === name);
+    const deptRecords = filteredData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === name);
     return { name, ...calculateMetrics(deptRecords) };
   }).sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
 
@@ -295,14 +295,14 @@ function renderWarningTable(baseData, tableId) {
   });
   
   const critical = unclosed.map(d => {
-    let tglRawStr = getVal(d, ['Tgl Eskalasi','Y']);
+    let tglRawStr = getVal(d, ['Tgl Eskalasi']);
     
     if (!tglRawStr || String(tglRawStr).trim() === '' || String(tglRawStr).trim() === '-') {
-        tglRawStr = getVal(d, ['Tgl Problem','D']);
+        tglRawStr = getVal(d, ['Tgl Problem']);
     }
     
     const tgl = parseCustomDate(tglRawStr);
-    const targetDays = parseNum(getVal(d, ['Target Hari', 'AF']));
+    const targetDays = parseNum(getVal(d, ['Target Hari']));
     
     if (!tgl || targetDays <= 0) return null;
     
@@ -322,12 +322,12 @@ function renderWarningTable(baseData, tableId) {
       label, 
       badge,
       sheetStatus: String(getVal(d, ['Status']) || '-').toUpperCase(),
-      dept: getVal(d, ['Departement','B']) || '-',
+      dept: getVal(d, ['Departement']) || '-',
       kodeToko: getVal(d, ['Kode Toko']) ||  '-',
       namaToko: getVal(d, ['Nama Toko']) || '-',
       masalah: getVal(d, ['Masalah']) || '-',
       noTicket: getVal(d, ['No Problem']) || '-',
-      pic: getVal(d, ['Nama Penangung') || '-'
+      pic: getVal(d, ['Nama Penangung']) || '-'
     };
   }).filter(d => d !== null); 
   
@@ -374,7 +374,7 @@ function updateDeptView(deptName, rank) {
   document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
   
-  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departement','B']) || 'N/A').trim() === deptName);
+  const deptDataFiltered = filteredData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === deptName);
   const m = calculateMetrics(deptDataFiltered);
   
   document.getElementById('det-name').innerText = deptName;
@@ -385,7 +385,7 @@ function updateDeptView(deptName, rank) {
   renderDetailTable(deptDataFiltered, ['Masalah'], 'dept-body-prob', false);
   renderDetailTable(deptDataFiltered, ['Nama Penangung'], 'dept-body-pic', true); 
   
-  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departement','B']) || 'N/A').trim() === deptName);
+  const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === deptName);
   renderWarningTable(deptDataRaw, 'dept-body-warn');
 
   document.querySelectorAll('.dept-item').forEach(e => {
@@ -397,6 +397,7 @@ function updateDeptView(deptName, rank) {
   });
 }
 
+// Inisiasi aplikasi yang lebih mulus dengan menyimpan rawData di localStorage
 async function initApp() {
   const listEl = document.getElementById('dept-list');
   const metricsEl = document.getElementById('home-metrics');
@@ -407,6 +408,9 @@ async function initApp() {
     
     const result = await response.json();
     rawData = Array.isArray(result) ? result : result.data;
+    
+    // Menyimpan data di cache untuk mempercepat loading berikutnya
+    localStorage.setItem("aho_raw_data", JSON.stringify(rawData));
 
     if (!rawData || rawData.length === 0) {
       listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Data Kosong</p>`;
@@ -425,10 +429,12 @@ async function initApp() {
 
   } catch (error) {
     console.error("Error:", error);
-    listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
-    metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
-      <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
-      <p class="text-slate-400 text-[10px] mt-2">Pastikan API Google Apps Script merespons dengan benar.</p>
-    </div>`;
+    if(rawData.length === 0) { // Hanya error jika belum ada data di cache
+        listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
+        metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
+          <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
+          <p class="text-slate-400 text-[10px] mt-2">Pastikan API Google Apps Script merespons dengan benar.</p>
+        </div>`;
+    }
   }
 }
