@@ -151,8 +151,18 @@ function calculateMetrics(records) {
   const pctClosed = (closed / total) * 100;
   const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['SLA'])), 0);
   const avgSla = totalSla / total;
-  const totalPuas = records.reduce((sum, r) => sum + parseNum(getVal(r, ['TINGKAT KEPUASAN OLAHAN'])), 0);
-  const avgPuas = totalPuas / total;
+  
+  let countPuas = 0;
+  const totalPuas = records.reduce((sum, r) => {
+      const val = parseNum(getVal(r, ['TINGKAT KEPUASAN OLAHAN']));
+      if (val > 0) {
+          countPuas++;
+          return sum + val;
+      }
+      return sum;
+  }, 0);
+  
+  const avgPuas = countPuas > 0 ? totalPuas / countPuas : 0;
   
   const convC = getScale(pctClosed, 'closed');
   const convS = getScale(avgSla, 'sla');
@@ -236,7 +246,6 @@ function refreshDashboard() {
   activeDeptName ? updateDeptView(activeDeptName, rankedDepts.findIndex(d => d.name === activeDeptName) + 1) : showHome();
 }
 
-// PERBAIKAN: Menambahkan layout khusus untuk 3 Status (New, Prog, Solve) di Metrics
 function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
@@ -310,7 +319,6 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
   
-  // PERBAIKAN: Format detail tabel dikembalikan seperti semula
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
     <tr class="hover:bg-slate-50 transition-colors text-[10px]">
       <td class="p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
