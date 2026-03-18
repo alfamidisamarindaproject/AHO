@@ -149,7 +149,7 @@ function calculateMetrics(records) {
   });
   
   const pctClosed = (closed / total) * 100;
-  const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['SLA'])), 0);
+  const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['ACH SLA FIX'])), 0);
   const avgSla = totalSla / total;
   
   let countPuas = 0;
