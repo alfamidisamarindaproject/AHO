@@ -233,8 +233,9 @@ function refreshDashboard() {
   const listEl = document.getElementById('dept-list');
   if (listEl) {
     listEl.innerHTML = rankedDepts.map((d, i) => `
-      <div onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${i + 1})" 
-           class="dept-item cursor-pointer p-3 mb-2 rounded-xl hover:bg-slate-100 border-l-4 border-transparent transition-all group ${activeDeptName === d.name ? 'active-dept shadow-sm bg-white' : ''}">
+      <div data-dept="${d.name.replace(/"/g, '&quot;')}"
+           onclick="selectDept('${d.name.replace(/'/g, "\\'")}', this, ${i + 1})" 
+           class="dept-item cursor-pointer p-3 mb-2 rounded-xl border-l-4 transition-all group ${activeDeptName === d.name ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'border-transparent hover:bg-slate-100'}">
         <div class="flex justify-between items-center mb-1.5">
           <span class="text-[9px] font-black uppercase text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md">Rank #${i + 1}</span>
           <span class="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">${d.final}</span>
@@ -243,7 +244,18 @@ function refreshDashboard() {
       </div>
     `).join('');
   }
-  activeDeptName ? updateDeptView(activeDeptName, rankedDepts.findIndex(d => d.name === activeDeptName) + 1) : showHome();
+
+  const isRankViewActive = !document.getElementById('view-rank').classList.contains('hidden');
+  const isDeptViewActive = !document.getElementById('view-dept').classList.contains('hidden');
+
+  if (isRankViewActive) {
+      showRankView();
+  } else if (isDeptViewActive && activeDeptName) {
+      const currentRank = rankedDepts.findIndex(d => d.name === activeDeptName) + 1;
+      updateDeptView(activeDeptName, currentRank || '-');
+  } else {
+      showHome();
+  }
 }
 
 function renderMetrikBox(containerId, m) {
@@ -259,15 +271,15 @@ function renderMetrikBox(containerId, m) {
     <div class="bg-white border border-slate-200 shadow-sm p-3 rounded-2xl flex flex-col justify-center min-h-[90px] gap-1">
       <div class="flex justify-between items-center w-full">
         <span class="text-[10px] font-bold text-slate-400 uppercase">New</span>
-        <span class="text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">${m.newT}</span>
+        <span class="text-[11px] sm:text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">${m.newT}</span>
       </div>
       <div class="flex justify-between items-center w-full">
         <span class="text-[10px] font-bold text-slate-400 uppercase">Prog</span>
-        <span class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${m.progT}</span>
+        <span class="text-[11px] sm:text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${m.progT}</span>
       </div>
       <div class="flex justify-between items-center w-full">
         <span class="text-[10px] font-bold text-slate-400 uppercase">Slv</span>
-        <span class="text-xs font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded">${m.solveT}</span>
+        <span class="text-[11px] sm:text-xs font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded">${m.solveT}</span>
       </div>
     </div>
 
@@ -320,19 +332,62 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   else resultArr.sort((a, b) => b.total - a.total);
   
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
-    <tr class="hover:bg-slate-50 transition-colors text-[10px]">
-      <td class="p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
-      <td class="p-3 text-center">${i.total}</td>
-      <td class="p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
-      <td class="p-3 text-center">${i.pct}%</td>
-      <td class="p-3 text-center text-blue-600">${i.sla}</td>
-      <td class="p-3 text-center text-amber-600">${i.puas}</td>
-      <td class="p-3 text-center font-black text-indigo-700">${i.final}</td>
+    <tr class="hover:bg-slate-50 transition-colors text-[9px] sm:text-[10px]">
+      <td class="p-2 sm:p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
+      <td class="p-2 sm:p-3 text-center">${i.total}</td>
+      <td class="p-2 sm:p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
+      <td class="p-2 sm:p-3 text-center">${i.pct}%</td>
+      <td class="p-2 sm:p-3 text-center text-blue-600">${i.sla}</td>
+      <td class="p-2 sm:p-3 text-center text-amber-600">${i.puas}</td>
+      <td class="p-2 sm:p-3 text-center font-black text-indigo-700">${i.final}</td>
     </tr>
   `).join('');
 }
 
-function renderWarningTable(baseData, tableId) {
+// FUNGSI BARU: Filter Berdasarkan Badge
+function filterWarningTable(label, tbodyId) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        if (label === 'ALL') {
+            row.style.display = '';
+        } else {
+            // Mencari kolom status indikator (kolom kedua terakhir)
+            const indicatorCell = row.querySelector('td:nth-last-child(1) span');
+            if (indicatorCell && indicatorCell.innerText.trim().toUpperCase() === label) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+}
+
+function renderWarningBadges(criticalArray, badgeContainerId, tbodyId) {
+    const container = document.getElementById(badgeContainerId);
+    if (!container) return;
+
+    let overdue = 0;
+    let warning = 0;
+    let secured = 0;
+
+    criticalArray.forEach(d => {
+        if (d.label === 'OVERDUE') overdue++;
+        else if (d.label === 'WARNING') warning++;
+        else if (d.label === 'SECURED') secured++;
+    });
+
+    container.innerHTML = `
+        <span onclick="filterWarningTable('OVERDUE', '${tbodyId}')" class="text-[9px] bg-red-100 text-red-700 hover:bg-red-200 hover:scale-105 px-2 py-0.5 rounded-full font-bold shadow-sm cursor-pointer transition-all border border-transparent">Overdue: ${overdue}</span>
+        <span onclick="filterWarningTable('WARNING', '${tbodyId}')" class="text-[9px] bg-amber-100 text-amber-700 hover:bg-amber-200 hover:scale-105 px-2 py-0.5 rounded-full font-bold shadow-sm cursor-pointer transition-all border border-transparent">Warning: ${warning}</span>
+        <span onclick="filterWarningTable('SECURED', '${tbodyId}')" class="text-[9px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 hover:scale-105 px-2 py-0.5 rounded-full font-bold shadow-sm cursor-pointer transition-all border border-transparent">Secured: ${secured}</span>
+        <span onclick="filterWarningTable('ALL', '${tbodyId}')" class="text-[9px] bg-slate-100 text-slate-600 hover:bg-slate-200 hover:scale-105 px-2 py-0.5 rounded-full font-bold shadow-sm cursor-pointer transition-all ml-1 border border-slate-200">Reset View</span>
+    `;
+}
+
+function renderWarningTable(baseData, tableId, badgeContainerId) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
   
@@ -381,28 +436,134 @@ function renderWarningTable(baseData, tableId) {
   }).filter(d => d !== null); 
   
   critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
+
+  renderWarningBadges(critical, badgeContainerId, tableId);
   
   tbody.innerHTML = critical.map(d => `
-    <tr class="text-[9px] hover:bg-slate-50 border-b border-slate-100">
-      <td class="p-3 font-bold text-slate-500 truncate max-w-[80px]" title="${d.dept}">${d.dept}</td>
-      <td class="p-3 font-bold text-slate-700">${d.kodeToko}</td>
-      <td class="p-3 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
-      <td class="p-3 font-mono font-bold text-indigo-600">${d.noTicket}</td>
-      <td class="p-3 truncate max-w-[120px]" title="${d.masalah}">${d.masalah}</td>
-      <td class="p-3 truncate font-semibold max-w-[80px]" title="${d.pic}">${d.pic}</td>
-      <td class="p-3 text-center font-bold text-slate-600">${d.usiaHari} / ${d.targetDays} Hari</td>
-      <td class="p-3 text-center font-bold text-slate-600 uppercase">${d.sheetStatus}</td>
-      <td class="p-3 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
+    <tr class="text-[9px] hover:bg-slate-100 border-b border-slate-100 cursor-pointer transition-colors" onclick="showTicketDetail('${d.noTicket.replace(/'/g, "\\'")}')">
+      <td class="p-3 sm:p-4 font-bold text-slate-500 truncate max-w-[80px]" title="${d.dept}">${d.dept}</td>
+      <td class="p-3 sm:p-4 font-bold text-slate-700">${d.kodeToko}</td>
+      <td class="p-3 sm:p-4 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
+      <td class="p-3 sm:p-4 font-mono font-bold text-indigo-600">${d.noTicket}</td>
+      <td class="p-3 sm:p-4 truncate max-w-[120px]" title="${d.masalah}">${d.masalah}</td>
+      <td class="p-3 sm:p-4 truncate font-semibold max-w-[80px]" title="${d.pic}">${d.pic}</td>
+      <td class="p-3 sm:p-4 text-center font-bold text-slate-600">${d.usiaHari} / ${d.targetDays} Hari</td>
+      <td class="p-3 sm:p-4 text-center font-bold text-slate-600 uppercase">${d.sheetStatus}</td>
+      <td class="p-3 sm:p-4 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
     </tr>
   `).join('');
+}
+
+function showTicketDetail(ticketId) {
+    const tiket = rawData.find(r => String(getVal(r, ['No Problem'])).trim() === String(ticketId).trim());
+    if (!tiket) return;
+
+    document.getElementById('modal-ticket-id').innerText = getVal(tiket, ['No Problem']) || '-';
+    document.getElementById('modal-ticket-dept').innerText = getVal(tiket, ['Departement']) || '-';
+    
+    const kodeToko = getVal(tiket, ['Kode Toko']) || '-';
+    const namaToko = getVal(tiket, ['Nama Toko']) || '-';
+    document.getElementById('modal-ticket-toko').innerText = `${kodeToko} - ${namaToko}`;
+    document.getElementById('modal-ticket-toko').title = `${kodeToko} - ${namaToko}`;
+    
+    document.getElementById('modal-ticket-pic').innerText = getVal(tiket, ['Nama Penangung']) || '-';
+    
+    // Pisahkan Masalah dan Deskripsi Masalah
+    document.getElementById('modal-ticket-masalah').innerText = getVal(tiket, ['Masalah']) || '-';
+    // Cari data di kolom Deskripsi Masalah
+    document.getElementById('modal-ticket-desc').innerText = getVal(tiket, ['Deskripsi Masalah', 'Deskripsi']) || 'Tidak ada deskripsi rinci tersedia.';
+    
+    // Kalkulasi Ulang Urgensi untuk Pop-up
+    let urgencyLabel = 'SECURED';
+    let urgencyBadgeClass = 'bg-emerald-500 text-white';
+    let usiaTextClass = 'text-emerald-600';
+
+    const targetDays = parseNum(getVal(tiket, ['Target Hari']));
+    let tglMulai = getVal(tiket, ['Tgl Eskalasi']);
+    if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
+        tglMulai = getVal(tiket, ['Tgl Problem']);
+    }
+    const tgl = parseCustomDate(tglMulai);
+    
+    let usiaLabel = "Belum dihitung";
+    if (tgl && targetDays > 0) {
+        const diffMs = new Date() - tgl.getTime();
+        const usiaHari = (diffMs / (1000 * 60 * 60 * 24));
+        usiaLabel = `${usiaHari.toFixed(1)} Hari dari Target ${targetDays} Hari`;
+        
+        if (usiaHari > targetDays) { 
+            urgencyLabel = 'OVERDUE'; 
+            urgencyBadgeClass = 'bg-red-500 text-white'; 
+            usiaTextClass = 'text-red-600';
+        } else if (usiaHari >= (targetDays * 0.7)) { 
+            urgencyLabel = 'WARNING'; 
+            urgencyBadgeClass = 'bg-amber-400 text-white'; 
+            usiaTextClass = 'text-amber-600';
+        }
+    } else {
+        urgencyLabel = 'NO TGT';
+        urgencyBadgeClass = 'bg-slate-400 text-white';
+        usiaTextClass = 'text-slate-600';
+    }
+
+    const usiaEl = document.getElementById('modal-ticket-usia');
+    usiaEl.innerText = usiaLabel;
+    usiaEl.className = `text-xs sm:text-sm font-black mt-1 ${usiaTextClass}`; // Set warna font dinamis
+
+    const status = String(getVal(tiket, ['Status']) || '-').toUpperCase();
+    document.getElementById('modal-ticket-status').innerText = status;
+    
+    const indicatorSpan = document.getElementById('modal-ticket-indicator');
+    if (status.includes('CLOSED')) {
+        indicatorSpan.className = 'text-[9px] px-2 py-0.5 rounded text-white font-bold shadow-sm bg-emerald-500';
+        indicatorSpan.innerText = 'SELESAI';
+    } else {
+        indicatorSpan.className = 'text-[9px] px-2 py-0.5 rounded text-white font-bold shadow-sm bg-blue-500';
+        indicatorSpan.innerText = 'OPEN';
+    }
+
+    // Set Urgency Badge
+    const urgencySpan = document.getElementById('modal-ticket-urgency');
+    urgencySpan.innerText = urgencyLabel;
+    urgencySpan.className = `text-[9px] px-2 py-0.5 rounded font-bold shadow-sm ${urgencyBadgeClass}`;
+    urgencySpan.classList.remove('hidden');
+
+    const modal = document.getElementById('ticket-modal');
+    const content = document.getElementById('ticket-modal-content');
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+    }, 10);
+}
+
+function closeTicketModal() {
+    const modal = document.getElementById('ticket-modal');
+    const content = document.getElementById('ticket-modal-content');
+    
+    modal.classList.add('opacity-0');
+    content.classList.add('scale-95');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 300);
 }
 
 function showHome() {
   activeDeptName = null;
   document.getElementById('view-home')?.classList.remove('hidden');
   document.getElementById('view-dept')?.classList.add('hidden');
+  document.getElementById('view-rank')?.classList.add('hidden');
   document.getElementById('btn-home')?.classList.add('nav-item-active');
-  document.querySelectorAll('.dept-item').forEach(e => e.classList.remove('active-dept', 'bg-white'));
+  
+  document.querySelectorAll('.dept-item').forEach(e => {
+    e.classList.remove('bg-indigo-50', 'border-indigo-500', 'shadow-sm');
+    e.classList.add('border-transparent', 'hover:bg-slate-100');
+  });
   
   const m = calculateMetrics(filteredData);
   renderMetrikBox('home-metrics', m);
@@ -410,16 +571,31 @@ function showHome() {
   renderDetailTable(filteredData, ['Masalah'], 'home-body-prob', false);
   renderDetailTable(filteredData, ['Nama Penangung'], 'home-body-pic', true); 
   
-  renderWarningTable(rawData, 'home-body-warn');
+  renderWarningTable(rawData, 'home-body-warn', 'home-warn-badges');
+
+  if (window.innerWidth < 1024) {
+      const sidebarOverlay = document.getElementById('sidebar-overlay');
+      if (sidebarOverlay && !sidebarOverlay.classList.contains('hidden')) {
+          toggleSidebar();
+      }
+  }
 }
 
 function selectDept(deptName, el, rank) {
   activeDeptName = deptName;
   updateDeptView(deptName, rank);
+  
+  if (window.innerWidth < 1024) {
+      const sidebarOverlay = document.getElementById('sidebar-overlay');
+      if (sidebarOverlay && !sidebarOverlay.classList.contains('hidden')) {
+          toggleSidebar();
+      }
+  }
 }
 
 function updateDeptView(deptName, rank) {
   document.getElementById('view-home')?.classList.add('hidden');
+  document.getElementById('view-rank')?.classList.add('hidden');
   document.getElementById('view-dept')?.classList.remove('hidden');
   document.getElementById('btn-home')?.classList.remove('nav-item-active');
   
@@ -435,15 +611,78 @@ function updateDeptView(deptName, rank) {
   renderDetailTable(deptDataFiltered, ['Nama Penangung'], 'dept-body-pic', true); 
   
   const deptDataRaw = rawData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === deptName);
-  renderWarningTable(deptDataRaw, 'dept-body-warn');
+  renderWarningTable(deptDataRaw, 'dept-body-warn', 'dept-warn-badges');
 
   document.querySelectorAll('.dept-item').forEach(e => {
-    if (e.querySelector('h3').innerText === deptName) {
-      e.classList.add('active-dept', 'bg-white');
+    const itemName = e.getAttribute('data-dept');
+    if (itemName === deptName) {
+      e.classList.add('bg-indigo-50', 'border-indigo-500', 'shadow-sm');
+      e.classList.remove('border-transparent', 'hover:bg-slate-100');
     } else {
-      e.classList.remove('active-dept', 'bg-white');
+      e.classList.remove('bg-indigo-50', 'border-indigo-500', 'shadow-sm');
+      e.classList.add('border-transparent', 'hover:bg-slate-100');
     }
   });
+}
+
+function showRankView() {
+    activeDeptName = null;
+    
+    document.getElementById('view-home')?.classList.add('hidden');
+    document.getElementById('view-dept')?.classList.add('hidden');
+    document.getElementById('view-rank')?.classList.remove('hidden');
+
+    document.getElementById('btn-home')?.classList.remove('nav-item-active');
+    
+    document.querySelectorAll('.dept-item').forEach(e => {
+        e.classList.remove('bg-indigo-50', 'border-indigo-500', 'shadow-sm');
+        e.classList.add('border-transparent', 'hover:bg-slate-100');
+    });
+
+    if (window.innerWidth < 1024) {
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        if (sidebarOverlay && !sidebarOverlay.classList.contains('hidden')) {
+            toggleSidebar();
+        }
+    }
+
+    const tbody = document.getElementById('rank-body');
+    if (!tbody || !rankedDepts) return;
+
+    tbody.innerHTML = rankedDepts.map((d, i) => {
+        let rankBadge = '';
+        let rowBgClass = 'bg-white hover:bg-indigo-50/50';
+        
+        if (i === 0) {
+            rankBadge = '<span class="text-2xl sm:text-3xl drop-shadow-md" title="Juara 1">🥇</span>';
+            rowBgClass = 'bg-gradient-to-r from-yellow-50/50 to-white hover:from-yellow-100/50';
+        } else if (i === 1) {
+            rankBadge = '<span class="text-xl sm:text-2xl drop-shadow-md" title="Juara 2">🥈</span>';
+            rowBgClass = 'bg-gradient-to-r from-slate-50 to-white hover:from-slate-100';
+        } else if (i === 2) {
+            rankBadge = '<span class="text-xl sm:text-2xl drop-shadow-md" title="Juara 3">🥉</span>';
+            rowBgClass = 'bg-gradient-to-r from-orange-50/30 to-white hover:from-orange-100/30';
+        } else {
+            rankBadge = `<span class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-[10px] sm:text-xs font-black mx-auto shadow-inner">${i + 1}</span>`;
+        }
+
+        return `
+            <tr class="${rowBgClass} transition-all text-xs cursor-pointer group border-b border-slate-100" onclick="selectDept('${d.name.replace(/'/g, "\\'")}', null, ${i + 1})">
+                <td class="p-3 sm:p-4 text-center w-12 sm:w-16">${rankBadge}</td>
+                <td class="p-3 sm:p-4 font-black text-indigo-700 uppercase whitespace-nowrap tracking-tight group-hover:text-indigo-600 transition-colors">${d.name}</td>
+                <td class="p-3 sm:p-4 text-center font-bold text-slate-600">${d.total}</td>
+                <td class="p-3 sm:p-4 text-center text-emerald-600 font-black">${d.closed}</td>
+                <td class="p-3 sm:p-4 text-center font-bold text-slate-700">${d.pct}%</td>
+                <td class="p-3 sm:p-4 text-center text-blue-600 font-bold">${d.sla}</td>
+                <td class="p-3 sm:p-4 text-center text-amber-600 font-bold">${d.puas}</td>
+                <td class="p-3 sm:p-4 text-center">
+                    <span class="inline-block px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-500 text-white font-black rounded-lg shadow-sm border-b-[3px] border-indigo-700 group-hover:bg-indigo-400 group-hover:translate-y-[1px] group-hover:border-b-[2px] transition-all text-[10px] sm:text-xs w-full sm:w-auto">
+                        ${d.final}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 async function initApp() {
@@ -490,7 +729,7 @@ async function initApp() {
     applyFilters(); 
     
     if (statusEl) {
-      statusEl.innerText = `SYNCED: ${new Date().toLocaleTimeString('id-ID')}`;
+      statusEl.innerText = `SYNCED: ${new Date().toLocaleTimeString('id-ID', { hour12: false })}`;
       statusEl.classList.remove('text-amber-500', 'text-red-500', 'text-indigo-600');
       statusEl.classList.add('text-emerald-600');
     }
@@ -508,9 +747,9 @@ async function initApp() {
         applyFilters();
     } else {
         if (listEl) listEl.innerHTML = `<p class="p-4 text-center text-red-500 font-bold">Error Koneksi API</p>`;
-        if (metricsEl) metricsEl.innerHTML = `<div class="col-span-full p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
-          <p class="text-red-500 font-bold uppercase">Gagal Memuat Dashboard</p>
-          <p class="text-slate-400 text-[10px] mt-2">Pastikan internet stabil & API Script merespons.</p>
+        if (metricsEl) metricsEl.innerHTML = `<div class="col-span-full p-6 sm:p-10 text-center bg-white rounded-2xl shadow-sm border border-red-100">
+          <p class="text-red-500 font-bold uppercase text-sm sm:text-base">Gagal Memuat Dashboard</p>
+          <p class="text-slate-400 text-[9px] sm:text-[10px] mt-2">Pastikan internet stabil & API Script merespons.</p>
         </div>`;
     }
   } finally {
