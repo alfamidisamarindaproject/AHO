@@ -26,34 +26,59 @@ const parseNum = (val) => {
 
 function parseCustomDate(dateStr) {
   if (!dateStr || dateStr === 'undefined' || dateStr === '-') return null;
-  
-  let d = new Date(dateStr);
-  if (!isNaN(d.getTime())) return d; 
+
+  if (dateStr instanceof Date) {
+      if (!isNaN(dateStr.getTime())) return dateStr;
+  }
 
   try {
     const sStr = String(dateStr).trim();
-    const parts = sStr.split(' ');
-    const dateParts = parts[0].split(/[-/]/); 
-    
-    if (dateParts.length !== 3) return null;
-    const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-    
-    let year, month, day;
-    if (dateParts[0].length === 4) {
-        year = dateParts[0]; month = dateParts[1]; day = dateParts[2];
-    } else {
-        day = dateParts[0]; month = dateParts[1]; year = dateParts[2];
+    const parts = sStr.split(/[ T]/);
+    const dateParts = parts[0].split(/[-/]/);
+
+    if (dateParts.length === 3) {
+        const timeParts = parts[1] ? parts[1].split(/[:.]/) : [0, 0, 0];
+        
+        let year, month, day;
+        if (dateParts[0].length === 4) {
+            year = dateParts[0]; month = dateParts[1]; day = dateParts[2];
+        } else {
+            day = dateParts[0]; month = dateParts[1]; year = dateParts[2];
+        }
+        
+        return new Date(
+            parseInt(year), 
+            parseInt(month) - 1, 
+            parseInt(day), 
+            parseInt(timeParts[0] || 0), 
+            parseInt(timeParts[1] || 0), 
+            parseInt(timeParts[2] || 0)
+        );
     }
-    
-    return new Date(
-        parseInt(year), 
-        parseInt(month) - 1, 
-        parseInt(day), 
-        parseInt(timeParts[0] || 0), 
-        parseInt(timeParts[1] || 0), 
-        parseInt(timeParts[2] || 0)
-    );
+
+    let d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return d;
+
+    return null;
   } catch (e) { return null; }
+}
+
+function formatUIDate(d) {
+  if (!d) return "-";
+  const pad = (n) => n.toString().padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}.${pad(d.getMinutes())}.${pad(d.getSeconds())}`;
+}
+
+function calculateDurationDH(start, end) {
+  if (!start || !end) return "-";
+  
+  let diffMs = end.getTime() - start.getTime();
+  if (diffMs < 0) return "-"; 
+  
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  return `${days} Hari ${hours} Jam`;
 }
 
 function doSearch(inputEl, tableBodyId) {
@@ -344,7 +369,6 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   `).join('');
 }
 
-// FUNGSI BARU: Filter Berdasarkan Badge
 function filterWarningTable(label, tbodyId) {
     const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
@@ -354,7 +378,6 @@ function filterWarningTable(label, tbodyId) {
         if (label === 'ALL') {
             row.style.display = '';
         } else {
-            // Mencari kolom status indikator (kolom kedua terakhir)
             const indicatorCell = row.querySelector('td:nth-last-child(1) span');
             if (indicatorCell && indicatorCell.innerText.trim().toUpperCase() === label) {
                 row.style.display = '';
@@ -468,26 +491,41 @@ function showTicketDetail(ticketId) {
     
     document.getElementById('modal-ticket-pic').innerText = getVal(tiket, ['Nama Penangung']) || '-';
     
-    // Pisahkan Masalah dan Deskripsi Masalah
     document.getElementById('modal-ticket-masalah').innerText = getVal(tiket, ['Masalah']) || '-';
-    // Cari data di kolom Deskripsi Masalah
     document.getElementById('modal-ticket-desc').innerText = getVal(tiket, ['Deskripsi Masalah', 'Deskripsi']) || 'Tidak ada deskripsi rinci tersedia.';
     
-    // Kalkulasi Ulang Urgensi untuk Pop-up
+    let tglMulai = getVal(tiket, ['Tgl Eskalasi']);
+    if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
+        tglMulai = getVal(tiket, ['Tgl Problem']);
+    }
+    
+    const dTerima = parseCustomDate(tglMulai);
+    const dProgress = parseCustomDate(getVal(tiket, ['Tgl Progress']));
+    const dSolve = parseCustomDate(getVal(tiket, ['Tgl Solve']));
+    const dClose = parseCustomDate(getVal(tiket, ['Tgl Close', 'Tgl Closed']));
+
+    document.getElementById('modal-ticket-tgl-terima').innerText = formatUIDate(dTerima);
+    document.getElementById('modal-ticket-tgl-progress').innerText = formatUIDate(dProgress);
+    document.getElementById('modal-ticket-tgl-solve').innerText = formatUIDate(dSolve);
+    document.getElementById('modal-ticket-tgl-close').innerText = formatUIDate(dClose);
+
+    const durProg = calculateDurationDH(dTerima, dProgress);
+    const durSolve = calculateDurationDH(dProgress, dSolve);
+    const durClose = calculateDurationDH(dSolve, dClose);
+
+    document.getElementById('modal-ticket-dur-prog').innerText = durProg !== "-" ? durProg : "-";
+    document.getElementById('modal-ticket-dur-solve').innerText = durSolve !== "-" ? durSolve : "-";
+    document.getElementById('modal-ticket-dur-close').innerText = durClose !== "-" ? durClose : "-";
+
     let urgencyLabel = 'SECURED';
     let urgencyBadgeClass = 'bg-emerald-500 text-white';
     let usiaTextClass = 'text-emerald-600';
 
     const targetDays = parseNum(getVal(tiket, ['Target Hari']));
-    let tglMulai = getVal(tiket, ['Tgl Eskalasi']);
-    if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
-        tglMulai = getVal(tiket, ['Tgl Problem']);
-    }
-    const tgl = parseCustomDate(tglMulai);
-    
     let usiaLabel = "Belum dihitung";
-    if (tgl && targetDays > 0) {
-        const diffMs = new Date() - tgl.getTime();
+    
+    if (dTerima && targetDays > 0) {
+        const diffMs = new Date() - dTerima.getTime();
         const usiaHari = (diffMs / (1000 * 60 * 60 * 24));
         usiaLabel = `${usiaHari.toFixed(1)} Hari dari Target ${targetDays} Hari`;
         
@@ -508,7 +546,7 @@ function showTicketDetail(ticketId) {
 
     const usiaEl = document.getElementById('modal-ticket-usia');
     usiaEl.innerText = usiaLabel;
-    usiaEl.className = `text-xs sm:text-sm font-black mt-1 ${usiaTextClass}`; // Set warna font dinamis
+    usiaEl.className = `text-xs sm:text-sm font-black mt-1 ${usiaTextClass}`; 
 
     const status = String(getVal(tiket, ['Status']) || '-').toUpperCase();
     document.getElementById('modal-ticket-status').innerText = status;
@@ -522,7 +560,6 @@ function showTicketDetail(ticketId) {
         indicatorSpan.innerText = 'OPEN';
     }
 
-    // Set Urgency Badge
     const urgencySpan = document.getElementById('modal-ticket-urgency');
     urgencySpan.innerText = urgencyLabel;
     urgencySpan.className = `text-[9px] px-2 py-0.5 rounded font-bold shadow-sm ${urgencyBadgeClass}`;
