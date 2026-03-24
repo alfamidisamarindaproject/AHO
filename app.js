@@ -69,16 +69,27 @@ function formatUIDate(d) {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}.${pad(d.getMinutes())}.${pad(d.getSeconds())}`;
 }
 
-function calculateDurationDH(start, end) {
+function calculateDurationMs(start, end) {
+  if (!start || !end) return null;
+  let diff = end.getTime() - start.getTime();
+  return diff >= 0 ? diff : null;
+}
+
+// Convert MS to decimal D format (e.g. 4.2 D)
+function msToDecimalDays(ms) {
+  if (ms === null || isNaN(ms)) return "-";
+  const days = ms / (1000 * 60 * 60 * 24);
+  return `${days.toFixed(1)} D`;
+}
+
+function calculateDurationDecimal(start, end) {
   if (!start || !end) return "-";
   
   let diffMs = end.getTime() - start.getTime();
   if (diffMs < 0) return "-"; 
   
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  
-  return `${days} Hari ${hours} Jam`;
+  const days = diffMs / (1000 * 60 * 60 * 24);
+  return `${days.toFixed(1)} D`;
 }
 
 function doSearch(inputEl, tableBodyId) {
@@ -161,9 +172,17 @@ function getScale(value, type) {
 
 function calculateMetrics(records) {
   const total = records.length;
-  if (total === 0) return { total:0, newT:0, progT:0, solveT:0, closed:0, pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", puas:"0.0", convK:"1.00", final:"0.00" };
+  if (total === 0) return { 
+      total:0, newT:0, progT:0, solveT:0, closed:0, 
+      pct:"0.0", convC:"1.00", sla:"0.0", convS:"1.00", 
+      puas:"0.0", convK:"1.00", final:"0.00",
+      avgNPStr:"-", avgPSStr:"-", avgSCStr:"-"
+  };
 
   let closed = 0, newT = 0, progT = 0, solveT = 0;
+  let totalNP = 0, countNP = 0;
+  let totalPS = 0, countPS = 0;
+  let totalSC = 0, countSC = 0;
 
   records.forEach(r => {
       const status = String(getVal(r, ['Status']) || '').trim().toLowerCase();
@@ -171,8 +190,31 @@ function calculateMetrics(records) {
       else if (['new'].includes(status)) newT++;
       else if (status.includes('progress')) progT++;
       else if (status.includes('solve')) solveT++;
+
+      let tglMulai = getVal(r, ['Tgl Eskalasi']);
+      if (!tglMulai || String(tglMulai).trim() === '' || String(tglMulai) === '-') {
+          tglMulai = getVal(r, ['Tgl Problem']);
+      }
+      
+      const dTerima = parseCustomDate(tglMulai);
+      const dProgress = parseCustomDate(getVal(r, ['Tgl Progress']));
+      const dSolve = parseCustomDate(getVal(r, ['Tgl Solve']));
+      const dClose = parseCustomDate(getVal(r, ['Tgl Close', 'Tgl Closed']));
+
+      const np = calculateDurationMs(dTerima, dProgress);
+      if (np !== null) { totalNP += np; countNP++; }
+
+      const ps = calculateDurationMs(dProgress, dSolve);
+      if (ps !== null) { totalPS += ps; countPS++; }
+
+      const sc = calculateDurationMs(dSolve, dClose);
+      if (sc !== null) { totalSC += sc; countSC++; }
   });
   
+  const avgNP = countNP > 0 ? totalNP / countNP : null;
+  const avgPS = countPS > 0 ? totalPS / countPS : null;
+  const avgSC = countSC > 0 ? totalSC / countSC : null;
+
   const pctClosed = (closed / total) * 100;
   const totalSla = records.reduce((sum, r) => sum + parseNum(getVal(r, ['ACH SLA FIX'])), 0);
   const avgSla = totalSla / total;
@@ -203,7 +245,10 @@ function calculateMetrics(records) {
     convS: convS.toFixed(2), 
     puas: isNaN(avgPuas) ? "0.0" : avgPuas.toFixed(2), 
     convK: convK.toFixed(2),
-    final: finalScore.toFixed(2)
+    final: finalScore.toFixed(2),
+    avgNPStr: msToDecimalDays(avgNP),
+    avgPSStr: msToDecimalDays(avgPS),
+    avgSCStr: msToDecimalDays(avgSC)
   };
 }
 
@@ -343,6 +388,138 @@ function renderMetrikBox(containerId, m) {
   `;
 }
 
+function showGroupDetail(groupName, groupKeyStr) {
+    let dataToUse = filteredData;
+    if (activeDeptName) {
+        dataToUse = filteredData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === activeDeptName);
+    }
+    
+    const groupData = dataToUse.filter(d => String(getVal(d, [groupKeyStr]) || 'N/A').trim() === groupName);
+    
+    const titleEl = document.getElementById('group-modal-title');
+    titleEl.innerText = groupKeyStr.includes('Masalah') ? `Problem: ${groupName}` : `Kinerja PIC: ${groupName}`;
+    
+    // Inject Averages Data to Header Modal Group dengan desain yang lebih besar & eye-catching
+    const metrics = calculateMetrics(groupData);
+    document.getElementById('group-modal-averages').innerHTML = `
+        <div class="bg-blue-50 text-blue-600 px-4 py-2 sm:py-3 rounded-2xl border border-blue-200 flex flex-col items-center justify-center shadow-sm min-w-[110px]">
+            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-blue-500 mb-1">New to Progress</span>
+            <span class="text-base sm:text-xl font-black leading-none">${metrics.avgNPStr}</span>
+        </div>
+        <div class="bg-teal-50 text-teal-600 px-4 py-2 sm:py-3 rounded-2xl border border-teal-200 flex flex-col items-center justify-center shadow-sm min-w-[110px]">
+            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-teal-500 mb-1">Progress to Solve</span>
+            <span class="text-base sm:text-xl font-black leading-none">${metrics.avgPSStr}</span>
+        </div>
+        <div class="bg-emerald-50 text-emerald-600 px-4 py-2 sm:py-3 rounded-2xl border border-emerald-200 flex flex-col items-center justify-center shadow-sm min-w-[110px]">
+            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-1">Solve to Close</span>
+            <span class="text-base sm:text-xl font-black leading-none">${metrics.avgSCStr}</span>
+        </div>
+    `;
+    
+    renderGroupTicketsTable(groupData, 'group-modal-body');
+    
+    const modal = document.getElementById('group-modal');
+    const content = document.getElementById('group-modal-content');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+    }, 10);
+}
+
+function closeGroupModal() {
+    const modal = document.getElementById('group-modal');
+    const content = document.getElementById('group-modal-content');
+    modal.classList.add('opacity-0');
+    content.classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 300);
+}
+
+function renderGroupTicketsTable(data, tbodyId) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    
+    const processed = data.map(d => {
+        let tglRawStr = getVal(d, ['Tgl Eskalasi']);
+        if (!tglRawStr || String(tglRawStr).trim() === '' || String(tglRawStr).trim() === '-') {
+            tglRawStr = getVal(d, ['Tgl Problem']);
+        }
+        const tgl = parseCustomDate(tglRawStr);
+        const targetDays = parseNum(getVal(d, ['Target Hari']));
+        let usiaHariNum = 0;
+        let label = 'SECURED', badge = 'bg-emerald-500'; 
+        
+        const status = String(getVal(d, ['Status']) || '').trim().toLowerCase();
+        const isClosed = status.includes('closed');
+        const isSolved = status.includes('solve');
+
+        if (tgl && targetDays > 0) {
+            const dClose = parseCustomDate(getVal(d, ['Tgl Close', 'Tgl Closed']));
+            const dSolve = parseCustomDate(getVal(d, ['Tgl Solve']));
+            
+            let endTgl = new Date();
+            // Berhenti menghitung usia jika sudah solve/close
+            if (isClosed || isSolved) {
+                if (dClose) endTgl = dClose;
+                else if (dSolve) endTgl = dSolve;
+            }
+
+            const diffMsReal = endTgl.getTime() - tgl.getTime();
+            const safeDiff = diffMsReal < 0 ? 0 : diffMsReal;
+            
+            usiaHariNum = safeDiff / (1000 * 60 * 60 * 24);
+            d.usiaHariStr = `${usiaHariNum.toFixed(1)} D`;
+            
+            // Logika label SLA (tetap diperlihatkan performanya meskipun sudah closed)
+            if (usiaHariNum > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
+            else if (usiaHariNum >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
+            else { label = 'SECURED'; badge = 'bg-emerald-500'; }
+            
+        } else {
+            d.usiaHariStr = "-";
+            label = 'NO TGT'; badge = 'bg-slate-400';
+        }
+
+        d.usiaHariSort = usiaHariNum;
+
+        return { 
+          ...d, 
+          targetDays: targetDays || '-', 
+          label, 
+          badge,
+          sheetStatus: String(getVal(d, ['Status']) || '-').toUpperCase(),
+          dept: getVal(d, ['Departement']) || '-',
+          kodeToko: getVal(d, ['Kode Toko']) ||  '-',
+          namaToko: getVal(d, ['Nama Toko']) || '-',
+          masalah: getVal(d, ['Masalah']) || '-',
+          noTicket: getVal(d, ['No Problem']) || '-',
+          pic: getVal(d, ['Nama Penangung']) || '-'
+        };
+    });
+    
+    // Sort berdasar usia terbesar ke terkecil
+    processed.sort((a,b) => parseFloat(b.usiaHariSort) - parseFloat(a.usiaHariSort));
+    
+    tbody.innerHTML = processed.map(d => `
+        <tr class="text-[9px] hover:bg-slate-100 border-b border-slate-100 cursor-pointer transition-colors" onclick="showTicketDetail('${d.noTicket.replace(/'/g, "\\'")}')">
+          <td class="p-3 sm:p-4 font-bold text-slate-500 truncate max-w-[80px]" title="${d.dept}">${d.dept}</td>
+          <td class="p-3 sm:p-4 font-bold text-slate-700">${d.kodeToko}</td>
+          <td class="p-3 sm:p-4 font-bold text-slate-700 truncate max-w-[100px]" title="${d.namaToko}">${d.namaToko}</td>
+          <td class="p-3 sm:p-4 font-mono font-bold text-indigo-600">${d.noTicket}</td>
+          <td class="p-3 sm:p-4 truncate max-w-[120px]" title="${d.masalah}">${d.masalah}</td>
+          <td class="p-3 sm:p-4 truncate font-semibold max-w-[80px]" title="${d.pic}">${d.pic}</td>
+          <td class="p-3 sm:p-4 text-center font-bold text-slate-600">${d.usiaHariStr} / ${d.targetDays} D</td>
+          <td class="p-3 sm:p-4 text-center font-bold text-slate-600 uppercase">${d.sheetStatus}</td>
+          <td class="p-3 sm:p-4 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
+        </tr>
+    `).join('');
+}
+
 function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -356,12 +533,17 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
   if (sortByScore) resultArr.sort((a, b) => parseFloat(b.final) - parseFloat(a.final));
   else resultArr.sort((a, b) => b.total - a.total);
   
+  const groupKeyStr = groupKeyObj[0];
+
   tbody.innerHTML = resultArr.slice(0, 50).map(i => `
-    <tr class="hover:bg-slate-50 transition-colors text-[9px] sm:text-[10px]">
-      <td class="p-2 sm:p-3 font-semibold text-slate-700 truncate" title="${i.name}">${i.name}</td>
+    <tr class="hover:bg-slate-100 transition-colors text-[9px] sm:text-[10px] cursor-pointer border-b border-slate-50 group" onclick="showGroupDetail('${i.name.replace(/'/g, "\\'")}', '${groupKeyStr}')">
+      <td class="p-2 sm:p-3 font-semibold text-slate-700 truncate group-hover:text-indigo-600 transition-colors" title="${i.name}">${i.name}</td>
       <td class="p-2 sm:p-3 text-center">${i.total}</td>
       <td class="p-2 sm:p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
       <td class="p-2 sm:p-3 text-center">${i.pct}%</td>
+      <td class="p-2 sm:p-3 text-center font-semibold text-slate-500">${i.avgNPStr}</td>
+      <td class="p-2 sm:p-3 text-center font-semibold text-slate-500">${i.avgPSStr}</td>
+      <td class="p-2 sm:p-3 text-center font-semibold text-slate-500">${i.avgSCStr}</td>
       <td class="p-2 sm:p-3 text-center text-blue-600">${i.sla}</td>
       <td class="p-2 sm:p-3 text-center text-amber-600">${i.puas}</td>
       <td class="p-2 sm:p-3 text-center font-black text-indigo-700">${i.final}</td>
@@ -429,22 +611,24 @@ function renderWarningTable(baseData, tableId, badgeContainerId) {
     const tgl = parseCustomDate(tglRawStr);
     const targetDays = parseNum(getVal(d, ['Target Hari']));
     
-    let usiaHari = 0;
+    let usiaHariNum = 0;
     let label = 'SECURED', badge = 'bg-emerald-500'; 
     
     if (tgl && targetDays > 0) {
-        const diffMs = new Date() - tgl.getTime();
-        usiaHari = diffMs / (1000 * 60 * 60 * 24);
+        const diffMsReal = new Date().getTime() - tgl.getTime();
+        const safeDiff = diffMsReal < 0 ? 0 : diffMsReal;
+        usiaHariNum = safeDiff / (1000 * 60 * 60 * 24);
         
-        if (usiaHari > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
-        else if (usiaHari >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
+        if (usiaHariNum > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
+        else if (usiaHariNum >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
     } else {
         label = 'NO TGT'; badge = 'bg-slate-400';
     }
 
     return { 
       ...d, 
-      usiaHari: usiaHari.toFixed(1), 
+      usiaHariStr: usiaHariNum.toFixed(1), 
+      usiaHariSort: usiaHariNum,
       targetDays: targetDays || '-', 
       label, 
       badge,
@@ -458,7 +642,7 @@ function renderWarningTable(baseData, tableId, badgeContainerId) {
     };
   }).filter(d => d !== null); 
   
-  critical.sort((a,b) => parseFloat(b.usiaHari) - parseFloat(a.usiaHari));
+  critical.sort((a,b) => parseFloat(b.usiaHariSort) - parseFloat(a.usiaHariSort));
 
   renderWarningBadges(critical, badgeContainerId, tableId);
   
@@ -470,7 +654,7 @@ function renderWarningTable(baseData, tableId, badgeContainerId) {
       <td class="p-3 sm:p-4 font-mono font-bold text-indigo-600">${d.noTicket}</td>
       <td class="p-3 sm:p-4 truncate max-w-[120px]" title="${d.masalah}">${d.masalah}</td>
       <td class="p-3 sm:p-4 truncate font-semibold max-w-[80px]" title="${d.pic}">${d.pic}</td>
-      <td class="p-3 sm:p-4 text-center font-bold text-slate-600">${d.usiaHari} / ${d.targetDays} Hari</td>
+      <td class="p-3 sm:p-4 text-center font-bold text-slate-600">${d.usiaHariStr} / ${d.targetDays} D</td>
       <td class="p-3 sm:p-4 text-center font-bold text-slate-600 uppercase">${d.sheetStatus}</td>
       <td class="p-3 sm:p-4 text-center"><span class="${d.badge} text-white px-2 py-1 rounded-md font-bold shadow-sm">${d.label}</span></td>
     </tr>
@@ -509,9 +693,9 @@ function showTicketDetail(ticketId) {
     document.getElementById('modal-ticket-tgl-solve').innerText = formatUIDate(dSolve);
     document.getElementById('modal-ticket-tgl-close').innerText = formatUIDate(dClose);
 
-    const durProg = calculateDurationDH(dTerima, dProgress);
-    const durSolve = calculateDurationDH(dProgress, dSolve);
-    const durClose = calculateDurationDH(dSolve, dClose);
+    const durProg = calculateDurationDecimal(dTerima, dProgress);
+    const durSolve = calculateDurationDecimal(dProgress, dSolve);
+    const durClose = calculateDurationDecimal(dSolve, dClose);
 
     document.getElementById('modal-ticket-dur-prog').innerText = durProg !== "-" ? durProg : "-";
     document.getElementById('modal-ticket-dur-solve').innerText = durSolve !== "-" ? durSolve : "-";
@@ -524,19 +708,36 @@ function showTicketDetail(ticketId) {
     const targetDays = parseNum(getVal(tiket, ['Target Hari']));
     let usiaLabel = "Belum dihitung";
     
+    const status = String(getVal(tiket, ['Status']) || '-').toUpperCase();
+    const isClosed = status.includes('CLOSED');
+    const isSolved = status.includes('SOLVE');
+    
     if (dTerima && targetDays > 0) {
-        const diffMs = new Date() - dTerima.getTime();
-        const usiaHari = (diffMs / (1000 * 60 * 60 * 24));
-        usiaLabel = `${usiaHari.toFixed(1)} Hari dari Target ${targetDays} Hari`;
+        let endTgl = new Date();
+        // Jika statusnya solve atau closed, usia berhenti dihitung saat hari itu
+        if (isClosed || isSolved) {
+            if (dClose) endTgl = dClose;
+            else if (dSolve) endTgl = dSolve;
+        }
+
+        const diffMsReal = endTgl.getTime() - dTerima.getTime();
+        const safeDiff = diffMsReal < 0 ? 0 : diffMsReal;
         
-        if (usiaHari > targetDays) { 
+        const usiaHariNum = safeDiff / (1000 * 60 * 60 * 24);
+        
+        usiaLabel = `${usiaHariNum.toFixed(1)} D dari Target ${targetDays} D`;
+        
+        // Logika warna label status (berlaku historis kalau sudah closed/solve)
+        if (usiaHariNum > targetDays) { 
             urgencyLabel = 'OVERDUE'; 
             urgencyBadgeClass = 'bg-red-500 text-white'; 
             usiaTextClass = 'text-red-600';
-        } else if (usiaHari >= (targetDays * 0.7)) { 
+        } else if (usiaHariNum >= (targetDays * 0.7)) { 
             urgencyLabel = 'WARNING'; 
             urgencyBadgeClass = 'bg-amber-400 text-white'; 
             usiaTextClass = 'text-amber-600';
+        } else {
+            urgencyLabel = 'SECURED';
         }
     } else {
         urgencyLabel = 'NO TGT';
@@ -548,11 +749,10 @@ function showTicketDetail(ticketId) {
     usiaEl.innerText = usiaLabel;
     usiaEl.className = `text-xs sm:text-sm font-black mt-1 ${usiaTextClass}`; 
 
-    const status = String(getVal(tiket, ['Status']) || '-').toUpperCase();
     document.getElementById('modal-ticket-status').innerText = status;
     
     const indicatorSpan = document.getElementById('modal-ticket-indicator');
-    if (status.includes('CLOSED')) {
+    if (isClosed) {
         indicatorSpan.className = 'text-[9px] px-2 py-0.5 rounded text-white font-bold shadow-sm bg-emerald-500';
         indicatorSpan.innerText = 'SELESAI';
     } else {
