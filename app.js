@@ -75,7 +75,6 @@ function calculateDurationMs(start, end) {
   return diff >= 0 ? diff : null;
 }
 
-// Convert MS to decimal D format (e.g. 4.2 D)
 function msToDecimalDays(ms) {
   if (ms === null || isNaN(ms)) return "-";
   const days = ms / (1000 * 60 * 60 * 24);
@@ -541,9 +540,6 @@ function renderDetailTable(data, groupKeyObj, tableId, sortByScore = false) {
       <td class="p-2 sm:p-3 text-center">${i.total}</td>
       <td class="p-2 sm:p-3 text-center text-emerald-600 font-bold">${i.closed}</td>
       <td class="p-2 sm:p-3 text-center">${i.pct}%</td>
-      <td class="p-2 sm:p-3 text-center font-semibold text-slate-500">${i.avgNPStr}</td>
-      <td class="p-2 sm:p-3 text-center font-semibold text-slate-500">${i.avgPSStr}</td>
-      <td class="p-2 sm:p-3 text-center font-semibold text-slate-500">${i.avgSCStr}</td>
       <td class="p-2 sm:p-3 text-center text-blue-600">${i.sla}</td>
       <td class="p-2 sm:p-3 text-center text-amber-600">${i.puas}</td>
       <td class="p-2 sm:p-3 text-center font-black text-indigo-700">${i.final}</td>
