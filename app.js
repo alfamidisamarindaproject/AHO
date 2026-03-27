@@ -327,33 +327,82 @@ function refreshDashboard() {
   }
 }
 
+// Show tickets by status type
+function showStatusDetail(statusKeyword) {
+    let dataToUse = filteredData;
+    if (activeDeptName) {
+        dataToUse = filteredData.filter(d => String(getVal(d, ['Departement']) || 'N/A').trim() === activeDeptName);
+    }
+    
+    const groupData = dataToUse.filter(d => {
+        if (statusKeyword === 'total') return true;
+        const status = String(getVal(d, ['Status']) || '').trim().toLowerCase();
+        if (statusKeyword === 'new') return ['new'].includes(status);
+        if (statusKeyword === 'progress') return status.includes('progress');
+        if (statusKeyword === 'solve') return status.includes('solve');
+        if (statusKeyword === 'closed') return ['closed'].includes(status);
+        return false;
+    });
+    
+    const titleEl = document.getElementById('group-modal-title');
+    titleEl.innerText = `Status Problem: ${statusKeyword.toUpperCase()}`;
+    
+    const metrics = calculateMetrics(groupData);
+    document.getElementById('group-modal-averages').innerHTML = `
+        <div class="bg-blue-50 text-blue-600 px-4 py-2 sm:py-3 rounded-2xl border border-blue-200 flex flex-col items-center justify-center shadow-sm min-w-[110px]">
+            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-blue-500 mb-1">New to Progress</span>
+            <span class="text-base sm:text-xl font-black leading-none">${metrics.avgNPStr}</span>
+        </div>
+        <div class="bg-teal-50 text-teal-600 px-4 py-2 sm:py-3 rounded-2xl border border-teal-200 flex flex-col items-center justify-center shadow-sm min-w-[110px]">
+            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-teal-500 mb-1">Progress to Solve</span>
+            <span class="text-base sm:text-xl font-black leading-none">${metrics.avgPSStr}</span>
+        </div>
+        <div class="bg-emerald-50 text-emerald-600 px-4 py-2 sm:py-3 rounded-2xl border border-emerald-200 flex flex-col items-center justify-center shadow-sm min-w-[110px]">
+            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-1">Solve to Close</span>
+            <span class="text-base sm:text-xl font-black leading-none">${metrics.avgSCStr}</span>
+        </div>
+    `;
+    
+    renderGroupTicketsTable(groupData, 'group-modal-body');
+    
+    const modal = document.getElementById('group-modal');
+    const content = document.getElementById('group-modal-content');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+    }, 10);
+}
+
 function renderMetrikBox(containerId, m) {
   const container = document.getElementById(containerId);
   if(!container) return;
   
   container.innerHTML = `
-    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
-      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Problem</p>
+    <div onclick="showStatusDetail('total')" class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px] cursor-pointer hover:border-slate-400 hover:shadow-md transition-all group">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 group-hover:text-slate-600 transition-colors">Total Problem</p>
       <p class="text-2xl font-black italic tracking-tight text-slate-800">${m.total}</p>
     </div>
     
-    <div class="bg-white border border-slate-200 shadow-sm p-3 rounded-2xl flex flex-col justify-center min-h-[90px] gap-1">
-      <div class="flex justify-between items-center w-full">
-        <span class="text-[10px] font-bold text-slate-400 uppercase">New</span>
-        <span class="text-[11px] sm:text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">${m.newT}</span>
+    <div class="bg-white border border-slate-200 shadow-sm p-2 sm:p-3 rounded-2xl flex flex-col justify-center min-h-[90px] gap-0.5">
+      <div onclick="showStatusDetail('new')" class="flex justify-between items-center w-full cursor-pointer hover:bg-slate-100 p-1 sm:p-1.5 rounded-lg transition-colors group">
+        <span class="text-[10px] font-bold text-slate-400 uppercase group-hover:text-slate-600 ml-1">New</span>
+        <span class="min-w-[44px] text-center inline-block text-[11px] sm:text-xs font-black text-slate-700 bg-slate-100 group-hover:bg-white px-2 py-0.5 rounded shadow-sm border border-transparent group-hover:border-slate-200 transition-all">${m.newT}</span>
       </div>
-      <div class="flex justify-between items-center w-full">
-        <span class="text-[10px] font-bold text-slate-400 uppercase">Prog</span>
-        <span class="text-[11px] sm:text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${m.progT}</span>
+      <div onclick="showStatusDetail('progress')" class="flex justify-between items-center w-full cursor-pointer hover:bg-blue-50 p-1 sm:p-1.5 rounded-lg transition-colors group">
+        <span class="text-[10px] font-bold text-blue-400 uppercase group-hover:text-blue-600 ml-1">Progress</span>
+        <span class="min-w-[44px] text-center inline-block text-[11px] sm:text-xs font-black text-blue-600 bg-blue-100/50 group-hover:bg-white px-2 py-0.5 rounded shadow-sm border border-transparent group-hover:border-blue-200 transition-all">${m.progT}</span>
       </div>
-      <div class="flex justify-between items-center w-full">
-        <span class="text-[10px] font-bold text-slate-400 uppercase">Slv</span>
-        <span class="text-[11px] sm:text-xs font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded">${m.solveT}</span>
+      <div onclick="showStatusDetail('solve')" class="flex justify-between items-center w-full cursor-pointer hover:bg-teal-50 p-1 sm:p-1.5 rounded-lg transition-colors group">
+        <span class="text-[10px] font-bold text-teal-400 uppercase group-hover:text-teal-600 ml-1">Solve</span>
+        <span class="min-w-[44px] text-center inline-block text-[11px] sm:text-xs font-black text-teal-600 bg-teal-100/50 group-hover:bg-white px-2 py-0.5 rounded shadow-sm border border-transparent group-hover:border-teal-200 transition-all">${m.solveT}</span>
       </div>
     </div>
 
-    <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
-      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Closed</p>
+    <div onclick="showStatusDetail('closed')" class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px] cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all group">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 group-hover:text-emerald-600 transition-colors">Closed</p>
       <p class="text-2xl font-black italic tracking-tight text-emerald-600">${m.closed}</p>
     </div>
     <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl flex flex-col justify-between min-h-[90px]">
@@ -398,7 +447,6 @@ function showGroupDetail(groupName, groupKeyStr) {
     const titleEl = document.getElementById('group-modal-title');
     titleEl.innerText = groupKeyStr.includes('Masalah') ? `Problem: ${groupName}` : `Kinerja PIC: ${groupName}`;
     
-    // Inject Averages Data to Header Modal Group dengan desain yang lebih besar & eye-catching
     const metrics = calculateMetrics(groupData);
     document.getElementById('group-modal-averages').innerHTML = `
         <div class="bg-blue-50 text-blue-600 px-4 py-2 sm:py-3 rounded-2xl border border-blue-200 flex flex-col items-center justify-center shadow-sm min-w-[110px]">
@@ -462,7 +510,6 @@ function renderGroupTicketsTable(data, tbodyId) {
             const dSolve = parseCustomDate(getVal(d, ['Tgl Solve']));
             
             let endTgl = new Date();
-            // Berhenti menghitung usia jika sudah solve/close
             if (isClosed || isSolved) {
                 if (dClose) endTgl = dClose;
                 else if (dSolve) endTgl = dSolve;
@@ -474,7 +521,6 @@ function renderGroupTicketsTable(data, tbodyId) {
             usiaHariNum = safeDiff / (1000 * 60 * 60 * 24);
             d.usiaHariStr = `${usiaHariNum.toFixed(1)} D`;
             
-            // Logika label SLA (tetap diperlihatkan performanya meskipun sudah closed)
             if (usiaHariNum > targetDays) { label = 'OVERDUE'; badge = 'bg-red-500'; }
             else if (usiaHariNum >= (targetDays * 0.7)) { label = 'WARNING'; badge = 'bg-amber-400'; } 
             else { label = 'SECURED'; badge = 'bg-emerald-500'; }
@@ -501,7 +547,6 @@ function renderGroupTicketsTable(data, tbodyId) {
         };
     });
     
-    // Sort berdasar usia terbesar ke terkecil
     processed.sort((a,b) => parseFloat(b.usiaHariSort) - parseFloat(a.usiaHariSort));
     
     tbody.innerHTML = processed.map(d => `
@@ -710,7 +755,6 @@ function showTicketDetail(ticketId) {
     
     if (dTerima && targetDays > 0) {
         let endTgl = new Date();
-        // Jika statusnya solve atau closed, usia berhenti dihitung saat hari itu
         if (isClosed || isSolved) {
             if (dClose) endTgl = dClose;
             else if (dSolve) endTgl = dSolve;
@@ -723,15 +767,18 @@ function showTicketDetail(ticketId) {
         
         usiaLabel = `${usiaHariNum.toFixed(1)} D dari Target ${targetDays} D`;
         
-        // Logika warna label status (berlaku historis kalau sudah closed/solve)
-        if (usiaHariNum > targetDays) { 
-            urgencyLabel = 'OVERDUE'; 
-            urgencyBadgeClass = 'bg-red-500 text-white'; 
-            usiaTextClass = 'text-red-600';
-        } else if (usiaHariNum >= (targetDays * 0.7)) { 
-            urgencyLabel = 'WARNING'; 
-            urgencyBadgeClass = 'bg-amber-400 text-white'; 
-            usiaTextClass = 'text-amber-600';
+        if (!isClosed) {
+            if (usiaHariNum > targetDays) { 
+                urgencyLabel = 'OVERDUE'; 
+                urgencyBadgeClass = 'bg-red-500 text-white'; 
+                usiaTextClass = 'text-red-600';
+            } else if (usiaHariNum >= (targetDays * 0.7)) { 
+                urgencyLabel = 'WARNING'; 
+                urgencyBadgeClass = 'bg-amber-400 text-white'; 
+                usiaTextClass = 'text-amber-600';
+            } else {
+                urgencyLabel = 'SECURED';
+            }
         } else {
             urgencyLabel = 'SECURED';
         }
