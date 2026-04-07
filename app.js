@@ -24,6 +24,7 @@ const parseNum = (val) => {
   return parseFloat(str) || 0;
 };
 
+// FITUR BARU: Logika penanganan tanggal yang lebih tangguh
 function parseCustomDate(dateStr) {
   if (!dateStr || dateStr === 'undefined' || dateStr === '-') return null;
 
@@ -33,10 +34,14 @@ function parseCustomDate(dateStr) {
 
   try {
     const sStr = String(dateStr).trim();
+    // Pisahkan antara tanggal dan jam berdasarkan spasi atau huruf 'T'
     const parts = sStr.split(/[ T]/);
+    
+    // Pisahkan bagian tanggal (bisa pakai - atau /)
     const dateParts = parts[0].split(/[-/]/);
 
     if (dateParts.length === 3) {
+        // Pisahkan bagian jam (bisa pakai : atau .) -> "21.45" akan terbagi jadi [21, 45]
         const timeParts = parts[1] ? parts[1].split(/[:.]/) : [0, 0, 0];
         
         let year, month, day;
@@ -46,6 +51,11 @@ function parseCustomDate(dateStr) {
             day = dateParts[0]; month = dateParts[1]; year = dateParts[2];
         }
         
+        // FIX UNTUK TAHUN 2 DIGIT: Ubah "26" menjadi "2026"
+        if (String(year).length === 2) {
+            year = "20" + year;
+        }
+
         return new Date(
             parseInt(year), 
             parseInt(month) - 1, 
@@ -270,8 +280,8 @@ function applyFilters() {
     const targetDays = parseNum(getVal(row, ['Target Hari']));
 
     if (reportType === 'score' && targetDays <= 0) {
-        return false; 
-    }
+        return false; 
+    }
     
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
