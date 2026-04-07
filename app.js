@@ -266,23 +266,30 @@ function applyFilters() {
     if (!tglTerima) return false;
     
     const rowMonth = tglTerima.getMonth();
+    const rowYear = tglTerima.getFullYear();
     const targetDays = parseNum(getVal(row, ['Target Hari']));
+
+    if (reportType === 'score' && targetDays <= 0) {
+        return false; 
+    }
     
     const tglTarget = new Date(tglTerima.getTime());
     tglTarget.setDate(tglTarget.getDate() + targetDays);
     const targetMonth = tglTarget.getMonth();
+    const targetYear = tglTarget.getFullYear();
 
-    if (analysis === 'YTD') {
+    if (analysis === 'MTD') {
+        if (reportType === 'monitoring') {
+            return rowMonth === selectedMonth || (rowMonth < selectedMonth && targetMonth === selectedMonth);
+        } else if (reportType === 'score') {
+            return rowMonth === selectedMonth && targetMonth <= selectedMonth;
+        }
+    } else if (analysis === 'YTD') {
         if (reportType === 'monitoring') {
             return rowMonth <= selectedMonth;
         } else if (reportType === 'score') {
-            return rowMonth <= selectedMonth && targetMonth <= selectedMonth;
-        }
-    } else if (analysis === 'MTD') {
-        if (reportType === 'monitoring') {
-            return rowMonth === selectedMonth;
-        } else if (reportType === 'score') {
-            return rowMonth === selectedMonth && targetMonth <= selectedMonth;
+            const isTargetTahunSama = targetYear === rowYear; 
+            return rowMonth <= selectedMonth && isTargetTahunSama && targetMonth <= selectedMonth;
         }
     }
     
